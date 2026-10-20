@@ -1,7 +1,6 @@
-import "./globals.css";
+﻿import "./globals.css";
 import { Exo_2, Fraunces } from "next/font/google";
-import Footer from "./components/Footer";
-import { Navbar } from "./components/Navbar";
+import LayoutChrome from "./components/LayoutChrome";
 
 const exo2 = Exo_2({
   variable: "--font-exo-2",
@@ -20,6 +19,22 @@ export const metadata = {
   title: "Sudharva Marathon",
   description:
     "Join Sudharva Marathon and take a stride for health, the environment, and education.",
+  icons: {
+    icon: [
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+        sizes: "any",
+      },
+      {
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+        sizes: "any",
+      },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
@@ -40,12 +55,9 @@ export default function RootLayout({ children }) {
         >
           Skip to main content
         </a>
-        <Navbar />
-        <main id="main-content" className="flex-1" tabIndex="-1">
-          {children}
-        </main>
-        <Footer />
+        <LayoutChrome>{children}</LayoutChrome>
       </body>
     </html>
   );
 }
+

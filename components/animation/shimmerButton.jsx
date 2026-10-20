@@ -1,41 +1,68 @@
-
 "use client";
 
 import React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * ShimmerButton — reusable shimmer-glow button.
+ *
+ * Colors are controlled by props (any CSS color / var()):
+ *   background / foreground / shimmerColor / borderColor
+ * and fall back to the theme vars in globals.css
+ * (--shimmer-button-background, --shimmer-button-foreground, ...).
+ *
+ * `asChild` renders the shimmer styles onto its single child element
+ * (e.g. a Next.js <Link>) instead of a <button> — this avoids the invalid
+ * <button><a/></button> nesting and lets the link keep href behaviour.
+ */
+
 export const ShimmerButton = React.forwardRef(
   (
     {
       shimmerColor = "var(--shimmer-button-color)",
-      shimmerSize = "0.05em",
+      shimmerSize = "0.15em",
       shimmerDuration = "3s",
       borderRadius = "100px",
       background = "var(--shimmer-button-background)",
+      foreground = "var(--shimmer-button-foreground)",
+      borderColor = "var(--shimmer-button-border)",
+      asChild = false,
+      size = "default",
       className,
       children,
       ...props
     },
     ref
   ) => {
-    return (
-      <button
-        style={{
-          "--spread": "90deg",
-          "--shimmer-color": shimmerColor,
-          "--radius": borderRadius,
-          "--speed": shimmerDuration,
-          "--cut": shimmerSize,
-          "--bg": background,
-        }}
-        className={cn(
-          "group relative isolate flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap border border-[color:var(--shimmer-button-border)] px-6 py-3 text-[color:var(--shimmer-button-foreground)] [background:var(--bg)] [border-radius:var(--radius)]",
-          "transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px",
-          className
-        )}
-        ref={ref}
-        {...props}
-      >
+    const styleVars = {
+      "--spread": "90deg",
+      "--shimmer-color": shimmerColor,
+      "--radius": borderRadius,
+      "--speed": shimmerDuration,
+      "--cut": shimmerSize,
+      "--bg": background,
+      "--fg": foreground,
+      "--shimmer-border": borderColor,
+    };
+
+    const sizes = {
+      sm: "px-4 py-2 text-sm",
+      default: "px-6 py-3 text-sm",
+      lg: "px-8 py-3.5 text-sm",
+      icon: "p-3",
+    };
+
+    const classes = cn(
+      "group relative isolate flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap border text-[color:var(--fg)] [background:var(--bg)] [border-radius:var(--radius)]",
+      "border-[color:var(--shimmer-border)] [box-shadow:inset_0_0_0_1px_var(--shimmer-border)]",
+      sizes[size] || sizes.default,
+      "transform-gpu transition-transform duration-300 ease-in-out active:translate-y-px",
+      className
+    );
+
+    /* Decorative layers shared by both button & asChild rendering */
+    const layers = (
+      <React.Fragment>
         {/* Spark container */}
         <div
           className={cn(
@@ -49,10 +76,6 @@ export const ShimmerButton = React.forwardRef(
             <div className="animate-spin-around absolute -inset-full w-auto [translate:0_0] rotate-0 [background:conic-gradient(from_calc(270deg-(var(--spread)*0.5)),transparent_0,var(--shimmer-color)_var(--spread),transparent_var(--spread))]" />
           </div>
         </div>
-
-        <span className="relative z-30 flex items-center justify-center gap-2">
-          {children}
-        </span>
 
         {/* Highlight */}
         <div
@@ -71,6 +94,34 @@ export const ShimmerButton = React.forwardRef(
             "absolute inset-(--cut) z-10 [border-radius:var(--radius)] [background:var(--bg)]"
           )}
         />
+      </React.Fragment>
+    );
+
+    if (asChild && React.isValidElement(children)) {
+      const child = React.Children.only(children);
+      return React.cloneElement(child, {
+        ...props,
+        ref,
+        style: { ...styleVars, ...(child.props?.style || {}) },
+        className: cn(classes, child.props?.className),
+        children: (
+          <React.Fragment>
+            {layers}
+            <span className="relative z-30 flex items-center justify-center gap-2">
+              {child.props?.children}
+            </span>
+          </React.Fragment>
+        ),
+      });
+    }
+
+    return (
+      <button style={styleVars} className={classes} ref={ref} {...props}>
+        {layers}
+
+        <span className="relative z-30 flex items-center justify-center gap-2">
+          {children}
+        </span>
       </button>
     );
   }

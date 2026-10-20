@@ -282,7 +282,7 @@
   --brand-education: #e4ab69;
   --brand-education-tint: #382a1c;
 
-  --brand-volunteer: #2563eb;
+  --brand-volunteer: #7aa7f5;
   --brand-volunteer-tint: #1c2a4b;
 
   --brand-bg: #0b1722;
@@ -3499,7 +3499,7 @@
 }
 
 @utility bg-gradient-brand {
-  background-image: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background-image: linear-gradient(135deg, #1e293b 20%,  #2563eb 50%, #7c3aed 60%);
 }
 
 @utility bg-gradient-dark {
@@ -3720,7 +3720,8 @@
   width: calc(100% + var(--tt-parallax) * 2);
   max-width: none;
   height: calc(100% + var(--tt-parallax) * 2);
-  object-fit: cover;
+  object-fit: contain;
+  border-radius: var(--tt-art-radius);
   -webkit-user-drag: none;
   transition: filter 700ms ease;
 }

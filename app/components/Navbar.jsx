@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { ListIcon, XIcon } from "@phosphor-icons/react";
@@ -7,10 +7,11 @@ import { RainbowButton } from "@/components/animation/rainbowButton";
 import { CountdownTimer } from "@/components/utilities/CountdownTimer";
 import Link from "next/link";
 
-// Configure the race date here — accepts an ISO string, Date, or epoch ms.
+// Configure the race date here â€” accepts an ISO string, Date, or epoch ms.
 // Example: "2026-12-14T05:30:00+05:30" (IST morning slot).
 const MARATHON_DATE = "2026-11-15T05:30:00+05:30";
 import Image from "next/image";
+import { Cancel01Icon, Menu01Icon } from "@animateicons/react/huge";
 
 const NAV_LINKS = [
   { label: "Home", href: "#home", decoration: "decoration-primary" },
@@ -18,12 +19,37 @@ const NAV_LINKS = [
     label: "Event Overview",
     href: "#overview",
     decoration: "decoration-accent",
+    subnav: [
+      { label: "5K & 10K Runs", href: "#runs" },
+      { label: "Volunteer", href: "#volunteer" },
+      { label: "Donate", href: "#donate" },
+      { label: "Partners", href: "#partners" },
+    ],
   },
   { label: "Join Us", href: "#join", decoration: "decoration-accent" },
-  { label: "Event Categories", href: "#event-categories", decoration: "decoration-primary" },
-  
+  {
+    label: "Event Categories",
+    href: "#event-categories",
+    decoration: "decoration-primary",
+    subnav: [
+      { label: "5K Run", href: "#5k" },
+      { label: "10K Challenge", href: "#10k" },
+      { label: "Half Marathon", href: "#half-marathon" },
+      { label: "Team Entries", href: "#team" },
+    ],
+  },
   { label: "Our Partners", href: "#partners", decoration: "decoration-primary" },
-  { label: "Contact", href: "#contact", decoration: "decoration-accent" },];
+  {
+    label: "Contact",
+    href: "#contact",
+    decoration: "decoration-accent",
+    subnav: [
+      { label: "Get in Touch", href: "#contact-form" },
+      { label: "Workshop", href: "#workshop" },
+      { label: "Media", href: "#media" },
+    ],
+  },
+];
 
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -34,7 +60,7 @@ export const Navbar = () => {
     const handleScroll = () => {
       const nextScrolled = window.scrollY > 30;
       setScrolled((currentScrolled) =>
-        currentScrolled === nextScrolled ? currentScrolled : nextScrolled
+        currentScrolled === nextScrolled ? currentScrolled : nextScrolled,
       );
     };
 
@@ -46,7 +72,7 @@ export const Navbar = () => {
   return (
     <>
       {/* Spacer so the fixed header never overlaps page content */}
-      <div className="h-16" aria-hidden="true" />
+      <div className="h-[76px] sm:h-20" aria-hidden="true" />
       <header
         onKeyDown={(event) => {
           if (event.key === "Escape" && mobileMenuOpen) {
@@ -54,29 +80,30 @@ export const Navbar = () => {
             menuButtonRef.current?.focus();
           }
         }}
-        className={`fixed top-0 left-0 right-0 z-40 h-16 border-b transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 h-[76px] border-b transition-all duration-300 sm:h-20 ${
           scrolled
             ? "border-border bg-surface/95 shadow-md backdrop-blur-md"
             : "border-border/60 bg-surface/80 backdrop-blur-sm"
         }`}
       >
-        <div className="mx-auto flex h-full w-full max-w-content items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-full w-full max-w-content items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
           {/* Zone 1: Brand wordmark */}
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
-            className="group flex shrink-0 items-center gap-2"
+            className="group flex shrink-0 flex-col items-center"
           >
-            {/* <span className="h-6 w-2.5 -skew-x-12 rounded-xs bg-linear-to-b from-primary to-accent transition-transform group-hover:scale-y-110" /> */}
             <Image
               src="/image/cta/logo.png"
               alt="Sudharva Logo"
               width={250}
               height={64}
+              className="block h-auto w-28 max-w-full min-[375px]:w-32 sm:w-40 lg:w-48"
+              sizes="(max-width: 374px) 112px, (max-width: 639px) 128px, (max-width: 1023px) 160px, 192px"
             />
-            {/* <span className="font-serif text-xl font-bold tracking-tight text-ink sm:text-2xl">
-              Sudharva
-            </span> */}
+            <span className="mt-0.5 block max-w-full px-1 text-center text-[7px] font-bold uppercase leading-none tracking-[0.12em] text-ink-soft min-[375px]:text-[8px] sm:mt-0 sm:text-[10px]">
+              Run Against Diabetes
+            </span>
           </Link>
 
           {/* Zone 2: Desktop nav links */}
@@ -139,15 +166,17 @@ export const Navbar = () => {
               onClick={() => setMobileMenuOpen((open) => !open)}
               className="cursor-pointer p-2 text-ink-soft transition-colors hover:text-ink"
               aria-label={
-                mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"
+                mobileMenuOpen
+                  ? "Close navigation menu"
+                  : "Open navigation menu"
               }
               aria-controls="mobile-navigation"
               aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
-                <XIcon className="h-6 w-6" />
+                <Cancel01Icon className="h-6 w-6" />
               ) : (
-                <ListIcon className="h-6 w-6" />
+                <Menu01Icon className="h-6 w-6" />
               )}
             </button>
           </div>
@@ -182,8 +211,8 @@ export const Navbar = () => {
             </nav>
           </div>
         )}
-        <div className=""></div>
       </header>
     </>
   );
 };
+

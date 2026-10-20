@@ -14,13 +14,14 @@ import {
   SendIcon,
   QrCode01Icon,
   Building01Icon,
+  Clock01Icon,
 } from "@animateicons/react/huge";
 
 export const heroRuningData = [
-  { id: 1, icon: "🕒", count: "10,000+", label: "Expected Participants" },
-  { id: 2, icon: "🏢", count: "10+", label: "Corporate Partners" },
-  { id: 3, icon: "🌍", count: "20,000+", label: "Lives to be Impacted" },
-  { id: 4, icon: "🎯", count: "1 Cause", label: "A Diabetes Free Tomorrow" },
+  { id: 1, icon: Clock01Icon, color: "text-volunteer", count: "10,000+", label: "Expected Participants" },
+  { id: 2, icon: Building01Icon, color: "text-health", count: "10+", label: "Corporate Partners" },
+  { id: 3, icon: Globe02Icon, color: "text-environment", count: "20,000+", label: "Lives to be Impacted" },
+  { id: 4, icon: Target01Icon, color: "text-education", count: "1 Cause", label: "A Diabetes Free Tomorrow" },
 ];
 
 export const overviewData = [
@@ -79,9 +80,9 @@ export const eventCategoriesData = [
     number: "01",
     key: "volunteer",
     label: "5K Run (Community Walk)",
-    message: "For every pace, and every first step.",
+    message: "For a healthier community tomorrow",
     Amount: "₹ 500",
-    description: "Run for a cause and make every step count.",
+    description: "Walk together, support your community",
     tag: "comfortable Jog",
     icon: HeartIcon,
     iconBg: "bg-volunteer-tint border border-volunteer/50",
@@ -259,9 +260,14 @@ export const imageLogos = [
     href: "https://company2.com",
   },
   {
-    src: "/image/cta/bisleri_soda_homepage_banner.jpg",
+    src: "/image/cta/appa-logo.svg",
     alt: "Company 3",
-    href: "https://company3.com",
+    href: "https://www.appatrust.com",
+  },
+  {
+    src: "/image/cta/sms.webp",
+    alt: "Company 4",
+    href: "https://www.sms24hrs.com",
   },
 ];
 

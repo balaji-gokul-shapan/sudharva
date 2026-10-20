@@ -117,7 +117,6 @@ export default function RegistrationForm() {
             name="phone"
             type="tel"
             required
-            minLength={10}
             autoComplete="tel"
             placeholder="+91 90000 00000"
             className={fieldClasses}
@@ -215,4 +214,3 @@ export default function RegistrationForm() {
     </form>
   );
 }
-

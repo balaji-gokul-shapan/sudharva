@@ -1,6 +1,7 @@
 import CurrentYear from "@/components/utilities/CurrentYear";
 import SocialIcons from "@/components/ui/SocialIcons";
 import Image from "next/image";
+import Link from "next/link";
 
 const QUICK_LINKS = [
   { label: "Home", href: "#home" },
@@ -99,7 +100,7 @@ const Footer = () => {
           <p>
             © <CurrentYear /> Sudharva. All rights reserved.
           </p>
-          <p>For runners, communities and the planet.</p>
+          <Link href="https://appatrust.com" target="_blank" rel="noopener noreferrer">powered by Appa charitable trust.</Link>
         </div>
       </div>
     </footer>

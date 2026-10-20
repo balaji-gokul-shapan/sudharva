@@ -16,6 +16,7 @@ import { ArrowRight02Icon } from "@animateicons/react/huge";
 
 import { overviewData } from "../datas/homepage/data";
 import { ShimmerButton } from "@/components/animation/shimmerButton";
+import Link from "next/link";
 
 /* ------------------------------------------------------------------ */
 /* Pillar card — cursor-tracked spotlight + staggered scroll reveal     */
@@ -154,7 +155,7 @@ const Overview = () => {
               transition={{ duration: 0.6, delay: 0.08 }}
               className="mt-5 max-w-2xl text-3xl font-bold leading-tight text-accent sm:text-4xl lg:text-5xl"
             >
-              Our Cause - <AuroraText>A Future Free from Diabetes</AuroraText>
+              Our Cause - <AuroraText colors={["#E85D75", "#F4A261", "#3B82F6", "#FFF1E8"]}>A Future Free from Diabetes</AuroraText>
             </motion.h2>
 
             <motion.p
@@ -184,9 +185,12 @@ const Overview = () => {
               Know More about our Impact
             </Button> */}
             <ShimmerButton className="shadow-2xl">
-              <span className="text-center text-sm font-medium leading-none tracking-tight whitespace-pre-wrap lg:text-lg">
-                Know More about our Impact
-              </span>
+              <Link href="https://appatrust.com">
+                <span className="inline-flex items-center justify-center gap-2 text-sm font-medium leading-none tracking-tight sm:text-lg">
+                  <ArrowRight02Icon color="currentColor" size={24} duration={1} className="shrink-0" />
+                  Know More about our Impact
+                </span>
+              </Link>
             </ShimmerButton>
           </motion.div>
         </div>

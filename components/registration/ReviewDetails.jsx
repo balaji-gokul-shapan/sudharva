@@ -1,0 +1,121 @@
+import { InformationCircle } from "@animateicons/react/huge";
+import { CATEGORIES, GENDERS, TEAM_SIZES } from "./datas/data";
+
+export const ReviewDetails = ({ form, onEdit }) => {
+  const category = CATEGORIES.find((item) => item.value === form.category);
+  const gender = GENDERS.find((item) => item.value === form.gender);
+  const teamSize = TEAM_SIZES.find((item) => item.value === form.teamSize);
+  const isCorporate = form.entryType === "corporate";
+
+  const groups = [
+    {
+      title: isCorporate ? "Company" : "Participant",
+      editStep: 0,
+      details: isCorporate
+        ? [
+            ["Company", form.companyName],
+            ["Contact person", form.contactName],
+            ["Work email", form.workEmail],
+            ["Company phone", form.companyPhone],
+            ["Team size", teamSize?.label],
+          ]
+        : [
+            ["Full name", [form.firstName, form.lastName].filter(Boolean).join(" ")],
+            ["Email", form.email],
+            ["Mobile", form.phone],
+            ["Date of birth", form.dob],
+            ["Gender", gender?.label],
+          ],
+    },
+    {
+      title: "Event & race day",
+      editStep: 1,
+      details: [
+        ["Event", category?.label],
+        ["Distance / role", category?.distance],
+        ["T-shirt", form.shirtSize],
+        ["Emergency contact", form.emergencyName],
+        ["Emergency phone", form.emergencyPhone],
+      ],
+    },
+    {
+      title: "Health & consent",
+      editStep: 2,
+      details: [
+        ["Medical fitness", form.medicallyFit ? "Confirmed" : "Not confirmed"],
+        [
+          "Previous marathon participation",
+          form.previous_marathon_participation ? "Yes" : "No",
+        ],
+        ["Cardiac condition", form.cardiac_condition ? "Yes" : "No"],
+        ["Hypertension", form.hypertension ? "Yes" : "No"],
+        ["Allergies", form.allergies || "None provided"],
+        [
+          "Other medical conditions",
+          form.other_medical_conditions || "None provided",
+        ],
+        [
+          "Physical activity",
+          form.physicalActivity ? "Acknowledged" : "Not acknowledged",
+        ],
+        ["Event updates", form.eventUpdates ? "Consented" : "Not consented"],
+        ["Event terms", form.terms ? "Accepted" : "Not accepted"],
+        [
+          "Wellness data use",
+          form.dataPrivacy ? "Authorized" : "Not authorized",
+        ],
+        [
+          "Payment",
+          form.paymentReported
+            ? "Reported by participant — awaiting organizer verification"
+            : "Not reported",
+        ],
+      ],
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
+            <InformationCircle size={19} weight="duotone" />
+          </span>
+          <p className="text-sm leading-relaxed text-ink-soft">
+            Take a moment to check your details. You can go back to either
+            section to make changes before finishing.
+          </p>
+        </div>
+      </div>
+      {groups.map((group) => (
+        <section
+          key={group.title}
+          className="rounded-2xl border border-border bg-background p-4 sm:p-5"
+        >
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h3 className="font-semibold text-foreground">{group.title}</h3>
+            <button
+              type="button"
+              onClick={() => onEdit(group.editStep)}
+              className="rounded-lg px-3 py-1.5 text-xs font-bold text-accent transition hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              Edit
+            </button>
+          </div>
+          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+            {group.details.map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
+                  {label}
+                </dt>
+                <dd className="mt-1 break-words text-sm font-medium text-foreground">
+                  {value || "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
+    </div>
+  );
+}

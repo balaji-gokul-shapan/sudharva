@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { AnimatedShinyText } from "@/components/animation/AnimatedShinyText";
-import { ArrowRight02Icon } from "@animateicons/react/huge";
+import { ArrowRight02Icon, HeartIcon } from "@animateicons/react/huge";
 import { AuroraText } from "@/components/animation/AuroraText";
 import { ShineBorder } from "@/components/animation/shine-border";
 import TearTicket from "@/components/animation/TearTicket";
@@ -15,6 +15,7 @@ import {
   StaggerItem,
 } from "@/components/animation/Reveal";
 import { GsParallax } from "@/components/animation/GsScroll";
+import { Ribbon } from "@/components/animation/Ribbon";
 
 /* ------------------------------------------------------------------ */
 /*  AddonsPill — exclusive-benefit badge (Motion float + fade)         */
@@ -97,9 +98,10 @@ export function ShareHealthCard({ items }) {
       <Reveal
         preset="fade-left"
         delay={0.15}
-        className="relative rounded-lg bg-gradient-mesh px-12 py-8 shadow-md"
+        className="relative rounded-lg bg-gradient-mesh px-12 py-8 shadow-md overflow-hidden"
       >
         <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
+         <Ribbon className={"bg-gradient-brand"} position="top-right" color="bg-white" textColor="text-white">Gift Card <HeartIcon size={14} className="ml-1 text-danger" /></Ribbon>
         <span className="mb-2 block text-2xl font-bold">
           Share the Health
           <br />
@@ -116,11 +118,11 @@ export function ShareHealthCard({ items }) {
             <li key={addon.id} className="flex items-center gap-3">
               <span
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-md",
+                  "flex size-12 shrink-0 items-center justify-center rounded-md",
                   addon.iconBg
                 )}
               >
-                <addon.icon className="size-4" aria-hidden="true" />
+                <addon.icon className="size-6" aria-hidden="true" />
               </span>
               <span>{addon.label}</span>
             </li>
@@ -142,7 +144,7 @@ export function AddonsTicket() {
   return (
     <Reveal preset="zoom-in" delay={0.1} className="relative my-8 mr-2">
       <TearTicket
-        image="/image/cta/hero-banner.png"
+        image="/image/cta/marathon-bib.webp"
         imageAlt="Marathon runner"
         stub={
           <div className="my-2 flex flex-col pl-2">
@@ -182,7 +184,7 @@ export function AddonsTicket() {
         borderWidth={1}
         recenter
       >
-        <span>{ticketUsed ? "Ticket used" : "Spectrum"}</span>
+        {/* <span>{ticketUsed ? "Ticket used" : ""}</span> */}
       </TearTicket>
     </Reveal>
   );

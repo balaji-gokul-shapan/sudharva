@@ -7,6 +7,7 @@ import {
   ScrollVelocityContainer,
   ScrollVelocityRow,
 } from "@/components/animation/scrollBasedVelocity";
+import { ShimmerButton } from "@/components/animation/shimmerButton";
 
 const CTABanner = () => {
   return (
@@ -37,22 +38,28 @@ const CTABanner = () => {
           >
             Be a Part of the Movement!
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-pretty text-sm opacity-90 sm:text-base">
+          <p className="mx-auto my-4 max-w-md text-pretty text-sm opacity-90 sm:text-base">
             Partner with Sudharva Marathon to champion wellness, empower
             communities, and inspire a healthier tomorrow.
           </p>
-          <Link
-            href="mailto:hello@sudharva.org?subject=Sudharva%20Marathon"
-            className="mt-7 inline-flex cursor-pointer items-center justify-center gap-2 rounded-md bg-primary-foreground px-6 py-2.5 text-sm font-semibold text-primary shadow-md transition hover:opacity-90"
+          <ShimmerButton
+            asChild
+            size="md"
+            className="shadow-2xl"
+            background="var(--primary-foreground)"
+            foreground="var(--primary)"
+            borderColor="color-mix(in srgb, var(--primary) 30%, transparent)"
           >
-            <HandshakeIcon
-              size={20}
-              duration={1}
-              color="currentColor"
-              className="shrink-0"
-            />
-            Become a Partner
-          </Link>
+            <Link href="mailto:hello@sudharva.org?subject=Sudharva%20Marathon">
+              <HandshakeIcon
+                size={20}
+                duration={1}
+                color="currentColor"
+                className="shrink-0"
+              />
+              Become a Partner
+            </Link>
+          </ShimmerButton>
         </div>
 
         {/* Scrolling marquee — full-bleed, decorative */}

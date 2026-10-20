@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FilterAddIcon } from "@animateicons/react/huge";
+import { FilterAddIcon, HandshakeIcon } from "@animateicons/react/huge";
 
 import { AuroraText } from "@/components/animation/AuroraText";
 import { RainbowButton } from "@/components/animation/rainbowButton";
@@ -12,6 +12,10 @@ import {
   StaggerItem,
 } from "@/components/animation/Reveal";
 import { NumberTicker } from "@/components/animation/NumberTicker";
+import { heroRuningData } from "../datas/homepage/data";
+import { cn } from "@/lib/utils";
+import { ShimmerButton } from "@/components/animation/shimmerButton";
+import { Button } from "@/components/ui/button";
 
 /* ------------------------------------------------------------------ */
 /*  HeroBadge — floating trust pill (Motion float + fade)              */
@@ -68,9 +72,9 @@ export function HeroHeading() {
 /* ------------------------------------------------------------------ */
 
 const META = [
-  { icon: "📅", label: "Sunday, 10th December 2023" },
+  { icon: "📅", label: "Sunday, 15th November 2026" },
   { icon: "📍", label: "SMS Hospital, Avadi, Chennai" },
-  { icon: "🕒", label: "10:00 AM – 4:00 PM" },
+  { icon: "🕒", label: "05:00 AM onwards" },
 ];
 
 export function HeroEventMeta() {
@@ -118,13 +122,44 @@ export function HeroCtas() {
             Register Now
           </Link>
         </RainbowButton>
-
-        <Link
-          href="#overview"
-          className="inline-flex w-full items-center justify-center rounded-md border border-white/50 bg-white/10 px-7 py-3.5 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:w-auto"
+        {/* <ShimmerButton
+          asChild
+          size="sm"
+          className={cn("shadow-2xl py-2")}
+          background="var(--primary-foreground)"
+          foreground="var(--primary)"
+          borderColor="color-mix(in srgb, var(--primary) 30%, transparent)"
         >
-          Explore the Course
-        </Link>
+          <Link
+            href="/register"
+            className="inline-flex w-full items-center justify-center sm:w-auto backdrop-blur-sm transition-colors hover:bg-white/20"
+          >
+            <HandshakeIcon
+              size={24}
+              duration={1}
+              color="currentColor"
+              className="mr-2"
+            />
+            Be a Part of the Marathon
+          </Link>
+        </ShimmerButton> */}
+        <Button
+          className="h-auto w-full items-center justify-center gap-2.5 rounded-lg border-white/50 bg-white/10 px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:w-auto"
+          render={<Link href="/register" />}
+        >
+          <HandshakeIcon
+            size={24}
+            duration={1}
+            color="currentColor"
+            className="mr-2 shrink-0"
+          />
+          Be a Part of the Marathon
+        </Button>
+        {/* <Link
+          href="#overview"
+        >
+         
+        </Link> */}
       </span>
     </Reveal>
   );
@@ -134,22 +169,31 @@ export function HeroCtas() {
 /*  HeroStats — count-up band (Motion ticker, once in view)            */
 /* ------------------------------------------------------------------ */
 
-export function HeroStats({ items }) {
+export function HeroStats() {
   return (
     <Stagger
       gap={0.1}
       amount={0.2}
       className="container-page grid grid-cols-2 gap-4 py-10 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
     >
-      {items.map(({ id, icon, count, label }) => (
+      {heroRuningData.map(({ id, icon: Icon, count, label, color }) => (
         <StaggerItem
           key={id}
           preset="fade-up"
           className="flex flex-row items-center gap-1 text-center sm:text-left"
         >
-          <span className="text-2xl font-bold" aria-hidden="true">
-            {icon}
-          </span>
+          {/* <span className="text-2xl font-bold" aria-hidden="true">
+            <Icon duration={1} color="currentColor" className={"h-6 w-6 mr-2 " + color} />
+          </span> */}
+          <Icon
+            size={30}
+            weight="duotone"
+            className={cn(
+              color,
+              "transition-transform duration-300 group-hover:scale-110  mr-2",
+            )}
+            aria-hidden="true"
+          />
           <span className="flex flex-col gap-2">
             <NumberTicker
               value={count}

@@ -8,7 +8,6 @@ import {
   HeroStats,
 } from "./HeroAnimations";
 import { GsParallax } from "@/components/animation/GsScroll";
-import { heroRuningData } from "../datas/homepage/data";
 
 const Hero = () => {
   return (
@@ -48,11 +47,10 @@ const Hero = () => {
 
       {/* Statistics pinned to the bottom of the hero */}
       <div className="relative z-10 mt-auto w-full bg-color-ink-soft text-white">
-        <HeroStats items={heroRuningData} />
+        <HeroStats />
       </div>
     </section>
   );
 };
 
 export default Hero;
-
