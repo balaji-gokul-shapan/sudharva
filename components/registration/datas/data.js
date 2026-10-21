@@ -86,15 +86,7 @@ export const SNAPSHOT_TINTS = {
   },
 };
 
-/**
- * HEALTH_SNAPSHOT — "Your health, at a glance" group shown under the
- * medically-fit check. Toggle chips (Yes/No) plus optional free text.
- * Each option carries its own semantic tint so the UI stays honest:
- * a reassuring "No" renders green, a "Yes" on a risk question renders amber.
- * - previousMarathon: yes = has run before (green)
- * - cardiacCondition / hypertension: yes = has the condition (amber)
- * - allergies / otherMedicalConditions: free text, optional
- */
+
 export const HEALTH_SNAPSHOT = [
   {
     id: "previous_marathon_participation",
@@ -160,7 +152,7 @@ export const TEAM_SIZES = [
 export const CATEGORIES = [
   {
     value: "5k",
-    label: "5K Community Run",
+    label: "5K Community Walk",
     detail: "Walk together, support your community.",
     distance: "5 km",
     price: 499,
@@ -170,7 +162,7 @@ export const CATEGORIES = [
   },
   {
     value: "05k",
-    label: "5K Run",
+    label: "5K Fun Run",
     detail: "For every pace, and every first step",
     distance: "5 km",
     price: 499,

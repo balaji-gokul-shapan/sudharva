@@ -6,6 +6,7 @@ export const ReviewDetails = ({ form, onEdit }) => {
   const gender = GENDERS.find((item) => item.value === form.gender);
   const teamSize = TEAM_SIZES.find((item) => item.value === form.teamSize);
   const isCorporate = form.entryType === "corporate";
+  const showNominee = Boolean(form.useNominee);
 
   const groups = [
     {
@@ -25,6 +26,12 @@ export const ReviewDetails = ({ form, onEdit }) => {
             ["Mobile", form.phone],
             ["Date of birth", form.dob],
             ["Gender", gender?.label],
+            [
+              "Address",
+              [form.address, form.city, form.state, form.pincode]
+                .filter(Boolean)
+                .join(", "),
+            ],
           ],
     },
     {
@@ -36,6 +43,29 @@ export const ReviewDetails = ({ form, onEdit }) => {
         ["T-shirt", form.shirtSize],
         ["Emergency contact", form.emergencyName],
         ["Emergency phone", form.emergencyPhone],
+        [
+          "Delivery address",
+          [
+            form.address_line1,
+            form.address_line2,
+            form.area,
+            form.delivery_city,
+            form.delivery_state,
+            form.delivery_pincode,
+          ]
+            .filter(Boolean)
+            .join(", "),
+        ],
+      ],
+    },
+    {
+      title: "Nominee contact",
+      editStep: 3,
+      details: [
+        ["Nominee name", form.beneficiary_name],
+        ["Nominee phone", form.beneficiary_mobile],
+        ["Nominee email", form.beneficiary_email],
+        ["Nominee address", form.beneficiary_address],
       ],
     },
     {
@@ -87,35 +117,37 @@ export const ReviewDetails = ({ form, onEdit }) => {
           </p>
         </div>
       </div>
-      {groups.map((group) => (
-        <section
-          key={group.title}
-          className="rounded-2xl border border-border bg-background p-4 sm:p-5"
-        >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-foreground">{group.title}</h3>
-            <button
-              type="button"
-              onClick={() => onEdit(group.editStep)}
-              className="rounded-lg px-3 py-1.5 text-xs font-bold text-accent transition hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-            >
-              Edit
-            </button>
-          </div>
-          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            {group.details.map(([label, value]) => (
-              <div key={label} className="min-w-0">
-                <dt className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
-                  {label}
-                </dt>
-                <dd className="mt-1 break-words text-sm font-medium text-foreground">
-                  {value || "—"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      ))}
+      {groups
+        .filter((group) => group.title !== "Nominee contact" || showNominee)
+        .map((group) => (
+          <section
+            key={group.title}
+            className="rounded-2xl border border-border bg-background p-4 sm:p-5"
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h3 className="font-semibold text-foreground">{group.title}</h3>
+              <button
+                type="button"
+                onClick={() => onEdit(group.editStep)}
+                className="rounded-lg px-3 py-1.5 text-xs font-bold text-accent transition hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              >
+                Edit
+              </button>
+            </div>
+            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+              {group.details.map(([label, value]) => (
+                <div key={label} className="min-w-0">
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 break-words text-sm font-medium text-foreground">
+                    {value || "—"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
     </div>
   );
 }

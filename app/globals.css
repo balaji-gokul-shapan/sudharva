@@ -3626,6 +3626,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fluid mode: the ticket always fills 100% of its container and scales up/down
+   to match, instead of being capped at its intrinsic pixel size. */
+.tear-ticket[data-fluid] {
+  width: 100%;
+}
+
 .tear-ticket[data-disabled] {
   opacity: 0.6;
 }

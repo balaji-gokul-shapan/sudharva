@@ -3,11 +3,15 @@ import { Field } from "./components/Field";
 import { motion } from "framer-motion";
 import {
   Calendar01Icon,
+  Home02Icon,
   Mail01Icon,
+  PencilIcon,
   PhoneIcon,
+  Shield01Icon,
   UserIcon,
 } from "@animateicons/react/huge";
 import { GENDERS } from "./datas/data";
+import { Separator } from "../ui/separator";
 
 export const IndividualDetails = ({ form, errors, onChange, age }) => {
   return (
@@ -20,6 +24,17 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
       role="tabpanel"
       aria-label="Individual registration details"
     >
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">
+          Contact details{" "}
+          <span className="text-accent" aria-hidden="true">
+            *
+          </span>
+        </h3>
+        <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
+          We send your bib, timing chip and race updates here.
+        </p>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
           id="firstName"
@@ -80,7 +95,6 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
           autoComplete="tel"
           required={false}
         />
-
         <div className="grid gap-5 sm:grid-cols-[65%_30%]">
           <Field
             id="dob"
@@ -104,15 +118,32 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
             readOnly
           />
         </div>
+      </div>
+      <Separator />
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">
+          Personal details{" "}
+          <span className="text-accent" aria-hidden="true">
+            *
+          </span>
+        </h3>
+        <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
+          Used to confirm your age eligibility and seed your pace predictions.
+        </p>
+      </div>
 
+      <div className="grid gap-5 sm:grid-cols-2">
         <div className="col-span-2">
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-foreground">
+            <legend className="text-sm font-semibold text-foreground">
               Gender{" "}
               <span className="text-accent" aria-hidden="true">
                 *
               </span>
             </legend>
+            <p className="mt-1 mb-2 text-xs leading-relaxed text-ink-soft">
+              Used to seed your pace predictions and category eligibility.
+            </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {GENDERS.map((option) => (
                 <label
@@ -154,112 +185,125 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
           </fieldset>
         </div>
 
-        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
-          <Field
-            id="height"
-            name="height"
-            label="Height"
-            type="number"
-            placeholder="cm"
-            value={form.height}
-            onChange={onChange}
-            // icon={}
-            error={errors.height}
-            autoComplete="height"
-          />
-          <Field
-            id="weight"
-            name="weight"
-            label="Weight"
-            type="number"
-            placeholder="kg"
-            value={form.weight}
-            onChange={onChange}
-            // icon={}
-            error={errors.weight}
-            autoComplete="weight"
-          />
-          <Field
-            id="bloodGroup"
-            name="bloodGroup"
-            label="Blood Group"
-            type="text"
-            placeholder="e.g., A+"
-            value={form.bloodGroup}
-            onChange={onChange}
-            // icon={}
-            error={errors.bloodGroup}
-            autoComplete="blood-group"
-          />
-        </div>
-
         <div className="col-span-2">
-          <Field
-            id="address"
-            name="address"
-            label="Address"
-            type="text"
-            value={form.address}
-            onChange={onChange}
-            // icon={}
-            error={errors.address}
-            autoComplete="street-address"
-          />
-        </div>
-        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
-          <Field
-            id="city"
-            name="city"
-            label="City"
-            type="text"
-            value={form.city}
-            onChange={onChange}
-            // icon={}
-            error={errors.city}
-            autoComplete="address-level2"
-          />
-          <Field
-            id="state"
-            name="state"
-            label="State"
-            type="text"
-            value={form.state}
-            onChange={onChange}
-            // icon={}
-            error={errors.state}
-            autoComplete="address-level1"
-          />
-          <Field
-            id="pincode"
-            name="pincode"
-            label="Pin Code"
-            type="text"
-            value={form.pincode}
-            onChange={onChange}
-            // icon={}
-            error={errors.pincode}
-            autoComplete="postal-code"
-          />
-        </div>
-        {/* <div>
-          <label
-            htmlFor="age"
-            className={cn(LABEL_CLASSES, "flex items-center gap-2")}
-          >
-            Age
+          <h3 className="text-sm font-semibold text-foreground">
+            Body metrics{" "}
             <span className="text-accent" aria-hidden="true">
               *
             </span>
-            <span
-              className={cn(
-                "ml-auto text-sm font-semibold tabular-nums text-foreground",
-                errors.age && "text-destructive"
-              )}
-            >
-              {age ?? "—"}
+          </h3>
+          <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
+            Helps us set safe pacing zones and the right hydration plan for you.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field
+              id="height"
+              name="height"
+              label="Height"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              max="500"
+              placeholder="cm"
+              value={form.height}
+              onChange={onChange}
+              icon={PencilIcon}
+              error={errors.height}
+              autoComplete="height"
+            />
+            <Field
+              id="weight"
+              name="weight"
+              label="Weight"
+              type="number"
+              placeholder="kg"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              max="300"
+              value={form.weight}
+              onChange={onChange}
+              icon={PencilIcon}
+              error={errors.weight}
+              autoComplete="weight"
+            />
+            <Field
+              id="bloodGroup"
+              name="bloodGroup"
+              label="Blood Group"
+              type="text"
+              placeholder="e.g., A+"
+              value={form.bloodGroup}
+              onChange={onChange}
+              icon={Shield01Icon}
+              error={errors.bloodGroup}
+              autoComplete="blood-group"
+            />
+          </div>
+        </div>
+        <Separator className="col-span-2" />
+
+        <div className="col-span-2">
+          <h3 className="text-sm font-semibold text-foreground">
+            Residential Address{" "}
+            <span className="text-accent" aria-hidden="true">
+              *
             </span>
-          </label>
-        </div> */}
+          </h3>
+          <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
+            Where you live — used for the start-line city grouping and prize
+            dispatch.
+          </p>
+          <div className="grid gap-5 sm:grid-cols-1">
+            <Field
+              id="address"
+              name="address"
+              label="Address"
+              type="text"
+              value={form.address}
+              onChange={onChange}
+              icon={Home02Icon}
+              error={errors.address}
+              autoComplete="street-address"
+            />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field
+                id="pincode"
+                name="pincode"
+                label="Pin Code"
+                type="text"
+                value={form.pincode}
+                onChange={onChange}
+                icon={Home02Icon}
+                error={errors.pincode}
+                autoComplete="postal-code"
+              />
+              <Field
+                id="city"
+                name="city"
+                label="City"
+                type="text"
+                value={form.city}
+                onChange={onChange}
+                icon={Home02Icon}
+                error={errors.city}
+                autoComplete="address-level2"
+              />
+              <Field
+                id="state"
+                name="state"
+                label="State"
+                type="text"
+                value={form.state}
+                onChange={onChange}
+                icon={Home02Icon}
+                error={errors.state}
+                autoComplete="address-level1"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

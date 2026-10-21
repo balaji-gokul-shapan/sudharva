@@ -7,7 +7,7 @@ import { AnimatedShinyText } from "@/components/animation/AnimatedShinyText";
 import { ArrowRight02Icon, HeartIcon } from "@animateicons/react/huge";
 import { AuroraText } from "@/components/animation/AuroraText";
 import { ShineBorder } from "@/components/animation/shine-border";
-import TearTicket from "@/components/animation/TearTicket";
+import { MarathonPassTicket } from "@/components/animation/MarathonPassTicket";
 import {
   Float,
   Reveal,
@@ -128,7 +128,6 @@ export function ShareHealthCard({ items }) {
             </li>
           ))}
         </ul>
-         <AddonsTicket />
       </Reveal>
     </GsParallax>
   );
@@ -142,51 +141,7 @@ export function AddonsTicket() {
   const [ticketUsed, setTicketUsed] = useState(false);
 
   return (
-    <Reveal preset="zoom-in" delay={0.1} className="relative my-8 mr-2">
-      <TearTicket
-        image="/image/cta/marathon-bib.webp"
-        imageAlt="Marathon runner"
-        stub={
-          <div className="my-2 flex flex-col pl-2">
-            <p className="text-xs font-bold">OFFICIAL EVENT PASS</p>
-            <h3 className="my-1 text-base font-bold leading-[1.2]">
-              Sudharva Marathon
-            </h3>
-            <span className="text-xs">10K RUN · OPEN REGISTRATION</span>
-            <p className="text-xs">Chennai, Tamil Nadu</p>
-            <span className="pt-8 text-xs">REG. NO. SM-284619</span>
-          </div>
-        }
-        orientation="horizontal"
-        scrim={false}
-        imageRadius={8}
-        onTear={() => setTicketUsed(true)}
-        width={460}
-        height={250}
-        stubSize={150}
-        radius={16}
-        holes={12}
-        holeSize={6}
-        notch={3}
-        roughness={0}
-        tearAngle={30}
-        stretch={30}
-        resistance={0.45}
-        rotate={4}
-        tilt
-        tiltMax={9}
-        tiltReach={260}
-        parallax={6}
-        perspective={1000}
-        background="var(--brand-surface)"
-        color="var(--brand-ink)"
-        border
-        borderWidth={1}
-        recenter
-      >
-        {/* <span>{ticketUsed ? "Ticket used" : ""}</span> */}
-      </TearTicket>
-    </Reveal>
+    <MarathonPassTicket onTear={() => setTicketUsed(true)} />
   );
 }
 

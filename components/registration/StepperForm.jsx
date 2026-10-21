@@ -36,12 +36,13 @@ import { RainbowButton } from "@/components/animation/rainbowButton";
 import PaymentStep from "@/components/registration/PaymentStep";
 import { cn } from "@/lib/utils";
 import { calculateAge } from "@/lib/utils";
-import { HeartIcon } from "@animateicons/react/huge";
+import { Gift, HeartIcon } from "@animateicons/react/huge";
 import { PersonalDetails } from "./RegistrationStep";
 import { HealthDeclaration } from "./HealthDeclaration";
 import { EventDetails } from "./EventDetails";
 import { ReviewDetails } from "./ReviewDetails";
 import { CATEGORIES, TEAM_SIZES } from "./datas/data";
+import GiftDetails from './GiftDetails'
 
 const STEPS = [
   {
@@ -60,6 +61,11 @@ const STEPS = [
     icon: HeartIcon,
   },
   {
+    label: "Exclusive Gifts",
+    description: "Discover your race-day gifts and rewards",
+    icon: Gift,
+  },
+  {
     label: "Complete Your Entry",
     description: "Check everything before finishing,  Your race journey awaits",
     icon: SealCheck,
@@ -69,6 +75,22 @@ const STEPS = [
     description: "Check your fee & payment status",
     icon: CreditCard,
   },
+];
+
+const BENEFICIARY_FIELDS = [
+  "beneficiary_name",
+  "beneficiary_mobile",
+  "beneficiary_email",
+  "beneficiary_address",
+];
+
+const DELIVERY_FIELDS = [
+  "address_line1",
+  "address_line2",
+  "area",
+  "delivery_pincode",
+  "delivery_city",
+  "delivery_state",
 ];
 
 const STEP_FIELDS = {
@@ -88,7 +110,18 @@ const STEP_FIELDS = {
       "weight",
       "bloodGroup"
     ],
-    ["category", "shirtSize", "emergencyName", "emergencyPhone", "emergencyRelation"],
+    [
+      "category",
+      "shirtSize",
+      "emergencyName",
+      "emergencyPhone",
+      "emergencyRelation",
+      "address_line1",
+      "area",
+      "delivery_pincode",
+      "delivery_city",
+      "delivery_state",
+    ],
     [
       "medicallyFit",
       "physicalActivity",
@@ -101,7 +134,18 @@ const STEP_FIELDS = {
   ],
   corporate: [
     ["companyName", "contactName", "workEmail", "companyPhone", "teamSize"],
-    ["category", "shirtSize", "emergencyName", "emergencyPhone", "emergencyRelation"],
+    [
+      "category",
+      "shirtSize",
+      "emergencyName",
+      "emergencyPhone",
+      "emergencyRelation",
+      "address_line1",
+      "area",
+      "delivery_pincode",
+      "delivery_city",
+      "delivery_state",
+    ],
     [
       "medicallyFit",
       "physicalActivity",
@@ -141,7 +185,19 @@ function createInitialForm() {
     emergencyName: "",
     emergencyPhone: "",
     emergencyRelation: "",
+    useNominee: false,
+    useResidentAddress: false,
+    beneficiary_name: "",
+    beneficiary_mobile: "",
+    beneficiary_email: "",
+    beneficiary_address: "",
     address: "",
+    address_line1: "",
+    address_line2: "",
+    area: "",
+    delivery_pincode: "",
+    delivery_city: "",
+    delivery_state: "",
     medicallyFit: false,
     previous_marathon_participation: false,
     cardiac_condition: false,
@@ -200,6 +256,16 @@ function validateField(name, value) {
       return trimmedValue ? "" : "Please enter your state.";
     case "pincode":
       return trimmedValue ? "" : "Please enter your pincode.";
+    case "address_line1":
+      return trimmedValue ? "" : "Please enter the delivery address.";
+    case "area":
+      return trimmedValue ? "" : "Please enter your area.";
+    case "delivery_pincode":
+      return trimmedValue ? "" : "Please enter the delivery pincode.";
+    case "delivery_city":
+      return trimmedValue ? "" : "Please enter the delivery city.";
+    case "delivery_state":
+      return trimmedValue ? "" : "Please enter the delivery state.";
     case "dob": {
       if (!trimmedValue) {
         return "Please enter your date of birth.";
@@ -283,6 +349,22 @@ function validateField(name, value) {
     }
     case "emergencyRelation":
       return trimmedValue ? "" : "Enter your contact's relation.";
+    case "beneficiary_name":
+      return trimmedValue ? "" : "Enter your nominee's name.";
+    case "beneficiary_mobile": {
+      if (!trimmedValue) return "Enter your nominee's phone.";
+      const digits = trimmedValue.replace(/\D/g, "");
+      return digits.length >= 7 && digits.length <= 15
+        ? ""
+        : "Enter a phone number with 7-15 digits.";
+    }
+    case "beneficiary_email":
+      if (!trimmedValue) return "Enter your nominee's email.";
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
+        ? ""
+        : "Enter a valid email address.";
+    case "beneficiary_address":
+      return trimmedValue ? "" : "Enter your nominee's address.";
     case "medicallyFit":
       return value
         ? ""
@@ -314,7 +396,7 @@ function StepProgress({ activeIndex, onSelect }) {
         animate={{ width: `${(activeIndex / (STEPS.length - 1)) * 80}%` }}
         transition={{ duration: 0.35, ease: "easeOut" }}
       />
-      <ol className="relative grid grid-cols-5">
+      <ol className="relative grid grid-cols-3 sm:grid-cols-6 py-2">
         {STEPS.map((step, index) => {
           const Icon = step.icon;
           const complete = index < activeIndex;
@@ -416,8 +498,38 @@ export default function StepperForm() {
     }
   }, [stepIndex]);
 
+  // Mirrors the residential address (step 1) into the delivery address
+  // fields (step 2) while the "use as resident address" switch is on.
+  const withResidentAddress = (current) => {
+    if (!current.useResidentAddress) return current;
+
+    return {
+      ...current,
+      address_line1: current.address,
+      address_line2: "",
+      area: "",
+      delivery_city: current.city,
+      delivery_state: current.state,
+      delivery_pincode: current.pincode,
+    };
+  };
+
   const updateField = (name, value) => {
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => {
+      const next = { ...current, [name]: value };
+      // The switch lives in step 2, so re-apply the mirror on every change to
+      // keep the delivery address in sync with the residential address.
+      return withResidentAddress(next);
+    });
+
+    // Turning on the resident-address switch supersedes the delivery fields.
+    if (name === "useResidentAddress" && value) {
+      setErrors((current) => {
+        const next = { ...current };
+        DELIVERY_FIELDS.forEach((field) => delete next[field]);
+        return next;
+      });
+    }
 
     if (touched[name]) {
       const message = validateField(name, value);
@@ -431,6 +543,7 @@ export default function StepperForm() {
   };
 
   const clearTabErrors = (entryType) => {
+    // Clearing the fields of the type we are leaving (the other tab).
     const otherFields =
       entryType === "corporate"
         ? STEP_FIELDS.individual[0]
@@ -449,7 +562,12 @@ export default function StepperForm() {
 
   const selectEntryType = (entryType) => {
     if (form.entryType === entryType) return;
-    setForm((current) => ({ ...current, entryType }));
+    setForm((current) => {
+      const next = { ...current, entryType };
+      // Corporate entries have no residential address to mirror.
+      if (entryType === "corporate") next.useResidentAddress = false;
+      return next;
+    });
     clearTabErrors(entryType);
   };
 
@@ -503,7 +621,17 @@ export default function StepperForm() {
   const handleContinue = (event) => {
     event.preventDefault();
     const fields = STEP_FIELDS[form.entryType][stepIndex];
-    if (!fields || !validateFields(fields)) return;
+    const stepFields =
+      stepIndex === 3 && form.useNominee
+        ? [...(fields ?? []), ...BENEFICIARY_FIELDS]
+        : fields;
+    if (!stepFields) return;
+
+    const fieldsToValidate = form.useResidentAddress
+      ? stepFields.filter((field) => !DELIVERY_FIELDS.includes(field))
+      : stepFields;
+
+    if (!validateFields(fieldsToValidate)) return;
     setStepIndex((current) => Math.min(current + 1, STEPS.length - 1));
   };
 
@@ -571,13 +699,20 @@ export default function StepperForm() {
                 onChange={updateField}
               />
             )}
-            {stepIndex === 3 && (
+              {stepIndex === 3 && (
+                <GiftDetails
+                  form={form}
+                  errors={errors}
+                  onChange={updateField}
+                />
+              )}
+            {stepIndex === 4 && (
               <ReviewDetails
                 form={form}
                 onEdit={(index) => setStepIndex(index)}
               />
             )}
-            {stepIndex === 4 && (
+            {stepIndex === 5 && (
               <PaymentStep
                 form={form}
                 category={CATEGORIES.find(

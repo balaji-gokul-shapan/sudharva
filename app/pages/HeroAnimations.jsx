@@ -72,8 +72,8 @@ export function HeroHeading() {
 /* ------------------------------------------------------------------ */
 
 const META = [
-  { icon: "📅", label: "Sunday, 15th November 2026" },
-  { icon: "📍", label: "SMS Hospital, Avadi, Chennai" },
+  { icon: "📅", label: "Sunday, 10th January 2027" },
+  { icon: "📍", label: "Ajeya Stadium, Avadi, Chennai" },
   { icon: "🕒", label: "05:00 AM onwards" },
 ];
 

@@ -16,10 +16,12 @@ export const Field = ({
   error,
   autoComplete,
   required = true,
+  readOnly = false,
+  className,
   ...inputProps
 }) => {
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <label htmlFor={id} className={LABEL_CLASSES}>
         {label}{" "}
         {required && (
@@ -44,6 +46,7 @@ export const Field = ({
           value={value}
           onChange={(event) => onChange(name, event.target.value)} onBlur={() => onChange(name, value)}
           autoComplete={autoComplete}
+          readOnly={readOnly}
           aria-required={required}
           aria-invalid={required && Boolean(error)}
           aria-describedby={required && error ? `${id}-error` : undefined}
@@ -51,6 +54,8 @@ export const Field = ({
             FIELD_CLASSES,
             Icon && "pl-11",
             error && "border-destructive",
+            readOnly &&
+              "cursor-not-allowed border-dashed bg-muted/50 text-ink-soft focus:border-accent focus:ring-0",
           )}
           {...inputProps}
         />

@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useMotionTemplate, useReducedMotion, useSpring, useTransform } from 'motion/react';
 
+import { cn } from '@/lib/utils';
+
 
 const TILT_SPRING = { stiffness: 220, damping: 24, mass: 0.6 };
 const GRAVITY = 2400;
@@ -107,6 +109,7 @@ export default function TearTicket({
   stubBackground = '',
   recenter = true,
   disabled = false,
+  fluid = false,
   ariaLabel = 'Tear off the stub',
   className = ''
 }) {
@@ -174,12 +177,15 @@ export default function TearTicket({
   useLayoutEffect(() => {
     const el = rootRef.current;
     if (!el) return undefined;
-    const measure = () => setFit(Math.min(1, el.clientWidth / width) || 1);
+    const measure = () => {
+      const ratio = el.clientWidth / width || 1;
+      setFit(fluid ? ratio : Math.min(1, ratio));
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [width]);
+  }, [width, fluid]);
 
   const paint = now => {
     const s = sim.current;
@@ -505,9 +511,10 @@ export default function TearTicket({
   return (
     <div
       ref={rootRef}
-      className={`tear-ticket${className ? ` ${className}` : ''}`}
+      className={cn('tear-ticket', className)}
       data-used={used ? '' : undefined}
       data-orientation={orientation}
+      data-fluid={fluid ? '' : undefined}
       data-shift={used && recenter ? (vertical ? 'y' : 'x') : undefined}
       data-instant={instant ? '' : undefined}
       data-grabbing={grabbing ? '' : undefined}
