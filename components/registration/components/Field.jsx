@@ -20,6 +20,18 @@ export const Field = ({
   className,
   ...inputProps
 }) => {
+  const handleInputChange = (event) => {
+    if (typeof onChange !== "function") return;
+ 
+    
+    if (onChange.length >= 2) {
+      onChange(name, event.target.value);
+      return;
+    }
+
+    onChange(event);
+  };
+
   return (
     <div className={cn("min-w-0", className)}>
       <label htmlFor={id} className={LABEL_CLASSES}>
@@ -44,7 +56,7 @@ export const Field = ({
           type={type}
           placeholder={placeholder}
           value={value}
-          onChange={(event) => onChange(name, event.target.value)} onBlur={() => onChange(name, value)}
+          onChange={handleInputChange}
           autoComplete={autoComplete}
           readOnly={readOnly}
           aria-required={required}

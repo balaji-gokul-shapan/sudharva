@@ -1,18 +1,21 @@
-import Image from "next/image";
-import Link from "next/link";
-import StepperForm from "@/components/registration/StepperForm";
 import Index from "./pages";
+import { FlickeringGrid } from "@/components/animation/flickering-grid";
+import Link from "next/link";
+import Image from "next/image";
 
 export const metadata = {
-  title: "Register — Sudharva Marathon",
+  title: "Register - Sudharva Marathon",
   description:
-    "Register for the Sudharva Marathon — run 5K or 10K, or join as a volunteer, for health, the environment, and education.",
+    "Register for the Sudharva Marathon - run 5K or 10K, or join as a volunteer, for health, the environment, and education.",
 };
+
+export const instant = false;
 
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-border bg-surface">
+    <div className="flex flex-col min-h-screen">
+      {/* Registration area */}
+       <header className="border-b border-border bg-surface">
         <div className="container-page flex min-h-[76px] items-center justify-between gap-3 sm:min-h-20">
           <Link
             href="/"
@@ -40,13 +43,30 @@ export default function RegisterPage() {
           </Link>
         </div>
       </header>
-
-      <section className="relative overflow-x-clip py-10 sm:py-16">
-        <div className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
-        <div className="container-page">
-          <Index />
+      <main className="relative flex flex-1 isolate  overflow-hidden bg-background">
+        {/* Animated grid background */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <FlickeringGrid
+            className="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_at_center,black_0%,transparent_100%)]"
+            squareSize={4}
+            gridGap={6}
+            color="#60A5FA"
+            darkColor="#2563EB"
+            maxOpacity={0.5}
+            flickerChance={0.1}
+          />
         </div>
-      </section>
+
+        {/* Decorative glow */}
+        <div className="pointer-events-none absolute -right-24 -top-24 z-0 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+
+        {/* Registration content */}
+        <section className="relative z-10 overflow-x-clip flex flex-1 flex-col">
+          <div className="container-page flex flex-1 flex-col items-center justify-center py-4 sm:py-8">
+            <Index />
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

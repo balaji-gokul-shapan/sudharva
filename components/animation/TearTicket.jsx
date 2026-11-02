@@ -111,7 +111,9 @@ export default function TearTicket({
   disabled = false,
   fluid = false,
   ariaLabel = 'Tear off the stub',
-  className = ''
+  className = '',
+  tearTicketContentClassName = '',
+  tearTicketStubClassName = ''
 }) {
   const reduce = useReducedMotion();
   const controlled = torn !== undefined;
@@ -559,7 +561,7 @@ export default function TearTicket({
                   {scrim ? <div className="tear-ticket__scrim" /> : null}
                 </div>
               ) : null}
-              <motion.div className="tear-ticket__content" style={reduce ? undefined : { transform: ink }}>
+              <motion.div className={cn("tear-ticket__content", tearTicketContentClassName)} style={reduce ? undefined : { transform: ink }}>
                 {children}
               </motion.div>
             </div>
@@ -602,7 +604,7 @@ export default function TearTicket({
               </svg>
             ) : null}
             <div className="tear-ticket__paper tear-ticket__paper--stub" style={{ clipPath: `path('${geo.stub}')` }}>
-              <div className="tear-ticket__stub">{stub}</div>
+              <div className={cn("tear-ticket__stub", tearTicketStubClassName)}>{stub}</div>
             </div>
           </div>
         </motion.div>

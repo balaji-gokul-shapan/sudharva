@@ -1,16 +1,19 @@
+"use client";
+
 import { Building01Icon, UserIcon } from "@animateicons/react/huge";
 import { CorporateDetails } from "./CorporateDetails";
 import { IndividualDetails } from "./IndividualDetails";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export const PersonalDetails = ({ form, errors, onChange, age }) => {
+export const PersonalDetails = ({ form, errors, onChange, age, hasCities, hasStates, hasDistricts, hasTaulks, cities, states, districts, taluks }) => {
   const isCorporate = form.entryType === "corporate";
 
   const selectType = (entryType) => {
     if (form.entryType === entryType) return;
     onChange("entryType", entryType);
   };
+ 
 
   return (
     <div className="space-y-6">
@@ -78,15 +81,35 @@ export const PersonalDetails = ({ form, errors, onChange, age }) => {
         })}
       </div>
       {isCorporate ? (
-        <CorporateDetails form={form} errors={errors} onChange={onChange} />
+        <CorporateDetails
+          form={form}
+          errors={errors}
+          onChange={onChange}
+          hasCities={hasCities}
+          hasStates={hasStates}
+          hasDistricts={hasDistricts}
+          hasTaulks={hasTaulks}
+          cities={cities}
+          states={states}
+          districts={districts}
+          taluks={taluks}
+        />
       ) : (
         <IndividualDetails
           form={form}
           errors={errors}
           onChange={onChange}
           age={age}
+          hasCities={hasCities}
+          hasStates={hasStates}
+          hasDistricts={hasDistricts}
+          hasTaulks={hasTaulks}
+          cities={cities}
+          states={states}
+          districts={districts}
+          taluks={taluks}
         />
       )}
     </div>
   );
-}
+};

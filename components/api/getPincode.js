@@ -1,7 +1,5 @@
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
-
-export const PINCODE_PATTERN = /^\d{6}$/;
+export const PINCODE_PATTERN = /^\d{5}$|^\d{6}$/;
 
 export const normalizePincode = (value) =>
   String(value ?? "").replace(/\D/g, "").slice(0, 6);
@@ -17,6 +15,22 @@ const completeness = (entry) =>
   Number(Boolean(entry.state)) +
   Number(Boolean(entry.taluk));
 
+/**
+ * Maps a pincode API record onto the registration form's location fields.
+ */
+export function mapPincodeToLocationFields(record) {
+  if (!record) {
+    return { city: "", state: "", taulk: "", district: "" };
+  }
+
+  return {
+    city: clean(record.city),
+    state: clean(record.state),
+    taulk: clean(record.taluk ?? record.taulk),
+    district: clean(record.district),
+  };
+}
+
 export async function getPincodeDetails(pincode, signal) {
   const normalized = normalizePincode(pincode);
 
@@ -24,24 +38,19 @@ export async function getPincodeDetails(pincode, signal) {
     throw new Error("Enter a valid 6-digit pincode.");
   }
 
-  if (!API_URL) {
-    throw new Error("API URL is not configured.");
-  }
-
-  const response = await fetch(
-    `${API_URL}/api/pincode/${normalized}`,
-    {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      signal,
-    }
-  );
+  const response = await fetch(`/api/pincode/${normalized}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    signal,
+  });
 
   if (!response.ok) {
+    const errorPayload = await response.json().catch(() => null);
     throw new Error(
-      response.status === 404
-        ? "No records found for this pincode."
-        : "Unable to look up this pincode. Please try again."
+      errorPayload?.error ||
+        (response.status === 404
+          ? "No records found for this pincode."
+          : "Unable to look up this pincode. Please try again.")
     );
   }
 

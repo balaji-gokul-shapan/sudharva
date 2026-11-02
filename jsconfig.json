@@ -3,5 +3,6 @@
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.json", ".next/types/**/*.ts"]
 }

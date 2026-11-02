@@ -1,13 +1,13 @@
-'use client';
-import LoginForm from "@/components/auth/LoginForm";
+"use client";
+import RegisterForm from "@/components/auth/RegisterForm";
 import StepperForm from "@/components/registration/StepperForm";
-import React from "react";
+import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-  console.log(isAuthenticated,"isAuthenticated");
-  
+  const [identifier, setIdentifier] = useState("");
+
   return (
     <div className="relative">
       <AnimatePresence mode="wait" initial={false}>
@@ -19,9 +19,11 @@ const Index = () => {
             exit={{ opacity: 0, y: -32, scale: 0.97, filter: "blur(8px)" }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
-            <LoginForm
+            <RegisterForm
               isAuthenticated={isAuthenticated}
               setIsAuthenticated={setIsAuthenticated}
+              setIdentifier={setIdentifier}
+              identifier={identifier}
             />
           </motion.div>
         )}
@@ -39,9 +41,12 @@ const Index = () => {
               className="mx-auto mb-6 flex w-fit items-center gap-2 rounded-full border border-success/40 bg-success/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-success"
             >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
-              Signed in — complete your registration
+              Signed in - complete your registration
             </motion.p>
-            <StepperForm />
+            <StepperForm
+              identifier={identifier}
+              setIdentifier={setIdentifier}
+            />
           </motion.div>
         )}
       </AnimatePresence>

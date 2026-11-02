@@ -12,8 +12,23 @@ import {
 } from "@animateicons/react/huge";
 import { GENDERS } from "./datas/data";
 import { Separator } from "../ui/separator";
+import { PincodeField } from "./components/PincodeField";
+import { SelectField } from "./components/SelectField";
 
-export const IndividualDetails = ({ form, errors, onChange, age }) => {
+export const IndividualDetails = ({
+  form,
+  errors,
+  onChange,
+  age,
+  hasCities,
+  hasStates,
+  hasDistricts,
+  hasTaulks,
+  cities,
+  states,
+  districts,
+  taluks,
+}) => {
   return (
     <motion.div
       key="individual-fields"
@@ -37,25 +52,31 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
-          id="firstName"
-          name="firstName"
+          id="first_name"
+          name="first_name"
           label="First name"
           placeholder="e.g. Arjun"
-          value={form.firstName}
-          onChange={onChange}
+          value={form.first_name}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+            onChange("first_name", value);
+          }}
           icon={UserIcon}
-          error={errors.firstName}
+          error={errors.first_name}
           autoComplete="given-name"
         />
         <Field
-          id="lastName"
-          name="lastName"
+          id="last_name"
+          name="last_name"
           label="Last name"
           placeholder="e.g. Kumar"
-          value={form.lastName}
-          onChange={onChange}
+          value={form.last_name}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+            onChange("last_name", value);
+          }}
           icon={UserIcon}
-          error={errors.lastName}
+          error={errors.last_name}
           autoComplete="name"
         />
         <Field
@@ -71,15 +92,18 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
           autoComplete="email"
         />
         <Field
-          id="phone"
-          name="phone"
+          id="mobile_number"
+          name="mobile_number"
           label="Mobile number"
           type="tel"
           placeholder="+91 98765 43210"
-          value={form.phone}
-          onChange={onChange}
+          value={form.mobile_number}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9\s]/g, "");
+            onChange("mobile_number", value);
+          }}
           icon={PhoneIcon}
-          error={errors.phone}
+          error={errors.mobile_number}
           autoComplete="tel"
         />
         <Field
@@ -89,7 +113,10 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
           type="tel"
           placeholder="+91 98765 43210"
           value={form.alternatePhone}
-          onChange={onChange}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9\s]/g, "");
+            onChange("alternatePhone", value);
+          }}
           icon={PhoneIcon}
           error={errors.alternatePhone}
           autoComplete="tel"
@@ -97,14 +124,14 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
         />
         <div className="grid gap-5 sm:grid-cols-[65%_30%]">
           <Field
-            id="dob"
-            name="dob"
+            id="date_of_birth"
+            name="date_of_birth"
             label="Date of birth"
             type="date"
-            value={form.dob}
+            value={form.date_of_birth}
             onChange={onChange}
             icon={Calendar01Icon}
-            error={errors.dob}
+            error={errors.date_of_birth}
             autoComplete="bday"
           />
           <Field
@@ -188,9 +215,9 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
         <div className="col-span-2">
           <h3 className="text-sm font-semibold text-foreground">
             Body metrics{" "}
-            <span className="text-accent" aria-hidden="true">
+            {/* <span className="text-accent" aria-hidden="true">
               *
-            </span>
+            </span> */}
           </h3>
           <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
             Helps us set safe pacing zones and the right hydration plan for you.
@@ -207,10 +234,14 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
               max="500"
               placeholder="cm"
               value={form.height}
-              onChange={onChange}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9\s]/g, "");
+                onChange("height", value);
+              }}
               icon={PencilIcon}
               error={errors.height}
               autoComplete="height"
+              required={false}
             />
             <Field
               id="weight"
@@ -223,10 +254,14 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
               inputMode="decimal"
               max="300"
               value={form.weight}
-              onChange={onChange}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9\s]/g, "");
+                onChange("weight", value);
+              }}
               icon={PencilIcon}
               error={errors.weight}
               autoComplete="weight"
+              required={false}
             />
             <Field
               id="bloodGroup"
@@ -239,6 +274,7 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
               icon={Shield01Icon}
               error={errors.bloodGroup}
               autoComplete="blood-group"
+              required={false}
             />
           </div>
         </div>
@@ -256,50 +292,108 @@ export const IndividualDetails = ({ form, errors, onChange, age }) => {
             dispatch.
           </p>
           <div className="grid gap-5 sm:grid-cols-1">
-            <Field
-              id="address"
-              name="address"
-              label="Address"
-              type="text"
-              value={form.address}
-              onChange={onChange}
-              icon={Home02Icon}
-              error={errors.address}
-              autoComplete="street-address"
-            />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field
+                id="resident_address_line1"
+                name="resident_address_line1"
+                label="Address Line 1"
+                type="text"
+                placeholder="e.g. 123 Main St"
+                value={form.resident_address_line1}
+                onChange={onChange}
+                icon={Home02Icon}
+                error={errors.resident_address_line1}
+                autoComplete="street-address"
+              />
+              <Field
+                id="resident_address_line2"
+                name="resident_address_line2"
+                label="Address Line 2"
+                type="text"
+                placeholder="e.g. Apt 4B"
+                value={form.resident_address_line2}
+                onChange={onChange}
+                icon={Home02Icon}
+                error={errors.resident_address_line2}
+                autoComplete="street-address"
+                required={false}
+              />
+            </div>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field
-                id="pincode"
-                name="pincode"
+              <PincodeField
+                id="resident_pincode"
+                name="resident_pincode"
                 label="Pin Code"
-                type="text"
-                value={form.pincode}
-                onChange={onChange}
+                value={form.resident_pincode}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9\s]/g, "");
+                  onChange("resident_pincode", value);
+                }}
                 icon={Home02Icon}
-                error={errors.pincode}
-                autoComplete="postal-code"
+                error={errors.resident_pincode}
+                cityField="resident_city"
+                cityValue={form.resident_city}
+                stateField="resident_state"
+                stateValue={form.resident_state}
+                talukField="resident_taulk"
+                talukValue={form.resident_taulk}
+                districtField="resident_district"
+                districtValue={form.resident_district}
               />
-              <Field
-                id="city"
-                name="city"
+
+              <SelectField
+                id="resident_city"
+                name="resident_city"
                 label="City"
-                type="text"
-                value={form.city}
+                value={form.resident_city}
                 onChange={onChange}
+                options={cities}
+                placeholder={hasCities ? "Select city" : "Enter pincode first"}
                 icon={Home02Icon}
-                error={errors.city}
-                autoComplete="address-level2"
+                error={errors.resident_city}
+                disabled={!hasCities}
               />
-              <Field
-                id="state"
-                name="state"
-                label="State"
-                type="text"
-                value={form.state}
+
+              <SelectField
+                id="resident_district"
+                name="resident_district"
+                label="District"
+                value={form.resident_district}
                 onChange={onChange}
+                options={districts}
+                placeholder={
+                  hasDistricts ? "Select district" : "Enter pincode first"
+                }
                 icon={Home02Icon}
-                error={errors.state}
-                autoComplete="address-level1"
+                error={errors.resident_district}
+                disabled={!hasDistricts}
+                required={false}
+              />
+              <SelectField
+                id="resident_taulk"
+                name="resident_taulk"
+                label="Taluk"
+                value={form.resident_taulk}
+                onChange={onChange}
+                options={taluks}
+                placeholder={hasTaulks ? "Select taulk" : "Enter pincode first"}
+                icon={Home02Icon}
+                error={errors.resident_taulk}
+                disabled={!hasTaulks}
+                required={false}
+              />
+
+              <SelectField
+                id="resident_state"
+                name="resident_state"
+                label="State"
+                value={form.resident_state}
+                onChange={onChange}
+                options={states}
+                placeholder={hasStates ? "Select state" : "Enter pincode first"}
+                icon={Home02Icon}
+                error={errors.resident_state}
+                disabled={!hasStates}
               />
             </div>
           </div>

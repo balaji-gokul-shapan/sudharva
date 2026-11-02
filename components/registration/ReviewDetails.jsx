@@ -1,8 +1,27 @@
 import { InformationCircle } from "@animateicons/react/huge";
 import { CATEGORIES, GENDERS, TEAM_SIZES } from "./datas/data";
+import { useAppSelector } from "@/store/hooks";
 
 export const ReviewDetails = ({ form, onEdit }) => {
-  const category = CATEGORIES.find((item) => item.value === form.category);
+  const masterData = useAppSelector((state) => state.master.data);
+  const registrationCategories = masterData?.registration_category ?? [];
+  const tshirtSizes = masterData?.tshirt_size ?? [];
+
+  const categoryById = registrationCategories.find(
+    (item) => String(item.id) === String(form.runner_category_id),
+  );
+  const categoryByValue = CATEGORIES.find(
+    (item) => String(item.value) === String(form.runner_category_id),
+  );
+  const category =
+    categoryById ||
+    categoryByValue ||
+    CATEGORIES.find((item) => item.value === form.category);
+
+  const tshirt = tshirtSizes.find(
+    (item) => String(item.id) === String(form.tshirt_size_id),
+  );
+
   const gender = GENDERS.find((item) => item.value === form.gender);
   const teamSize = TEAM_SIZES.find((item) => item.value === form.teamSize);
   const isCorporate = form.entryType === "corporate";
@@ -21,14 +40,23 @@ export const ReviewDetails = ({ form, onEdit }) => {
             ["Team size", teamSize?.label],
           ]
         : [
-            ["Full name", [form.firstName, form.lastName].filter(Boolean).join(" ")],
+            [
+              "Full name",
+              [form.first_name, form.last_name].filter(Boolean).join(" "),
+            ],
             ["Email", form.email],
-            ["Mobile", form.phone],
-            ["Date of birth", form.dob],
+            ["Mobile", form.mobile_number],
+            ["Date of birth", form.date_of_birth],
             ["Gender", gender?.label],
             [
-              "Address",
-              [form.address, form.city, form.state, form.pincode]
+              "Residential address",
+              [
+                form.resident_address_line1,
+                form.resident_address_line2,
+                form.resident_city,
+                form.resident_state,
+                form.resident_pincode,
+              ]
                 .filter(Boolean)
                 .join(", "),
             ],
@@ -38,24 +66,28 @@ export const ReviewDetails = ({ form, onEdit }) => {
       title: "Event & race day",
       editStep: 1,
       details: [
-        ["Event", category?.label],
+        ["Event", category?.label || category?.name],
         ["Distance / role", category?.distance],
-        ["T-shirt", form.shirtSize],
+        [
+          "T-shirt",
+          tshirt?.value || tshirt?.name || tshirt?.label || form.tshirt_size_id,
+        ],
         ["Emergency contact", form.emergencyName],
         ["Emergency phone", form.emergencyPhone],
-        [
-          "Delivery address",
-          [
-            form.address_line1,
-            form.address_line2,
-            form.area,
-            form.delivery_city,
-            form.delivery_state,
-            form.delivery_pincode,
-          ]
-            .filter(Boolean)
-            .join(", "),
-        ],
+        // [
+        //   "Delivery address",
+        //   [
+        //     form.delivery_address_line1,
+        //     form.delivery_address_line2,
+        //     form.delivery_city,
+        //     form.delivery_taulk,
+        //     form.delivery_district,
+        //     form.delivery_state,
+        //     form.delivery_pincode,
+        //   ]
+        //     .filter(Boolean)
+        //     .join(", "),
+        // ],
       ],
     },
     {
@@ -72,13 +104,14 @@ export const ReviewDetails = ({ form, onEdit }) => {
       title: "Health & consent",
       editStep: 2,
       details: [
-        ["Medical fitness", form.medicallyFit ? "Confirmed" : "Not confirmed"],
+        ["Medical fitness", form.medical_fitness_declaration ? "Confirmed" : "Not confirmed"],
         [
           "Previous marathon participation",
           form.previous_marathon_participation ? "Yes" : "No",
         ],
         ["Cardiac condition", form.cardiac_condition ? "Yes" : "No"],
         ["Hypertension", form.hypertension ? "Yes" : "No"],
+        ["Diabetes", form.has_diabetes ? "Yes" : "No"],
         ["Allergies", form.allergies || "None provided"],
         [
           "Other medical conditions",
@@ -86,7 +119,7 @@ export const ReviewDetails = ({ form, onEdit }) => {
         ],
         [
           "Physical activity",
-          form.physicalActivity ? "Acknowledged" : "Not acknowledged",
+          form.physical_exertion_acknowledgement ? "Acknowledged" : "Not acknowledged",
         ],
         ["Event updates", form.eventUpdates ? "Consented" : "Not consented"],
         ["Event terms", form.terms ? "Accepted" : "Not accepted"],
@@ -141,7 +174,7 @@ export const ReviewDetails = ({ form, onEdit }) => {
                     {label}
                   </dt>
                   <dd className="mt-1 break-words text-sm font-medium text-foreground">
-                    {value || "—"}
+                    {value || "-"}
                   </dd>
                 </div>
               ))}

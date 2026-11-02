@@ -17,7 +17,7 @@ export default function DedicationRegisterPage() {
           <h1 className="mt-3 font-serif text-3xl font-bold text-foreground sm:text-4xl">
             Register a Dedication
           </h1>
-          <p className="mt-3 text-sm text-ink-soft sm:text-base">
+          <p className="mt-3 text-sm text-[var(--color-ink-soft)] sm:text-base">
             Dedicate your run to someone you love — for health, the
             environment, and education. Pick your category and confirm your
             dedication in a minute.

@@ -1,19 +1,122 @@
 import {
   Check,
   Home01Icon,
+  Home02Icon,
   PhoneIcon,
   Trophy,
   UserIcon,
 } from "@animateicons/react/huge";
+import { usePincodeLookup } from "./PincodeContext";
 import { Field } from "./components/Field";
-import { CATEGORIES, SHIRT_SIZES } from "./datas/data";
+import {
+  CATEGORIES,
+  CATEGORY_META_RULES,
+  SHIRT_SIZES,
+  DEFAULT_CATEGORY_META,
+} from "./datas/data";
 import { cn } from "@/lib/utils";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { PincodeField } from "./components/PincodeField";
+import { SelectField } from "./components/SelectField";
+import { AnimatedShinyText } from "../animation/AnimatedShinyText";
 
-export const EventDetails = ({ form, errors, onChange }) => {
+const resolveCategoryMeta = (name = "") => {
+  const normalizedName = String(name).toLowerCase();
+  const matchedRule = CATEGORY_META_RULES.find((rule) =>
+    rule.matches.some((token) => normalizedName.includes(token)),
+  );
+
+  return matchedRule || DEFAULT_CATEGORY_META;
+};
+
+export const EventDetails = ({
+  form,
+  errors,
+  onChange,
+  masterData,
+  fetchMasterData,
+}) => {
   const useResident = Boolean(form.useResidentAddress);
   const hasResidentAddress = form.entryType !== "corporate";
+
+  const { options } = usePincodeLookup(form.delivery_pincode);
+
+  const getCategoryDetail = (name = "") => resolveCategoryMeta(name).detail;
+  const getClassName = (name = "") => resolveCategoryMeta(name).className;
+  const getIconClassname = (name = "") =>
+    resolveCategoryMeta(name).iconClassName;
+  const getSelectedClassName = (name = "") =>
+    resolveCategoryMeta(name).selectedClassName;
+  const getCategories = (masterData) => {
+    const categories =
+      masterData?.registration_category?.filter((item) => item.is_active) || [];
+
+    return categories.map((item) => ({
+      id: String(item.id),
+      value: String(item.id),
+      label: item.name,
+      detail: getCategoryDetail(item.name),
+      distance: item.distance,
+      price: Number(item.fee),
+      minAge: item.min_age,
+      maxAge: item.max_age,
+      selected: getSelectedClassName(item.name),
+      icon: getIconClassname(item.name),
+      className: getClassName(item.name),
+    }));
+  };
+
+  const mappedMasterCategories = getCategories(masterData);
+  const fallbackCategories = CATEGORIES.map((item) => ({
+    ...item,
+    id: String(item.id ?? item.value),
+    value: String(item.value ?? item.id),
+  }));
+  const categoriesToRender =
+    mappedMasterCategories.length > 0 ? mappedMasterCategories : fallbackCategories;
+    console.log(categoriesToRender,"categoriesToRender");
+    
+  const shirtSizesFromMaster =
+    masterData?.tshirt_size
+      ?.filter((item) => item.is_active)
+      .map((item) => ({
+        id: String(item.id),
+        value: String(item.id),
+        label: String(
+          item.value || item.name || item.size || item.label || "",
+        ).trim(),
+      }))
+      .filter((item) => item.label) || [];
+
+  const fallbackShirtSizes = SHIRT_SIZES.map((size) => ({
+    id: String(size),
+    value: String(size),
+    label: String(size),
+  }));
+
+  const shirtSizesToRender =
+    shirtSizesFromMaster.length > 0 ? shirtSizesFromMaster : fallbackShirtSizes;
+    console.log(shirtSizesToRender,"shirtSizesToRender");
+    
+
+  const isGettingDetails = Array.isArray(options) && options.length > 0;
+
+  const getOptions = (key) => {
+    if (!isGettingDetails) return [];
+
+    return [
+      ...new Set(options.map((option) => option[key]).filter(Boolean)),
+    ].map((value) => ({
+      value,
+      label: value,
+    }));
+  };
+
+  const citiesForDelivery = getOptions("city");
+  const statesForDelivery = getOptions("state");
+  const districtsForDelivery = getOptions("district");
+  const taluksForDelivery = getOptions("taluk");
 
   return (
     <div className="space-y-7">
@@ -28,30 +131,38 @@ export const EventDetails = ({ form, errors, onChange }) => {
           Pick the distance that matches your stride. Every category includes
           timing chips, hydration and medical support.
         </p>
+        {categoriesToRender.length === 0 &&
+          typeof fetchMasterData === "function" && (
+            <button
+              type="button"
+              onClick={fetchMasterData}
+              className="mb-3 text-xs font-semibold text-accent underline"
+            >
+              Retry loading events
+            </button>
+          )}
         <div className="grid gap-3 sm:grid-cols-4">
-          {CATEGORIES.map((category) => {
-            const selected = form.category === category.value;
+          {categoriesToRender.map((category) => {
+            const selected = String(form.runner_category_id) === category.id;
 
             return (
               <label
-                key={category.value}
+                key={category.id}
                 className={cn(
-                  "relative flex cursor-pointer flex-col items-center  rounded-2xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                  "relative flex  cursor-pointer flex-col items-center  rounded-2xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
                   selected ? category.selected : category.className,
-                  "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent/15",
+                  "has-focus-visible:ring-accent/15",
                 )}
               >
                 <input
-                  id={`category-${category.value}`}
+                  id={`category-${category.id}`}
                   type="radio"
-                  name="category"
+                  name="runner_category_id"
                   value={category.value}
                   checked={selected}
-                  onChange={() => onChange("category", category.value)}
-                  aria-required="true"
-                  aria-invalid={Boolean(errors.category)}
+                  onChange={() => onChange("runner_category_id", category.value)}
                   aria-describedby={
-                    errors.category ? "category-error" : undefined
+                    errors.runner_category_id ? "category-error" : undefined
                   }
                   className="sr-only"
                 />
@@ -68,7 +179,15 @@ export const EventDetails = ({ form, errors, onChange }) => {
                 <span className="mt-1 text-xs text-ink-soft">
                   {category.detail}
                 </span>
-                <span className="mt-3 rounded-full bg-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                {category.price ? (
+                  // <span className="mt-1 text-lg text-ink font-bold">
+                  //   ₹{category.price}
+                  // </span>
+                  <AnimatedShinyText className="inline-flex my-2 font-bold items-center justify-center gap-1 px-0 py-0 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+                    ₹{category.price}
+                  </AnimatedShinyText>
+                ) : null}
+                <span className="mt-auto rounded-full bg-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft">
                   {category.distance}
                 </span>
                 {selected && (
@@ -83,12 +202,12 @@ export const EventDetails = ({ form, errors, onChange }) => {
             );
           })}
         </div>
-        {errors.category && (
+        {errors.runner_category_id && (
           <p
             id="category-error"
             className="mt-2 text-xs font-medium text-destructive"
           >
-            {errors.category}
+            {errors.runner_category_id}
           </p>
         )}
       </fieldset>
@@ -105,39 +224,39 @@ export const EventDetails = ({ form, errors, onChange }) => {
           so this choice is final once the race closes.
         </p>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {SHIRT_SIZES.map((size) => (
+          {shirtSizesToRender.map((sizeOption) => (
             <label
-              key={size}
+              key={sizeOption.value}
               className={cn(
                 "flex cursor-pointer justify-center rounded-xl border px-3 py-3 text-sm font-bold transition",
-                form.shirtSize === size
+                String(form.tshirt_size_id) === sizeOption.value
                   ? "border-accent bg-accent text-accent-foreground shadow-sm"
                   : "border-border bg-background text-ink-soft hover:border-accent/50",
-                "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent/15",
+                "has-focus-visible:ring-accent/15",
               )}
             >
               <input
-                id={`shirt-${size.toLowerCase()}`}
+                id={`shirt-${sizeOption.value}`}
                 type="radio"
-                name="shirtSize"
-                value={size}
-                checked={form.shirtSize === size}
-                onChange={() => onChange("shirtSize", size)}
-                aria-required="true"
-                aria-invalid={Boolean(errors.shirtSize)}
-                aria-describedby={errors.shirtSize ? "shirt-error" : undefined}
+                name="tshirt_size_id"
+                value={sizeOption.value}
+                checked={String(form.tshirt_size_id) === sizeOption.value}
+                onChange={() => onChange("tshirt_size_id", sizeOption.value)}
+                aria-describedby={
+                  errors.tshirt_size_id ? "shirt-error" : undefined
+                }
                 className="sr-only"
               />
-              {size}
+              {sizeOption.label}
             </label>
           ))}
         </div>
-        {errors.shirtSize && (
+        {errors.tshirt_size_id && (
           <p
             id="shirt-error"
             className="mt-2 text-xs font-medium text-destructive"
           >
-            {errors.shirtSize}
+            {errors.tshirt_size_id}
           </p>
         )}
       </fieldset>
@@ -161,7 +280,10 @@ export const EventDetails = ({ form, errors, onChange }) => {
             label="Emergency contact name"
             placeholder="e.g. Priya Kumar"
             value={form.emergencyName}
-            onChange={onChange}
+           onChange={(e) => {
+            const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+            onChange("emergencyName", value);
+          }}
             icon={UserIcon}
             error={errors.emergencyName}
             autoComplete="off"
@@ -174,7 +296,10 @@ export const EventDetails = ({ form, errors, onChange }) => {
             type="tel"
             placeholder="+91 98765 43210"
             value={form.emergencyPhone}
-            onChange={onChange}
+           onChange={(e) => {
+            const value = e.target.value.replace(/[^0-9\s]/g, "");
+            onChange("emergencyPhone", value);
+          }}
             icon={PhoneIcon}
             error={errors.emergencyPhone}
             autoComplete="off"
@@ -186,7 +311,10 @@ export const EventDetails = ({ form, errors, onChange }) => {
             type="text"
             placeholder="e.g. Parent, Sibling"
             value={form.emergencyRelation}
-            onChange={onChange}
+            onChange={(e) => {
+            const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+            onChange("emergencyRelation", value);
+          }}
             icon={Home01Icon}
             error={errors.emergencyRelation}
             autoComplete="off"
@@ -194,7 +322,7 @@ export const EventDetails = ({ form, errors, onChange }) => {
         </div>
       </div>
 
-      <fieldset>
+      {/* <fieldset>
         <div className="flex flex-wrap items-center justify-between  gap-2">
           <h3 className="text-sm font-semibold text-foreground">
             Delivery address
@@ -230,31 +358,31 @@ export const EventDetails = ({ form, errors, onChange }) => {
         <div className="grid gap-5 sm:grid-cols-2">
           <span className="sr-only">Address Details</span>
           <Field
-            id="address_line1"
-            name="address_line1"
+            id="delivery_address_line1"
+            name="delivery_address_line1"
             label="Address Line 1"
             placeholder="e.g. 123 Main St"
-            value={form.address_line1}
+            value={form.delivery_address_line1}
             onChange={onChange}
             icon={Home01Icon}
-            error={errors.address_line1}
+            error={errors.delivery_address_line1}
             autoComplete="off"
             readOnly={useResident}
           />
           <Field
-            id="address_line2"
-            name="address_line2"
+            id="delivery_address_line2"
+            name="delivery_address_line2"
             label="Address Line 2"
             placeholder="e.g. Apt 4B"
-            value={form.address_line2}
+            value={form.delivery_address_line2}
             onChange={onChange}
             icon={Home01Icon}
-            error={errors.address_line2}
+            error={errors.delivery_address_line2}
             autoComplete="off"
             required={false}
             readOnly={useResident}
           />
-          <Field
+          <PincodeField
             id="delivery_pincode"
             name="delivery_pincode"
             label="Pincode"
@@ -265,45 +393,68 @@ export const EventDetails = ({ form, errors, onChange }) => {
             error={errors.delivery_pincode}
             autoComplete="off"
             readOnly={useResident}
+            cityField="delivery_city"
+            cityValue={form.delivery_city}
+            stateField="delivery_state"
+            stateValue={form.delivery_state}
+            talukField="delivery_taulk"
+            talukValue={form.delivery_taulk}
+            districtField="delivery_district"
+            districtValue={form.delivery_district}
           />
-          <Field
+     
+          <SelectField
             id="delivery_city"
             name="delivery_city"
             label="City"
-            placeholder="e.g. New York"
             value={form.delivery_city}
             onChange={onChange}
+            options={citiesForDelivery}
+            placeholder={citiesForDelivery.length > 0 ? "Select city" : "Enter pincode first"}
             icon={Home01Icon}
             error={errors.delivery_city}
-            autoComplete="off"
-            readOnly={useResident}
+            disabled={citiesForDelivery.length === 0}
           />
-          <Field
-            id="area"
-            name="area"
-            label="Area"
-            placeholder="e.g. Downtown"
-            value={form.area}
+          <SelectField
+            id="delivery_taulk"
+            name="delivery_taulk"
+            label="Taulk"
+            value={form.delivery_taulk}
             onChange={onChange}
+            options={taluksForDelivery}
+            placeholder={taluksForDelivery.length > 0 ? "Select taulk" : "Enter pincode first"}
             icon={Home01Icon}
-            error={errors.area}
-            autoComplete="off"
-            readOnly={useResident}
+            error={errors.delivery_taulk}
+            disabled={taluksForDelivery.length === 0}
+            required={false}
           />
-          <Field
+          <SelectField
+            id="delivery_district"
+            name="delivery_district"
+            label="District"
+            value={form.delivery_district}
+            onChange={onChange}
+            options={districtsForDelivery}
+            placeholder={districtsForDelivery.length > 0 ? "Select district" : "Enter pincode first"}
+            icon={Home01Icon}
+            error={errors.delivery_district}
+            disabled={districtsForDelivery.length === 0}
+            required={false}
+          />
+          <SelectField
             id="delivery_state"
             name="delivery_state"
             label="State"
-            placeholder="e.g. New York"
             value={form.delivery_state}
             onChange={onChange}
+            options={statesForDelivery}
+            placeholder={statesForDelivery.length > 0 ? "Select state" : "Enter pincode first"}
             icon={Home01Icon}
             error={errors.delivery_state}
-            autoComplete="off"
-            readOnly={useResident}
+            disabled={statesForDelivery.length === 0}
           />
         </div>
-      </fieldset>
+      </fieldset> */}
     </div>
   );
 };

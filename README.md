@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## API proxy
+
+Set `NEXT_APP_API_URL` in `.env.local` to the backend base URL. Browser requests to `/api/...` are forwarded to that server, so the backend does not need to allow browser CORS requests. The default upstream prefix is `/api`, unless the base URL already ends in `/api`. Set `NEXT_APP_API_PREFIX` to override the prefix, or set it to an empty value to use the base URL as-is. For example, `/api/pincode/600012` is forwarded to `https://your-backend/api/pincode/600012`. Restart the dev server after changing environment variables.
+
 You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

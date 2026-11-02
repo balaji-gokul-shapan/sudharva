@@ -42,14 +42,17 @@ export function GsParallax({
     }
 
     const sign = direction === "up" ? -1 : 1;
+    gsap.set(el, { yPercent: 0 });
+
     const tween = gsap.to(el, {
       yPercent: sign * speed * 100,
       ease: "none",
       scrollTrigger: {
         trigger: el.closest("section") ?? el,
-        start: "top bottom",
+        start: "top top",
         end: "bottom top",
         scrub: true,
+        invalidateOnRefresh: true,
       },
     });
 

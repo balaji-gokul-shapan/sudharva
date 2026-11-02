@@ -19,10 +19,10 @@ const RELATIONSHIPS = [
 ];
 
 const fieldClasses =
-  "w-full rounded-md border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition placeholder:text-ink-soft/70 focus:border-accent focus:ring-2 focus:ring-accent/30";
+  "w-full rounded-md border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition placeholder:text-[var(--color-ink-soft)]/70 focus:border-accent focus:ring-2 focus:ring-accent/30";
 
 const labelClasses =
-  "mb-1.5 block text-xs font-bold uppercase tracking-wider text-ink-soft";
+  "mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--color-ink-soft)]";
 
 export default function DedicationForm() {
   const [submitted, setSubmitted] = useState(null);
@@ -42,7 +42,7 @@ export default function DedicationForm() {
     return (
       <div
         aria-live="polite"
-        className="mx-auto flex w-full max-w-2xl flex-col items-center rounded-2xl border border-border bg-surface px-6 py-14 text-center shadow-lg"
+        className="mx-auto flex w-full max-w-2xl flex-col items-center rounded-2xl border border-border bg-[var(--color-surface)] px-6 py-14 text-center shadow-lg"
       >
         <span className="grid h-14 w-14 place-items-center rounded-full bg-accent/15 text-accent">
           <svg
@@ -58,18 +58,18 @@ export default function DedicationForm() {
         </span>
         <h2 className="mt-5 font-serif text-2xl font-bold text-primary-deep sm:text-3xl">
           Dedication registered for {submitted.fullName}{" "}
-          <span className="text-ink-soft/70 font-normal">
+          <span className="text-[var(--color-ink-soft)]/70 font-normal">
             in honor of {submitted.dedicateTo}
           </span>
         </h2>
-        <p className="mt-2 max-w-md text-sm text-ink-soft">
+        <p className="mt-2 max-w-md text-sm text-[var(--color-ink-soft)]">
           Your stride now carries their name. A confirmation with your bib
           details will be sent to you before race day.
         </p>
         <button
           type="button"
           onClick={() => setSubmitted(null)}
-          className="mt-6 cursor-pointer rounded-md border border-border px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-ink transition hover:border-accent hover:text-accent"
+          className="mt-6 cursor-pointer rounded-md border border-border px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--color-ink)] transition hover:border-accent hover:text-accent"
         >
           Register another dedication
         </button>
@@ -80,7 +80,7 @@ export default function DedicationForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-surface p-6 shadow-lg sm:p-8"
+      className="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-[var(--color-surface)] p-6 shadow-lg sm:p-8"
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
@@ -120,7 +120,7 @@ export default function DedicationForm() {
             id="phone"
             name="phone"
             type="tel"
-            placeholder="+91 90000 00000"
+            placeholder="+91 84455 05533"
             className={fieldClasses}
           />
         </div>
@@ -184,7 +184,7 @@ export default function DedicationForm() {
                 />
                 <label
                   htmlFor={`category-${category.value}`}
-                  className="block cursor-pointer rounded-md border border-border px-2 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-ink transition hover:border-primary peer-checked:border-accent peer-checked:bg-accent peer-checked:text-accent-foreground"
+                  className="block cursor-pointer rounded-md border border-border px-2 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-[var(--color-ink)] transition hover:border-primary peer-checked:border-accent peer-checked:bg-accent peer-checked:text-accent-foreground"
                 >
                   {category.label}
                 </label>
@@ -195,7 +195,7 @@ export default function DedicationForm() {
         <div className="sm:col-span-2">
           <label
             htmlFor="consent"
-            className="flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-ink-soft sm:col-span-2"
+            className="flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-[var(--color-ink-soft)] sm:col-span-2"
           >
             <input
               id="consent"

@@ -7,7 +7,7 @@ import { Building01, Mail01Icon, PhoneIcon, UserIcon } from "@animateicons/react
 import { TEAM_SIZES } from "./datas/data";
 import { cn } from "@/lib/utils";
 
-export const CorporateDetails = ({ form, errors, onChange }) => {
+export const CorporateDetails = ({ form, errors, onChange, hasCities, hasStates, hasDistricts, hasTaulks, cities, states, districts, taluks }) => {
   return (
     <motion.div
       key="corporate-fields"

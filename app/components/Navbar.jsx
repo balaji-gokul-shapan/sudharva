@@ -1,52 +1,62 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ListIcon, XIcon } from "@phosphor-icons/react";
+import { AnimatePresence } from "motion/react";
+import { EventSubnav } from "@/components/animation/EventSubnav";
+import { OverviewSubnav } from "@/components/animation/OverviewSubnav";
+import { LinksSubnav } from "@/components/animation/LinksSubnav";
+import { CaretDownIcon } from "@phosphor-icons/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RainbowButton } from "@/components/animation/rainbowButton";
 import { CountdownTimer } from "@/components/utilities/CountdownTimer";
+// import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "@/app/datas/homepage/data";
 import Link from "next/link";
 
-// Configure the race date here â€” accepts an ISO string, Date, or epoch ms.
 // Example: "2026-12-14T05:30:00+05:30" (IST morning slot).
-const MARATHON_DATE = "2026-11-15T05:30:00+05:30";
+const MARATHON_DATE = "2027-01-24T05:30:00+05:30";
 import Image from "next/image";
 import { Cancel01Icon, Menu01Icon } from "@animateicons/react/huge";
+import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "../datas/homepage/data";
+
+/* ------------------------------------------------------------------ */
+/*  NavSubnav — dispatches to the right dropdown for a nav link        */
+/* ------------------------------------------------------------------ */
+
+function NavSubnav({ type, link, leaveTimeoutRef, setOpenSubnav }) {
+  const props = { link, leaveTimeoutRef, setOpenSubnav };
+
+  if (type === "overview") return <OverviewSubnav {...props} />;
+  if (type === "event") return <EventSubnav {...props} />;
+  if (type === "links") return <LinksSubnav {...props} />;
+
+  return null;
+}
 
 const NAV_LINKS = [
-  { label: "Home", href: "#home", decoration: "decoration-primary" },
+  { label: "Home", href: "/", decoration: "decoration-primary" },
   {
     label: "Event Overview",
     href: "#overview",
     decoration: "decoration-accent",
-    subnav: [
-      { label: "5K & 10K Runs", href: "#runs" },
-      { label: "Volunteer", href: "#volunteer" },
-      { label: "Donate", href: "#donate" },
-      { label: "Partners", href: "#partners" },
-    ],
+    subnavType: "overview",
   },
-  { label: "Join Us", href: "#join", decoration: "decoration-accent" },
+  { label: "Sudharva 2027", href: "/event", decoration: "decoration-accent" },
   {
     label: "Event Categories",
     href: "#event-categories",
     decoration: "decoration-primary",
-    subnav: [
-      { label: "5K Run", href: "#5k" },
-      { label: "10K Challenge", href: "#10k" },
-      { label: "Half Marathon", href: "#half-marathon" },
-      { label: "Team Entries", href: "#team" },
-    ],
+    subnavType: "event",
   },
-  { label: "Our Partners", href: "#partners", decoration: "decoration-primary" },
+  // { label: "Our Partners", href: "#partners", decoration: "decoration-primary" },
   {
     label: "Contact",
     href: "#contact",
     decoration: "decoration-accent",
+    subnavType: "links",
     subnav: [
-      { label: "Get in Touch", href: "#contact-form" },
-      { label: "Workshop", href: "#workshop" },
-      { label: "Media", href: "#media" },
+      { label: "Get in Touch", href: "#contact" },
+      { label: "Email Us", href: "mailto:sudharvarun@yahoo.com" },
+      { label: "Call Us", href: "tel:+91 8445505533" },
     ],
   },
 ];
@@ -54,6 +64,8 @@ const NAV_LINKS = [
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openSubnav, setOpenSubnav] = useState(null);
+  const leaveTimeoutRef = useRef(null);
   const menuButtonRef = useRef(null);
 
   useEffect(() => {
@@ -69,10 +81,19 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Clear pending subnav-close timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <>
       {/* Spacer so the fixed header never overlaps page content */}
-      <div className="h-[76px] sm:h-20" aria-hidden="true" />
+      <div className="h-19 sm:h-20" aria-hidden="true" />
       <header
         onKeyDown={(event) => {
           if (event.key === "Escape" && mobileMenuOpen) {
@@ -80,7 +101,7 @@ export const Navbar = () => {
             menuButtonRef.current?.focus();
           }
         }}
-        className={`fixed top-0 left-0 right-0 z-40 h-[76px] border-b transition-all duration-300 sm:h-20 ${
+        className={`fixed top-0 left-0 right-0 z-40 h-19 border-b transition-all duration-300 sm:h-20 ${
           scrolled
             ? "border-border bg-surface/95 shadow-md backdrop-blur-md"
             : "border-border/60 bg-surface/80 backdrop-blur-sm"
@@ -111,15 +132,57 @@ export const Navbar = () => {
             aria-label="Main navigation"
             className="hidden items-center gap-6 text-sm font-semibold tracking-wide text-ink-soft lg:flex xl:gap-8"
           >
-            {NAV_LINKS.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`whitespace-nowrap underline-offset-8 decoration-2 transition-colors hover:text-ink hover:underline ${link.decoration}`}
-              >
-                {link.label}
-              </a>
-            ))}
+            {NAV_LINKS.map((link, index) => {
+              const isOpen = openSubnav === index;
+              const hasSubnav = Boolean(link.subnavType);
+              return (
+                <div key={link.href} className="inline-block">
+                  <div
+                    className="relative inline-flex"
+                    onMouseEnter={() => {
+                      if (leaveTimeoutRef.current) {
+                        clearTimeout(leaveTimeoutRef.current);
+                        leaveTimeoutRef.current = null;
+                      }
+                      if (hasSubnav) setOpenSubnav(index);
+                    }}
+                    onMouseLeave={() => {
+                      if (hasSubnav) {
+                        leaveTimeoutRef.current = setTimeout(
+                          () => setOpenSubnav(null),
+                          150
+                        );
+                      }
+                    }}
+                  >
+                    <a
+                      href={link.href}
+                      className={`whitespace-nowrap underline-offset-8 decoration-2 transition-colors hover:text-ink hover:underline flex items-center ${link.decoration}`}
+                    >
+                      {link.label}
+                      {hasSubnav && (
+                        <CaretDownIcon
+                          size={14}
+                          className="ml-1 text-ink-soft transition-transform duration-200"
+                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                        />
+                      )}
+                    </a>
+                    <AnimatePresence>
+                      {isOpen && hasSubnav && (
+                        <NavSubnav
+                          key={`subnav-${link.subnavType}`}
+                          type={link.subnavType}
+                          link={link}
+                          leaveTimeoutRef={leaveTimeoutRef}
+                          setOpenSubnav={setOpenSubnav}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              );
+            })}
           </nav>
 
           {/* Zone 3: Desktop actions */}
@@ -199,14 +262,82 @@ export const Navbar = () => {
                 className="mb-2 justify-center"
               />
               {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="rounded-md px-3 py-2.5 transition-colors hover:bg-muted hover:text-primary"
-                >
-                  {link.label}
-                </a>
+                <div key={link.href} className="border-b border-border/40 last:border-b-0">
+                  <a
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block rounded-md px-3 py-2.5 transition-colors hover:bg-muted hover:text-primary"
+                  >
+                    {link.label}
+                  </a>
+
+                  {/* Nested subnav links (mobile) */}
+                  {link.subnavType === "overview" && (
+                    <ul className="mb-2 ml-3 space-y-0.5 border-l border-border pl-3">
+                      {OVERVIEW_SUBNAV.map((item) => (
+                        <li key={item.id}>
+                          <a
+                            href={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block rounded-md px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-muted hover:text-primary"
+                          >
+                            {item.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {link.subnavType === "event" && (
+                    <ul className="mb-2 ml-3 space-y-0.5 border-l border-border pl-3">
+                      {EVENT_SUBNAV.map((item) =>
+                        item.href.startsWith("/") ? (
+                          <li key={item.id}>
+                            <Link
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block rounded-md px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-muted hover:text-primary"
+                            >
+                              {item.label}
+                              <span className="ml-2 text-xs text-ink-soft/70">
+                                {item.Amount}
+                              </span>
+                            </Link>
+                          </li>
+                        ) : (
+                          <li key={item.id}>
+                            <a
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block rounded-md px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-muted hover:text-primary"
+                            >
+                              {item.label}
+                              <span className="ml-2 text-xs text-ink-soft/70">
+                                {item.Amount}
+                              </span>
+                            </a>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  )}
+
+                  {link.subnavType === "links" && (
+                    <ul className="mb-2 ml-3 space-y-0.5 border-l border-border pl-3">
+                      {link.subnav.map((item) => (
+                        <li key={item.href}>
+                          <a
+                            href={item.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block rounded-md px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-muted hover:text-primary"
+                          >
+                            {item.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               ))}
             </nav>
           </div>

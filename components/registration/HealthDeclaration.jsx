@@ -1,7 +1,19 @@
 import { motion } from "framer-motion";
-import { HEALTH_DECLARATIONS, HEALTH_SNAPSHOT, SNAPSHOT_TINTS, DECLARATION_STYLES } from "./datas/data";
+import {
+  HEALTH_DECLARATIONS,
+  HEALTH_SNAPSHOT,
+  SNAPSHOT_TINTS,
+  DECLARATION_STYLES,
+} from "./datas/data";
 import { cn } from "@/lib/utils";
-import { AlertCircleIcon, HeartIcon, LockKeyholeIcon, ShieldCheck } from "@animateicons/react/huge";
+import {
+  AlertCircleIcon,
+  HeartIcon,
+  LockKeyholeIcon,
+  ShieldCheck,
+} from "@animateicons/react/huge";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
 
 function DeclarationRow({
   id,
@@ -15,8 +27,7 @@ function DeclarationRow({
   const styles = DECLARATION_STYLES[tint];
 
   return (
-    <label
-      htmlFor={id}
+    <Label
       className={cn(
         "group flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-200",
         "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent/20",
@@ -27,15 +38,15 @@ function DeclarationRow({
             : "border-border bg-background hover:border-accent/40 hover:shadow-sm",
       )}
     >
-      <input
+      <Checkbox
         id={id}
-        type="checkbox"
+        name={id}
         checked={checked}
-        onChange={(event) => onChange(id, event.target.checked)}
+        onCheckedChange={(nextChecked) => onChange(id, nextChecked === true)}
         aria-required="true"
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[var(--accent)]"
+        className="mt-0.5 h-5 w-5 rounded-md shrink-0 cursor-pointer accent-[var(--accent)]"
       />
       <span
         className={cn(
@@ -53,7 +64,7 @@ function DeclarationRow({
       >
         {label}
       </span>
-    </label>
+    </Label>
   );
 }
 
@@ -182,7 +193,7 @@ function HealthSnapshot({ form, onChange }) {
           );
         })}
       </div>
-      <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-ink-soft">
+      <div className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-ink-soft">
         <LockKeyholeIcon
           size={14}
           aria-hidden="true"
@@ -190,12 +201,17 @@ function HealthSnapshot({ form, onChange }) {
         />
         Optional details to help the event team plan participant support. This
         page does not submit your information.
-      </p>
+      </div>
     </section>
   );
 }
 
-export const HealthDeclaration = ({ form, errors, onChange }) => {
+export const HealthDeclaration = ({
+  form,
+  errors,
+  onChange,
+
+}) => {
   const total = HEALTH_DECLARATIONS.length + 1;
   const done =
     HEALTH_DECLARATIONS.filter((item) => form[item.id]).length +
@@ -245,7 +261,10 @@ export const HealthDeclaration = ({ form, errors, onChange }) => {
               Your well-being comes first, always.
             </p>
             <div className="mt-3 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-xs leading-relaxed text-foreground">
-              <AlertCircleIcon size={15} className="mt-0.5 shrink-0 text-warning" />
+              <AlertCircleIcon
+                size={15}
+                className="mt-0.5 shrink-0 text-warning"
+              />
               <span>
                 High diabetic and cardiac patients should be under control
                 before race day.
@@ -293,7 +312,7 @@ export const HealthDeclaration = ({ form, errors, onChange }) => {
               onChange={onChange}
               error={errors[item.id]}
             />
-            {item.id === "medicallyFit" && (
+            {item.id === "medical_fitness_declaration" && (
               <div className="my-3">
                 <HealthSnapshot form={form} onChange={onChange} />
               </div>
@@ -340,4 +359,4 @@ export const HealthDeclaration = ({ form, errors, onChange }) => {
       </div>
     </motion.div>
   );
-}
+};

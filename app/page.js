@@ -1,11 +1,10 @@
-import Hero from "./pages/Hero";
-import CTABanner from "./pages/CTABanner";
-import Overview from "./pages/Overview";
-import MarathonPage from "./pages/Route";
-import EventCategories from "./pages/EventCategories";
-import SpecialAddons from "./pages/SpecialAddons";
-import Partners from "./pages/Partners";
-import CarouselPage from "./pages/Carousel";
+import CTABanner from "./pages/Homepage/pages/CTABanner";
+import EventCategories from "./pages/Homepage/pages/EventCategories";
+import Hero from "./pages/Homepage/pages/Hero";
+import Overview from "./pages/Homepage/pages/Overview";
+import Partners from "./pages/Homepage/pages/Partners";
+import SpecialAddons from "./pages/Homepage/pages/SpecialAddons";
+
 
 export default function Home() {
   return (
