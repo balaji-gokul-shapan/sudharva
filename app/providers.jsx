@@ -12,7 +12,7 @@ export default function Providers({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
+        <PersistGate loading={children} persistor={persistor}>
           {children}
         </PersistGate>
       </Provider>

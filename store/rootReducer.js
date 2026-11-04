@@ -9,6 +9,8 @@ import getMasterReducer from "./slices/masters/getMasterSlice";
 import createPaymentOrderReducer from "./slices/payment/createPaymentOrderSlice";
 import paymentOrderConfirmationReducer from "./slices/payment/paymentOrderConfirmationSlice";
 import loginUserReducer from "./slices/users/userLoginSlice";
+import userRegisterReducer from "./slices/users/userRegisterSlice";
+import userRefreshTokenReducer from "./slices/users/userRefreshTokenSlice";
 
 const rootReducer = combineReducers({
   app: appReducer,
@@ -20,7 +22,9 @@ const rootReducer = combineReducers({
   paymentOrderConfirmation: paymentOrderConfirmationReducer,
   registrationDraft: registrationDraftReducer,
   master: getMasterReducer,
-  loginUser: loginUserReducer
+  loginUser: loginUserReducer,
+  userRegister: userRegisterReducer,
+  userRefreshToken: userRefreshTokenReducer,
 });
 
 export default rootReducer;

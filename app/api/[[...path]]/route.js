@@ -55,7 +55,10 @@ async function proxyRequest(request, { params }) {
   const upstreamUrl = new URL(baseUrl);
   const basePath = upstreamUrl.pathname.replace(/\/+$/, "");
   const apiPath = path.map((segment) => encodeURIComponent(segment)).join("/");
-  upstreamUrl.pathname = `${basePath}${getApiPrefix(baseUrl)}/${apiPath}`;
+  const trailingSlash = new URL(request.url).pathname.endsWith("/");
+  upstreamUrl.pathname = `${basePath}${getApiPrefix(baseUrl)}/${apiPath}${
+    trailingSlash ? "/" : ""
+  }`;
   upstreamUrl.search = new URL(request.url).search;
 
   const headers = new Headers();
@@ -110,4 +113,3 @@ export const POST = proxyRequest;
 export const PUT = proxyRequest;
 export const PATCH = proxyRequest;
 export const DELETE = proxyRequest;
-

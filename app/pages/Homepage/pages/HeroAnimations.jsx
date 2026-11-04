@@ -492,7 +492,19 @@ export function HeroBadge() {
       preset="fade-down"
       duration={0.6}
       data-fade-in="down"
+      className="flex flex-col items-center gap-3 sm:items-start"
     >
+     <div className="flex flex-col items-center gap-3 sm:items-start">
+       <Float distance={7} duration={3.5}>
+        <Image
+          src="/image/cta/appa-logo.svg"
+          alt="Appa Charitable Trust"
+          width={267}
+          height={108}
+          priority
+          className="mx-auto block h-auto w-44 sm:mx-0 sm:w-52"
+        />
+      </Float>
       <Float distance={5} duration={3.5}>
         <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-white/85 backdrop-blur-sm sm:text-xs">
           <span
@@ -507,6 +519,7 @@ export function HeroBadge() {
           </span>
         </p>
       </Float>
+     </div>
     </Reveal>
   );
 }
@@ -567,7 +580,7 @@ export function HeroHeading() {
         <StaggerItem preset="fade-up">
           <span
             data-text-anim="bodyAnimation"
-            className="hero-body invisible mx-auto mt-5 block max-w-xl text-sm leading-7 text-white/85 sm:mx-0 sm:text-base lg:text-lg"
+            className="hero-body invisible mx-auto mt-5 block max-w-xl text-sm leading-7 tracking-normal text-white/85 sm:mx-0 sm:text-base lg:text-lg"
           >
             Join us in raising awareness for diabetes prevention
             and building a healthier community - one stride at a time.
@@ -609,6 +622,16 @@ export function HeroEventMeta() {
 
               <span className="text-sm sm:text-base">
                 {item.label}
+                {item.location && (
+                  <a
+                    href={item.location}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-sm text-white/70 underline"
+                  >
+                    View Map
+                  </a>
+                )}
               </span>
             </span>
           </StaggerItem>

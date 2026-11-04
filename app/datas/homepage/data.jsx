@@ -21,6 +21,15 @@ import {
   Calendar01Icon,
   GoogleMapsIcon,
 } from "@animateicons/react/huge";
+import { eventCategoryRecords } from "../eventCategories";
+
+const EVENT_CATEGORY_ICONS = {
+  volunteer: HeartIcon,
+  health: HeartIcon,
+  environment: Globe02Icon,
+  education: BookOpen01Icon,
+};
+
 export const heroRuningData = [
   {
     id: 1,
@@ -103,128 +112,11 @@ export const overviewData = [
   },
 ];
 
-export const eventCategoriesData = [
-  {
-    number: "01",
-    key: "volunteer",
-    anchorId: "5k",
-    label: "5K Run (Community Walk)",
-    message: "For a healthier community tomorrow",
-    Amount: "₹499",
-    description: "Walk together, support your community",
-    tag: "comfortable Jog",
-    icon: HeartIcon,
-    iconBg: "bg-volunteer-tint border border-volunteer/50",
-    textColor: "text-volunteer",
-    glow: "bg-volunteer/30",
-    listingIcon: SparkleIcon,
-    bannerImg: "/image/cta/events/5k_walk.webp",
-    detailImg: "/image/cta/events/5k_walk_detail.webp",
-
-    benefits: [
-      "Event T-shirt",
-      "E-certificate",
-      "Finisher Medal",
-      "Free HbA1c Test",
-      "Digital Family Health Coupen",
-      "Refreshements",
-    ],
-    ButtonText: "Register Now",
-  },
-  {
-    number: "02",
-    key: "health",
-    anchorId: "5k-fun-run",
-    label: "5K Run (Fun Run)",
-    message: "For every pace, and every first step.",
-    Amount: "₹499",
-    description: "Run for a cause and make every step count.",
-    tag: "comfortable Jog",
-    icon: HeartIcon,
-    iconBg: "bg-health-tint border border-health/50",
-    textColor: "text-health",
-    glow: "bg-health/30",
-    listingIcon: SparkleIcon,
-    bannerImg: "/image/cta/events/5k_run.webp",
-    detailImg: "/image/cta/events/5k_run_detail.webp",
-
-    benefits: [
-      "Event T-shirt",
-      "E-certificate",
-      "Finisher Medal",
-      "Free HbA1c Test",
-      "Digital Family Health Coupen",
-      "Refreshements",
-    ],
-    ButtonText: "Register Now",
-  },
-  {
-    number: "03",
-    key: "environment",
-    anchorId: "10k",
-    label: "10K Run (Challenge Run)",
-    message: "Half the distance. Double the heart",
-    Amount: "₹599",
-    description: "Run for a stronger communities and a healthier planet.",
-    tag: "Challenging strides",
-    icon: Globe02Icon,
-    iconBg: "bg-environment-tint border border-environment/50",
-    textColor: "text-environment",
-    glow: "bg-environment/30",
-    listingIcon: SparkleIcon,
-    ButtonText: "Register Now",
-    bannerImg: "/image/cta/events/10k_run.webp",
-    detailImg: "/image/cta/events/10k_run_detail.webp",
-    benefits: [
-      "Event T-shirt",
-      "E-certificate",
-      "Finisher Medal",
-      "Free HbA1c Test",
-      "Digital Family Health Coupen",
-      "Refreshements",
-    ],
-  },
-  {
-    number: "04",
-    key: "education",
-    anchorId: "half-marathon",
-    label: "21.1K Run (Half Marathon)",
-    message: "Go the distance for 589 million.",
-    Amount: "₹799",
-    description: "Run for a Diabetic Free India.",
-    tag: "Powerful Pacers",
-    icon: BookOpen01Icon,
-    iconBg: "bg-education-tint border border-education/50",
-    textColor: "text-education",
-    glow: "bg-education/30",
-    listingIcon: SparkleIcon,
-    ButtonText: "Register Now",
-    bannerImg: "/image/cta/events/21.1k_run.webp",
-    detailImg: "/image/cta/events/21.1k_run_detail.webp",
-
-    benefits: [
-      "Event T-shirt",
-      "E-certificate",
-      "Finisher Medal",
-      "Free HbA1c Test",
-      "Digital Family Health Coupen",
-      "Refreshements",
-    ],
-  },
-  // {
-  //   number: "04",
-  //   key: "volunteer",
-  //   label: "Volunteer Crew",
-  //   message: "All hands welcome",
-  //   description:
-  //     "Cheer squads, hydration stations and registration desks powered by volunteers like you.",
-  //   tag: "Join Us",
-  //   icon: UserGroupIcon,
-  //   iconBg: "bg-volunteer-tint border border-volunteer/50",
-  //   textcolor: "text-volunteer",
-  //   glow: "bg-volunteer/30",
-  // },
-];
+export const eventCategoriesData = eventCategoryRecords.map((category) => ({
+  ...category,
+  icon: EVENT_CATEGORY_ICONS[category.key],
+  listingIcon: SparkleIcon,
+}));
 
 export const addonData = [
   {
@@ -290,25 +182,40 @@ export const extraAddonData = [
 ];
 export const imageLogos = [
   {
-    src: "/image/cta/bisleri_soda_homepage_banner.jpg",
+    src: "/image/cta/fiveplus.webp",
     alt: "Company 1",
-    href: "https://company1.com",
+    href: "https://www.fiveplushospitals.com/",
   },
   {
-    src: "/image/cta/apollo_banner.webp",
+    src: "/image/cta/dolor.webp",
     alt: "Company 2",
-    href: "https://company2.com",
+    href: "https://www.fiveplushospitals.com/",
+  },
+  {
+    src: "/image/cta/appa.webp",
+    alt: "Company 2",
+    href: "https://www.fiveplushospitals.com/",
+  },
+  {
+    src: "/image/cta/ssdental.webp",
+    alt: "Company 2",
+    href: "https://www.fiveplushospitals.com/",
+  },
+  {
+    src: "/image/cta/sspharma.webp",
+    alt: "Company 2",
+    href: "https://www.fiveplushospitals.com/",
   },
   {
     src: "/image/cta/appa-logo.svg",
     alt: "Company 3",
     href: "https://www.appatrust.com",
   },
-  {
-    src: "/image/cta/sms.webp",
-    alt: "Company 4",
-    href: "https://www.sms24hrs.com",
-  },
+  // {
+  //   src: "/image/cta/sms.webp",
+  //   alt: "Company 4",
+  //   href: "https://www.sms24hrs.com",
+  // },
 ];
 
 export const SLIDES = [
@@ -335,7 +242,7 @@ export const SLIDES = [
 export const EVENT_SUBNAV = [
   {
     id: "5k",
-    href: "#5k",
+    href: "/categories/5k",
     label: "5K Run",
     title: "5K Community Walk",
     description:
@@ -346,7 +253,7 @@ export const EVENT_SUBNAV = [
   },
   {
     id: "5k-fun-run",
-    href: "#5k-fun-run",
+    href: "/categories/5k-fun-run",
     label: "5K Fun Run",
     title: "5K Fun Run",
     description:
@@ -357,7 +264,7 @@ export const EVENT_SUBNAV = [
   },
   {
     id: "10k",
-    href: "#10k",
+    href: "/categories/10k",
     label: "10K Challenge",
     title: "10K Challenge Run",
     description: "Push your pace with a challenging course through the city.",
@@ -367,7 +274,7 @@ export const EVENT_SUBNAV = [
   },
   {
     id: "half-marathon",
-    href: "#half-marathon",
+    href: "/categories/half-marathon",
     label: "Half Marathon",
     title: "21.1K Half Marathon",
     description: "Go the full distance for a diabetes-free India.",
@@ -375,16 +282,16 @@ export const EVENT_SUBNAV = [
     distance: "21.1 KM",
     icon: TrophyIcon,
   },
-  {
-    id: "team",
-    href: "/register",
-    label: "Team Entries",
-    title: "Corporate Team Entries",
-    description: "Register your team and run together for the cause.",
-    Amount: "Custom",
-    distance: "Team",
-    icon: UserGroupIcon,
-  },
+  // {
+  //   id: "team",
+  //   href: "/register",
+  //   label: "Team Entries",
+  //   title: "Corporate Team Entries",
+  //   description: "Register your team and run together for the cause.",
+  //   Amount: "Custom",
+  //   distance: "Team",
+  //   icon: UserGroupIcon,
+  // },
 ];
 
 export const META = [
@@ -395,6 +302,7 @@ export const META = [
   {
     icon: GoogleMapsIcon,
     label: "Ajeya Stadium, Avadi, Chennai",
+    location: "https://www.google.com/maps/place/ajeya+stadium/data=!4m2!3m1!1s0x3a52627fc6dca50d:0xad76da86c69d66ca?sa=X&ved=1t:242&ictx=111"
   },
   {
     icon: Clock01Icon,
@@ -421,7 +329,7 @@ export const OVERVIEW_SUBNAV = [
   },
   {
     id: "partners",
-    href: "/partners",
+    href: "/",
     label: "Our Partners",
     description:
       "Meet the changemakers supporting healthier lifestyles and stronger communities through every stride.",
@@ -429,7 +337,7 @@ export const OVERVIEW_SUBNAV = [
   },
   {
     id: "join",
-    href: "/contact",
+    href: "/",
     label: "Become a Partner",
     description:
       "Partner with Sudharva Marathon to amplify your brand, inspire communities, and make a lasting impact.",

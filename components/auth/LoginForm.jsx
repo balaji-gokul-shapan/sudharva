@@ -1,32 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAppDispatch } from "@/store/hooks";
 import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import {
-  ArrowLeft,
   ArrowRight,
   CheckCircle,
-  Envelope,
+  Eye,
+  EyeSlash,
   Heartbeat,
   LockKey,
-  Phone,
   ShieldCheck,
   Sparkle,
+  User,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { RainbowButton } from "@/components/animation/rainbowButton";
-import { useAppDispatch } from "@/store/hooks";
-import { requestOtp } from "@/store/slices/otp/otpRequestSlice";
-import { verifyOtp } from "@/store/slices/otp/otpVerifySlice";
-
-const PANEL_SPRING = {
-  type: "spring",
-  stiffness: 300,
-  damping: 32,
-};
+import { loginUser } from "@/store/slices/users/userLoginSlice";
+import { EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
 
 const panelVariants = {
   enter: (dir) => ({
@@ -46,55 +40,41 @@ const panelVariants = {
   }),
 };
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function validateLoginPayload({ username, password }) {
+  const trimmedUsername = username.trim();
 
-function validateIdentifier(value, type) {
-  const identifier = value.trim();
-
-  if (!identifier) {
-    return type === "email"
-      ? "Enter your registered email to continue your journey."
-      : "Enter your registered mobile number to continue.";
+  if (!trimmedUsername) {
+    return "Enter your username to continue.";
   }
 
-  if (type === "email") {
-    return emailPattern.test(identifier)
-      ? ""
-      : "That email doesn't look right. Check it and try again.";
+  if (!password) {
+    return "Enter your password to continue.";
   }
 
-  const digitCount = identifier.replace(/\D/g, "").length;
+  if (password.length < 8) {
+    return "Password should be at least 8 characters.";
+  }
 
-  return digitCount >= 7 && digitCount <= 15
-    ? ""
-    : "Enter a valid phone number with 7–15 digits.";
+  return "";
 }
 
-export default function LoginForm({
-  isAuthenticated,
-  setIsAuthenticated,
-  identifier,
-  setIdentifier,
-}) {
-  const [identifierType, setIdentifierType] = useState("email");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState("identifier");
+export default function LoginForm({ setIsAuthenticated }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [justVerified, setJustVerified] = useState(false);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [direction, setDirection] = useState(1);
-  const [isRequestingOtp, setIsRequestingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useAppDispatch();
 
   const visualRef = useRef(null);
   const formPanelRef = useRef(null);
-  const verificationTimerRef = useRef(null);
+  const loginTimerRef = useRef(null);
 
   const shouldReduceMotion = useReducedMotion();
-  const isEmail = identifierType === "email";
 
-  // GSAP entrance animation for the brand panel and login content.
   useEffect(() => {
     if (shouldReduceMotion) return;
 
@@ -160,145 +140,49 @@ export default function LoginForm({
     };
   }, [shouldReduceMotion]);
 
-  // Clear a pending verification timer when the component unmounts.
   useEffect(() => {
     return () => {
-      if (verificationTimerRef.current) {
-        clearTimeout(verificationTimerRef.current);
+      if (loginTimerRef.current) {
+        clearTimeout(loginTimerRef.current);
       }
     };
   }, []);
 
-  const switchIdentifierType = (type) => {
-    setIdentifierType(type);
-    setIdentifier("");
-    setOtp("");
-    setError("");
-    setNotice("");
-    setJustVerified(false);
-  };
-
-  const handleIdentifierSubmit = async (event) => {
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
 
-    if (isRequestingOtp) return;
+    if (isSubmitting) return;
 
-    const validationError = validateIdentifier(identifier, identifierType);
+    const validationError = validateLoginPayload({ username, password });
 
     if (validationError) {
       setError(validationError);
       setNotice("");
       return;
     }
-
-    const trimmedIdentifier = identifier.trim();
-    const payload = {
-      purpose: identifierType,
-      email: identifierType === "email" ? trimmedIdentifier : "",
-      mobile_number: identifierType === "phone" ? trimmedIdentifier : "",
-    };
+    const payload = { username: username.trim(), password: password.trim() };
 
     try {
-      setIsRequestingOtp(true);
-      await dispatch(requestOtp(payload)).unwrap();
-    } catch (requestError) {
-      const message =
-        typeof requestError === "string"
-          ? requestError
-          : requestError?.message ||
-            "Unable to send OTP right now. Please try again.";
-      setError(message);
-      setNotice("");
-      return;
+      setIsSubmitting(true);
+      // Hook your login API call here when backend endpoint is ready.
+      await dispatch(loginUser(payload)).unwrap();
+      await Promise.resolve();
     } finally {
-      setIsRequestingOtp(false);
+      setIsSubmitting(false);
     }
 
     setError("");
-    setOtp("");
-    setDirection(1);
-    setStep("otp");
-    setNotice("Verification code sent. Enter the 6-digit OTP to continue.");
-  };
+    setNotice("Login successful. Redirecting to your dashboard...");
+    setJustLoggedIn(true);
 
-  const handleOtpSubmit = async (event) => {
-    event.preventDefault();
-
-    if (isVerifyingOtp) return;
-
-    const validationError = validateIdentifier(identifier, identifierType);
-
-    if (validationError) {
-      setError(validationError);
-      setNotice("");
-      return;
+    if (loginTimerRef.current) {
+      clearTimeout(loginTimerRef.current);
     }
 
-    if (!/^\d{6}$/.test(otp)) {
-      setError("Enter all 6 digits to continue your journey.");
-      setNotice("");
-      return;
-    }
-
-    const trimmedIdentifier = identifier.trim();
-    const payload = {
-      purpose: identifierType,
-      email: identifierType === "email" ? trimmedIdentifier : "",
-      mobile_number: identifierType === "phone" ? trimmedIdentifier : "",
-      otp,
-    };
-
-    try {
-      setIsVerifyingOtp(true);
-      await dispatch(verifyOtp(payload)).unwrap();
-    } catch (verifyError) {
-      const message =
-        typeof verifyError === "string"
-          ? verifyError
-          : verifyError?.message ||
-            "Unable to verify OTP right now. Please try again.";
-      setError(message);
-      setNotice("");
-      setIsVerifyingOtp(false);
-      return;
-    }
-
-    setError("");
-    setNotice("Your next chapter starts now. Let's get moving!");
-    setJustVerified(true);
-
-    if (verificationTimerRef.current) {
-      clearTimeout(verificationTimerRef.current);
-    }
-
-    verificationTimerRef.current = setTimeout(() => {
+    loginTimerRef.current = setTimeout(() => {
       setIsAuthenticated(true);
-      setIsVerifyingOtp(false);
+      setJustLoggedIn(false);
     }, 1400);
-  };
-
-  const handleOtpChange = (event) => {
-    setOtp(event.target.value.replace(/\D/g, "").slice(0, 6));
-    setError("");
-    setNotice("");
-    setIsAuthenticated(false);
-    setJustVerified(false);
-  };
-
-  const goBack = () => {
-    if (verificationTimerRef.current) {
-      clearTimeout(verificationTimerRef.current);
-      verificationTimerRef.current = null;
-    }
-
-    setDirection(-1);
-    setStep("identifier");
-    setOtp("");
-    setError("");
-    setNotice("");
-    setJustVerified(false);
-    setIsAuthenticated(false);
-    setIsVerifyingOtp(false);
   };
 
   return (
@@ -326,7 +210,7 @@ export default function LoginForm({
             <Link
               href="/"
               aria-label="Sudharva Marathon home"
-              className="login-brand inline-flex flex-col items-center rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-white"
+              className="login-brand inline-flex flex-col items-center rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-white"
             >
               <Image
                 src="/image/cta/logo.png"
@@ -390,9 +274,8 @@ export default function LoginForm({
           ref={formPanelRef}
           className="relative flex items-center px-5 py-8 sm:px-10 sm:py-12 lg:px-14"
         >
-          {/* Verification success overlay */}
           <AnimatePresence>
-            {justVerified && (
+            {justLoggedIn && (
               <motion.div
                 key="verified"
                 role="status"
@@ -443,359 +326,147 @@ export default function LoginForm({
                     delay: 0.15,
                     ease: "easeInOut",
                   }}
-                  className="h-1 w-44 origin-left rounded-full bg-gradient-to-r from-success via-accent to-success"
+                  className="h-1 w-44 origin-left rounded-full bg-linear-to-r from-success via-accent to-success"
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
           <div className="mx-auto w-full max-w-md">
-            {/* Step indicator */}
-            <div className="login-form-intro mb-8">
-              <div className="mb-5 flex items-center gap-2">
-                <motion.span
-                  key={
-                    step === "identifier" ? "account-step" : "verification-step"
-                  }
-                  initial={
-                    shouldReduceMotion
-                      ? false
-                      : { scale: 0.6, opacity: 0, rotate: -20 }
-                  }
-                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 22,
-                  }}
-                  className={cn(
-                    "grid h-8 w-8 place-items-center rounded-full text-xs font-bold",
-                    step === "identifier"
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-success text-foreground",
-                  )}
-                >
-                  {step === "otp" ? (
-                    <CheckCircle size={17} weight="fill" color="white" />
-                  ) : (
-                    "1"
-                  )}
-                </motion.span>
+            <div className="login-form-intro mb-4">
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-accent">
+                GOOD TO HAVE YOU BACK
+              </p>
 
-                <span
-                  aria-hidden="true"
-                  className="relative h-0.5 w-9 overflow-hidden rounded-full bg-border"
-                >
-                  <AnimatePresence initial={false}>
-                    {step === "otp" && (
-                      <motion.span
-                        key="connector-fill"
-                        aria-hidden="true"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        exit={{ scaleX: 0 }}
-                        transition={{
-                          duration: 0.5,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                        className="absolute inset-0 origin-left rounded-full bg-success"
-                      />
-                    )}
-                  </AnimatePresence>
-                </span>
+              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">
+                Let&rsquo;s get moving.!
+              </h2>
 
-                <span
-                  className={cn(
-                    "grid h-8 w-8 place-items-center rounded-full text-xs font-bold",
-                    step === "otp"
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-ink-soft",
-                  )}
-                >
-                  2
-                </span>
-
-                <span className="ml-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
-                  {step === "identifier" ? "Your account" : "Verification"}
-                </span>
-              </div>
-
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={step}
-                  initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={shouldReduceMotion ? undefined : { opacity: 0, y: -10 }}
-                  transition={{
-                    duration: 0.28,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  <h2 className="font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    {step === "identifier"
-                      ? "Your journey continues."
-                      : "One last step."}
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                    {step === "identifier"
-                      ? "Pick up where your purpose began. Sign in with your email or phone to continue."
-                      : `Enter the 6-digit code for ${identifier.trim()} to continue your journey.`}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
+              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                Sign in to access your account and keep your marathon journey
+                moving.
+              </p>
             </div>
 
-            {/* Identifier and OTP forms */}
             <AnimatePresence mode="wait" initial={false} custom={direction}>
-              {step === "identifier" ? (
-                <motion.form
-                  key="login-identifier"
-                  custom={direction}
-                  onSubmit={handleIdentifierSubmit}
-                  noValidate
-                  variants={panelVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={PANEL_SPRING}
+              <motion.form
+                key="login-password"
+                custom={direction}
+                onSubmit={handleLoginSubmit}
+                noValidate
+                variants={panelVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ type: "spring", stiffness: 300, damping: 32 }}
+              >
+                <label
+                  htmlFor="login-username"
+                  className="mb-2 block text-sm font-semibold text-foreground"
                 >
-                  {/* Email / phone selector */}
-                  <div
-                    role="group"
-                    aria-label="Choose sign-in method"
-                    className="mb-5 grid grid-cols-2 rounded-xl bg-muted/70 p-1"
-                  >
-                    <button
-                      type="button"
-                      aria-pressed={isEmail}
-                      onClick={() => switchIdentifierType("email")}
-                      className={cn(
-                        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                        isEmail
-                          ? "bg-surface text-foreground shadow-sm"
-                          : "text-ink-soft hover:text-foreground",
-                      )}
-                    >
-                      <Envelope size={17} />
-                      Email
-                    </button>
-
-                    <button
-                      type="button"
-                      aria-pressed={!isEmail}
-                      onClick={() => switchIdentifierType("phone")}
-                      className={cn(
-                        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                        !isEmail
-                          ? "bg-surface text-foreground shadow-sm"
-                          : "text-ink-soft hover:text-foreground",
-                      )}
-                    >
-                      <Phone size={17} />
-                      Mobile
-                    </button>
-                  </div>
-
-                  <label
-                    htmlFor="login-identifier"
-                    className="mb-2 block text-sm font-semibold text-foreground"
-                  >
-                    {isEmail
-                      ? "Your registered email"
-                      : "Your registered mobile"}
-                  </label>
-
-                  <div className="relative">
-                    {isEmail ? (
-                      <Envelope
-                        size={19}
-                        aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
-                      />
-                    ) : (
-                      <Phone
-                        size={19}
-                        aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
-                      />
-                    )}
-
-                    <input
-                      id="login-identifier"
-                      name="identifier"
-                      type={isEmail ? "email" : "tel"}
-                      inputMode={isEmail ? "email" : "tel"}
-                      autoComplete={isEmail ? "email" : "tel"}
-                      autoFocus
-                      required
-                      value={identifier}
-                      onChange={(event) => {
-                        setIdentifier(event.target.value);
-                        setError("");
-                        setNotice("");
-                      }}
-                      placeholder={
-                        isEmail ? "you@example.com" : "+91 98765 43210"
-                      }
-                      aria-invalid={Boolean(error)}
-                      aria-describedby={
-                        error ? "login-error" : "login-identifier-hint"
-                      }
-                      className={cn(
-                        "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-4 focus:ring-accent/10",
-                        error && "border-destructive focus:border-destructive",
-                      )}
-                    />
-                  </div>
-
-                  <p
-                    id={error ? "login-error" : "login-identifier-hint"}
-                    role={error ? "alert" : undefined}
-                    className={cn(
-                      "mt-2 min-h-5 text-xs",
-                      error ? "font-medium text-destructive" : "text-ink-soft",
-                    )}
-                  >
-                    {error ||
-                      (isEmail
-                        ? "Use the email linked to your marathon registration."
-                        : "Enter the mobile number linked to your registration.")}
-                  </p>
-
-                  <RainbowButton
-                    type="submit"
-                    variant="accent"
-                    size="lg"
-                    disabled={isRequestingOtp}
-                    className="mt-4 min-h-12 w-full rounded-xl"
-                  >
-                    <motion.span
-                      aria-hidden="true"
-                      className="inline-flex"
-                      animate={
-                        error && !shouldReduceMotion
-                          ? {
-                              x: [0, -7, 7, -4, 4, 0],
-                              transition: { duration: 0.35 },
-                            }
-                          : { x: 0 }
-                      }
-                    >
-                      {isRequestingOtp
-                        ? "Sending OTP..."
-                        : "Continue My Journey"}
-                    </motion.span>
-                    <ArrowRight size={18} weight="bold" />
-                  </RainbowButton>
-                </motion.form>
-              ) : (
-                <motion.form
-                  key="login-otp"
-                  custom={direction}
-                  onSubmit={handleOtpSubmit}
-                  noValidate
-                  variants={panelVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={PANEL_SPRING}
-                >
-                  <div className="mb-5 rounded-xl border border-accent/20 bg-accent/5 p-4">
-                    <div className="flex items-start gap-3">
-                      <LockKey
-                        size={19}
-                        className="mt-0.5 shrink-0 text-accent"
-                      />
-                      <p className="text-sm leading-relaxed text-ink-soft">
-                        Enter the one-time code for{" "}
-                        <span className="break-all font-semibold text-foreground">
-                          {identifier.trim()}
-                        </span>
-                        .
-                      </p>
-                    </div>
-                  </div>
-
-                  <label
-                    htmlFor="login-otp"
-                    className="mb-2 block text-sm font-semibold text-foreground"
-                  >
-                    Your 6-digit verification code
-                  </label>
-
+                  Username
+                </label>
+                <div className="relative">
+                  <User
+                    size={19}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
+                  />
                   <input
-                    id="login-otp"
-                    name="otp"
+                    id="login-username"
+                    name="username"
                     type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    pattern="[0-9]{6}"
-                    maxLength={6}
+                    autoComplete="username"
                     autoFocus
                     required
-                    value={otp}
-                    onChange={handleOtpChange}
-                    placeholder="••••••"
+                    value={username}
+                    onChange={(event) => {
+                      setUsername(event.target.value);
+                      setError("");
+                      setNotice("");
+                    }}
+                    placeholder="Enter your username"
                     aria-invalid={Boolean(error)}
-                    aria-describedby={error ? "otp-error" : "otp-hint"}
                     className={cn(
-                      "min-h-14 w-full rounded-xl border border-border bg-background px-4 text-center font-mono text-2xl font-bold tracking-[0.6em] text-foreground outline-none transition placeholder:text-ink-soft/40 focus:border-accent focus:ring-4 focus:ring-accent/10 sm:text-3xl",
+                      "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
                       error && "border-destructive focus:border-destructive",
                     )}
                   />
+                </div>
 
-                  <p
-                    id={error ? "otp-error" : "otp-hint"}
-                    role={error ? "alert" : undefined}
+                <label
+                  htmlFor="login-password"
+                  className="mb-2 mt-4 block text-sm font-semibold text-foreground"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <LockKey
+                    size={19}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
+                  />
+                  <input
+                    id="login-password"
+                    name="password"
+                    type={isPasswordVisible ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setError("");
+                      setNotice("");
+                    }}
+                    placeholder="Enter your password"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? "login-error" : "login-hint"}
                     className={cn(
-                      "mt-2 min-h-5 text-xs",
-                      error ? "font-medium text-destructive" : "text-ink-soft",
+                      "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-12 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
+                      error && "border-destructive focus:border-destructive",
                     )}
-                  >
-                    {error ||
-                      "Keep your verification code private. Your account security matters."}
-                  </p>
-
-                  <RainbowButton
-                    type="submit"
-                    variant="accent"
-                    size="lg"
-                    disabled={isVerifyingOtp}
-                    className="mt-4 min-h-12 w-full rounded-xl"
-                  >
-                    <motion.span
-                      aria-hidden="true"
-                      className="inline-flex"
-                      animate={
-                        error && !shouldReduceMotion
-                          ? {
-                              x: [0, -7, 7, -4, 4, 0],
-                              transition: { duration: 0.35 },
-                            }
-                          : { x: 0 }
-                      }
-                    >
-                      {isVerifyingOtp
-                        ? "Verifying OTP..."
-                        : "Verify &amp; Get Moving"}
-                    </motion.span>
-                    <ArrowRight size={18} weight="bold" />
-                  </RainbowButton>
-
+                  />
                   <button
                     type="button"
-                    onClick={goBack}
-                    className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-ink-soft transition hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    onClick={() => setIsPasswordVisible((visible) => !visible)}
+                    aria-label={
+                      isPasswordVisible ? "Hide password" : "Show password"
+                    }
+                    aria-pressed={isPasswordVisible}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
-                    <ArrowLeft size={17} />
-                    Try another {isEmail ? "email" : "mobile number"}
+                    {isPasswordVisible ? (
+                      <EyeIcon size={20} aria-hidden="true" />
+                    ) : (
+                      <EyeOffIcon size={20} aria-hidden="true" />
+                    )}
                   </button>
-                </motion.form>
-              )}
+                </div>
+
+                <p
+                  id={error ? "login-error" : "login-hint"}
+                  role={error ? "alert" : undefined}
+                  className={cn(
+                    "mt-2 min-h-5 text-xs",
+                    error ? "font-medium text-destructive" : "text-ink-soft",
+                  )}
+                >
+                  {error || "Use your account credentials to sign in securely."}
+                </p>
+
+                <RainbowButton
+                  type="submit"
+                  variant="accent"
+                  size="lg"
+                  disabled={isSubmitting}
+                  className="mt-4 min-h-12 w-full rounded-xl"
+                >
+                  {isSubmitting ? "Signing in..." : "Login"}
+                  <ArrowRight size={18} weight="bold" />
+                </RainbowButton>
+              </motion.form>
             </AnimatePresence>
 
-            {/* Status message */}
             {notice && (
               <motion.div
                 key={notice}
@@ -812,13 +483,12 @@ export default function LoginForm({
               </motion.div>
             )}
 
-            {/* Registration link */}
             <div className="login-form-intro mt-7 border-t border-border pt-5 text-center">
               <p className="text-sm text-ink-soft">
                 Haven&rsquo;t joined the movement yet?{" "}
                 <Link
                   href="/register"
-                  className="font-bold text-accent underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="font-bold text-accent underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-accent"
                 >
                   Claim your place at the starting line
                 </Link>

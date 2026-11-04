@@ -10,6 +10,8 @@ export const metadata = {
     "Sign-in preview for the Sudharva Marathon. Email and phone authentication will be available when the sign-in service is connected.",
 };
 
+export const instant = false;
+
 export default function LoginPage() {
   return (
     // <section className="relative py-10 sm:py-16">

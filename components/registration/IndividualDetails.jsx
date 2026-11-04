@@ -29,6 +29,14 @@ export const IndividualDetails = ({
   districts,
   taluks,
 }) => {
+  const handleResidentPincodeChange = (field, value) => {
+    const nextValue =
+      field === "resident_pincode"
+        ? value.replace(/[^0-9\s]/g, "")
+        : value;
+    onChange(field, nextValue);
+  };
+
   return (
     <motion.div
       key="individual-fields"
@@ -325,10 +333,7 @@ export const IndividualDetails = ({
                 name="resident_pincode"
                 label="Pin Code"
                 value={form.resident_pincode}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9\s]/g, "");
-                  onChange("resident_pincode", value);
-                }}
+                onChange={handleResidentPincodeChange}
                 icon={Home02Icon}
                 error={errors.resident_pincode}
                 cityField="resident_city"

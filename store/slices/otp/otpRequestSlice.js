@@ -31,7 +31,7 @@ const normalizeRequestPayload = (payload = {}) => {
   const mobile_number = String(payload?.mobile_number ?? "").trim();
 
   return {
-    purpose,
+    // purpose,
     email,
     mobile_number,
   };

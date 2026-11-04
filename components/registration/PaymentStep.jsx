@@ -756,13 +756,15 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
 
           <dl className="mt-5 space-y-3 border-t border-border/70 pt-4 text-sm">
             <div className="">
-              <div className="">
+              {/* <div className=""> */}
                 <MarathonPassTicket
+                  fluid
                   onTear={() => setTicketUsed(true)}
                   tearTicketContentClassName="bg-transparent"
                   tearTicketStubClassName="bg-gradient-mesh"
                   width={820}
-                  height={300}
+                  height={320}
+                  imageFit="cover"
                   imageRadius={16}
                   radius={24}
                   stubSize={300}
@@ -787,8 +789,8 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
                   stubLocation="Avadi"
                   stubRegNo={bibTicketValue}
                 />
-              </div>
-              <PromoCodeCard
+              {/* </div> */}
+              {/* <PromoCodeCard
                 code={form.premiumPromoCode ?? ""}
                 promo={appliedPremiumPromo}
                 bibNumber={form.premiumBibNumber ?? ""}
@@ -797,7 +799,7 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
                 onApply={handleApplyPremiumPromo}
                 onClear={handleClearPremiumPromo}
                 promoCodes={PREMIUM_PROMO_CODES}
-              />
+              /> */}
             </div>
 
             <div className="flex items-center justify-between gap-4">
@@ -944,7 +946,7 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
                     onClick={() => setPaymentLinkOpened(true)}
                     className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/15 transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:w-auto"
                   >
-                    Pay with Razorpay
+                   Continue to Secure Payment
                     <ArrowSquareOut
                       size={17}
                       weight="bold"
@@ -960,7 +962,7 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
                       ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
                       : "Opening Razorpay does not submit this registration or confirm payment."}
                   </p>
-                  {form.paymentReported ? (
+                  {/* {form.paymentReported ? (
                     <div
                       role="status"
                       aria-live="polite"
@@ -998,21 +1000,21 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
                     >
                       I’ve completed payment
                     </button>
-                  )}
+                  )} */}
                 </>
               )}
             </div>
           </div>
         </div>
       </div>
-      <StandardPromoCodeCard
+      {/* <StandardPromoCodeCard
         code={form.promoCode ?? ""}
         promo={appliedPromo}
         onCodeChange={handleCodeChange}
         onApply={handleApplyPromo}
         onClear={handleClearPromo}
         promoCodes={PROMO_CODES}
-      />
+      /> */}
       <AnimatePresence initial={false}>
         {(appliedPromo || appliedPremiumPromo) && totalDiscount > 0 && (
           <motion.div

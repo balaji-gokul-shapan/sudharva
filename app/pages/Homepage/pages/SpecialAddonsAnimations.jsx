@@ -104,7 +104,7 @@ export function ShareHealthCard({ items }) {
           className={"bg-gradient-brand"}
           position="top-right"
           color="bg-[var(--color-surface)]"
-          textColor="text-[var(--color-ink)]"
+          textColor="text-[var(--color-white)]"
         >
           Gift Card <HeartIcon size={14} className="ml-1 text-danger" />
         </Ribbon>

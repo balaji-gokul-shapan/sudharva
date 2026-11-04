@@ -24,8 +24,26 @@ function MousePosition() {
   return mousePosition
 }
 
-function hexToRgb(hex) {
-  hex = hex.replace("#", "")
+function colorToRgb(color) {
+  let resolvedColor = color
+
+  if (typeof window !== "undefined" && color.startsWith("var(")) {
+    const colorProbe = document.createElement("span")
+    colorProbe.style.color = color
+    document.body.appendChild(colorProbe)
+    resolvedColor = window.getComputedStyle(colorProbe).color
+    colorProbe.remove()
+  }
+
+  const rgbMatch = resolvedColor.match(
+    /^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i
+  )
+
+  if (rgbMatch) {
+    return [Number(rgbMatch[1]), Number(rgbMatch[2]), Number(rgbMatch[3])]
+  }
+
+  let hex = resolvedColor.replace("#", "")
 
   if (hex.length === 3) {
     hex = hex
@@ -57,6 +75,7 @@ export const Particles = ({
   const canvasContainerRef = useRef(null)
   const context = useRef(null)
   const circles = useRef([])
+  const rgb = useRef([255, 255, 255])
   const mousePosition = MousePosition()
   const mouse = useRef({ x: 0, y: 0 })
   const canvasSize = useRef({ w: 0, h: 0 })
@@ -68,6 +87,7 @@ export const Particles = ({
   const animateRef = useRef(() => {})
 
   useEffect(() => {
+    rgb.current = colorToRgb(color)
     if (canvasRef.current) {
       context.current = canvasRef.current.getContext("2d")
     }
@@ -168,15 +188,13 @@ export const Particles = ({
     }
   }
 
-  const rgb = hexToRgb(color)
-
   const drawCircle = (circle, update = false) => {
     if (context.current) {
       const { x, y, translateX, translateY, size, alpha } = circle
       context.current.translate(translateX, translateY)
       context.current.beginPath()
       context.current.arc(x, y, size, 0, 2 * Math.PI)
-      context.current.fillStyle = `rgba(${rgb.join(", ")}, ${alpha})`
+      context.current.fillStyle = `rgba(${rgb.current.join(", ")}, ${alpha})`
       context.current.fill()
       context.current.setTransform(dpr, 0, 0, dpr, 0, 0)
 

@@ -6,14 +6,26 @@ import { IndividualDetails } from "./IndividualDetails";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export const PersonalDetails = ({ form, errors, onChange, age, hasCities, hasStates, hasDistricts, hasTaulks, cities, states, districts, taluks }) => {
+export const PersonalDetails = ({
+  form,
+  errors,
+  onChange,
+  age,
+  hasCities,
+  hasStates,
+  hasDistricts,
+  hasTaulks,
+  cities,
+  states,
+  districts,
+  taluks,
+}) => {
   const isCorporate = form.entryType === "corporate";
 
   const selectType = (entryType) => {
     if (form.entryType === entryType) return;
     onChange("entryType", entryType);
   };
- 
 
   return (
     <div className="space-y-6">

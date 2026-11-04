@@ -10,16 +10,7 @@ const initialState = {
 
 const DEFAULT_ERROR_MESSAGE = "OTP verification failed";
 
-const getVerifyUrl = () => {
-  const publicBaseUrl = process.env.NEXT_PUBLIC_API_URL || "";
-
-  if (publicBaseUrl) {
-    return `${publicBaseUrl.replace(/\/+$/, "")}/otp/verify`;
-  }
-
-  // Prefer the local Next.js API proxy. Configure NEXT_APP_API_URL server-side.
-  return "/api/otp/verify/";
-};
+const getVerifyUrl = () => "/api/auth/otp/verify";
 
 const getErrorMessage = (error) =>
   error?.response?.data?.message ||
@@ -29,13 +20,15 @@ const getErrorMessage = (error) =>
 
 const normalizeVerifyPayload = (payload = {}) => {
   const otp = String(payload?.otp ?? "").replace(/\D/g, "").slice(0, 6);
-  const purpose = String(payload?.purpose ?? "email").trim() || "email";
-  const email = String(payload?.email ?? "").trim();
-  const mobile_number = String(payload?.mobile_number ?? "").trim();
+  const email =
+    payload?.email == null ? null : String(payload.email).trim();
+  const mobile_number =
+    payload?.mobile_number == null
+      ? null
+      : String(payload.mobile_number).trim();
 
   return {
     otp,
-    purpose,
     email,
     mobile_number,
   };
@@ -59,7 +52,7 @@ export const verifyOtp = createAsyncThunk(
   "otpVerify/verifyOtp",
   async (payload, thunkAPI) => {
     const { rejectWithValue, signal } = thunkAPI;
-    const { otp, purpose, email, mobile_number } = normalizeVerifyPayload(payload);
+    const { otp, email, mobile_number } = normalizeVerifyPayload(payload);
 
     if (!/^\d{6}$/.test(otp)) {
       return rejectWithValue("Enter a valid 6-digit OTP");
@@ -74,7 +67,6 @@ export const verifyOtp = createAsyncThunk(
         getVerifyUrl(),
         {
           otp,
-          purpose,
           email,
           mobile_number,
         },

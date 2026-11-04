@@ -565,8 +565,8 @@
   .header-char {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--foreground) 56%, white) 25%,
-      color-mix(in srgb, var(--accent) 40%, var(--foreground)) 92%
+      color-mix(in srgb, var(--foreground) 16%, white) 25%,
+      color-mix(in srgb, var(--accent) 60%, var(--foreground)) 92%
     );
     background-clip: text;
     -webkit-background-clip: text;

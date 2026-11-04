@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import {
-  HEALTH_DECLARATIONS,
   HEALTH_SNAPSHOT,
   SNAPSHOT_TINTS,
   DECLARATION_STYLES,
@@ -8,12 +7,66 @@ import {
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
+  CheckListIcon,
   HeartIcon,
+  InformationCircle,
   LockKeyholeIcon,
   ShieldCheck,
 } from "@animateicons/react/huge";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
+
+const REQUIRED_DECLARATIONS = [
+  {
+    id: "medical_fitness_declaration",
+    label: "I confirm I am medically fit to participate.",
+    icon: HeartIcon,
+    tint: "health",
+  },
+  {
+    id: "physical_exertion_acknowledgement",
+    label: "I acknowledge marathon participation involves physical exertion.",
+    icon: AlertCircleIcon,
+    tint: "accent",
+  },
+  {
+    id: "event_rules_acceptance",
+    label: "I accept the event rules and regulations.",
+    icon: CheckListIcon,
+    tint: "education",
+  },
+  {
+    id: "event_communication_consent",
+    label: "I consent to communication regarding event updates.",
+    icon: InformationCircle,
+    tint: "primary",
+  },
+  {
+    id: "anonymized_impact_reporting_consent",
+    label: "I consent to anonymized impact reporting.",
+    icon: ShieldCheck,
+    tint: "success",
+  },
+];
+
+const LEGACY_MIRROR_FIELDS = {
+  event_rules_acceptance: "terms",
+  event_communication_consent: "eventUpdates",
+  anonymized_impact_reporting_consent: "dataPrivacy",
+};
+
+const REQUIRED_SNAPSHOT_FIELDS = new Set([
+  "previous_marathon_participation",
+  "cardiac_condition",
+  "hypertension",
+  "has_diabetes",
+]);
+
+const CONSENT_DECLARATION_FIELDS = new Set([
+  "event_rules_acceptance",
+  "event_communication_consent",
+  "anonymized_impact_reporting_consent",
+]);
 
 function DeclarationRow({
   id,
@@ -30,7 +83,7 @@ function DeclarationRow({
     <Label
       className={cn(
         "group flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-200",
-        "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent/20",
+        "has-focus-visible:ring-accent/20",
         checked
           ? cn(styles.selected, "shadow-sm")
           : error
@@ -46,7 +99,7 @@ function DeclarationRow({
         aria-required="true"
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className="mt-0.5 h-5 w-5 rounded-md shrink-0 cursor-pointer accent-[var(--accent)]"
+        className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded-md accent-(--accent)"
       />
       <span
         className={cn(
@@ -72,7 +125,7 @@ function HealthSnapshot({ form, onChange }) {
   return (
     <section
       aria-labelledby="health-snapshot-title"
-      className="rounded-2xl border border-health/20 bg-gradient-to-br from-health/5 via-background to-primary/5 p-4 sm:p-5"
+      className="rounded-2xl border border-health/20 bg-linear-to-br from-health/5 via-background to-primary/5 p-4 sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -92,10 +145,13 @@ function HealthSnapshot({ form, onChange }) {
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {HEALTH_SNAPSHOT.map((item) => {
+        {HEALTH_SNAPSHOT.filter(
+          (item) => !CONSENT_DECLARATION_FIELDS.has(item.id),
+        ).map((item) => {
           const Icon = item.icon;
           const value = form[item.id];
           const styles = SNAPSHOT_TINTS[item.tint] ?? SNAPSHOT_TINTS.health;
+          const isRequiredSnapshot = REQUIRED_SNAPSHOT_FIELDS.has(item.id);
 
           if (item.kind === "toggle") {
             return (
@@ -114,9 +170,16 @@ function HealthSnapshot({ form, onChange }) {
                     <Icon size={17} aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold leading-relaxed text-foreground">
-                      {item.label}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-semibold leading-relaxed text-foreground">
+                        {item.label}
+                      </p>
+                      {isRequiredSnapshot ? (
+                        <span className="shrink-0 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
+                          Required
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="mt-2 flex gap-2">
                       {item.options.map((option) => {
                         const optionId = `${item.id}-${option.value ? "yes" : "no"}`;
@@ -130,7 +193,7 @@ function HealthSnapshot({ form, onChange }) {
                             htmlFor={optionId}
                             className={cn(
                               "flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 text-center text-[11px] font-semibold transition",
-                              "focus-within:ring-2 focus-within:ring-accent/30",
+                              "focus-within:ring-accent/30",
                               isActive
                                 ? optionStyles.active
                                 : optionStyles.chip,
@@ -153,8 +216,13 @@ function HealthSnapshot({ form, onChange }) {
                   </div>
                 </div>
                 {item.hint ? (
-                  <p className="mt-2 pl-[2.625rem] text-[10px] leading-relaxed text-ink-soft">
+                  <p className="mt-2 pl-10.5 text-[10px] leading-relaxed text-ink-soft">
                     {item.hint}
+                  </p>
+                ) : null}
+                {isRequiredSnapshot && form[item.id] === undefined ? (
+                  <p className="mt-1 pl-10.5 text-[11px] font-medium text-destructive">
+                    Please choose Yes or No.
                   </p>
                 ) : null}
               </fieldset>
@@ -187,7 +255,7 @@ function HealthSnapshot({ form, onChange }) {
                 onChange={(event) => onChange(item.id, event.target.value)}
                 placeholder={item.placeholder}
                 rows={2}
-                className="mt-2 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-4 focus:ring-accent/10"
+                className="mt-2 w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10"
               />
             </div>
           );
@@ -199,8 +267,7 @@ function HealthSnapshot({ form, onChange }) {
           aria-hidden="true"
           className="mt-0.5 shrink-0"
         />
-        Optional details to help the event team plan participant support. This
-        page does not submit your information.
+        Health details are used only to help the medical crew prepare support on race day.
       </div>
     </section>
   );
@@ -212,10 +279,17 @@ export const HealthDeclaration = ({
   onChange,
 
 }) => {
-  const total = HEALTH_DECLARATIONS.length + 1;
-  const done =
-    HEALTH_DECLARATIONS.filter((item) => form[item.id]).length +
-    (form.dataPrivacy ? 1 : 0);
+  const handleFieldChange = (id, value) => {
+    onChange(id, value);
+
+    const legacyField = LEGACY_MIRROR_FIELDS[id];
+    if (legacyField) {
+      onChange(legacyField, value);
+    }
+  };
+
+  const total = REQUIRED_DECLARATIONS.length;
+  const done = REQUIRED_DECLARATIONS.filter((item) => form[item.id]).length;
   const progress = Math.round((done / total) * 100);
 
   return (
@@ -303,30 +377,49 @@ export const HealthDeclaration = ({
         </span>
       </div>
 
-      <div className="space-y-3">
-        {HEALTH_DECLARATIONS.map((item) => (
+      <div className="rounded-2xl border border-accent/20 bg-linear-to-br from-accent/5 via-background to-health/5 p-4 sm:p-5">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-bold text-foreground">Safety Passport</h4>
+            <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+              Complete these required declarations to unlock final submission.
+            </p>
+          </div>
+          <span className="rounded-full border border-accent/30 bg-accent/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-accent">
+            Required
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {REQUIRED_DECLARATIONS.map((item) => (
           <div key={item.id}>
             <DeclarationRow
               {...item}
               checked={form[item.id]}
-              onChange={onChange}
+              onChange={handleFieldChange}
               error={errors[item.id]}
             />
             {item.id === "medical_fitness_declaration" && (
               <div className="my-3">
-                <HealthSnapshot form={form} onChange={onChange} />
+                <HealthSnapshot form={form} onChange={handleFieldChange} />
               </div>
             )}
+            {errors[item.id] ? (
+              <p id={`${item.id}-error`} className="mt-2 pl-1 text-xs text-destructive">
+                {errors[item.id]}
+              </p>
+            ) : null}
           </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div
         className={cn(
           "rounded-3xl border p-5 transition-colors",
-          form.dataPrivacy
+          form.anonymized_impact_reporting_consent
             ? "border-primary/30 bg-primary/5"
-            : errors.dataPrivacy
+            : errors.anonymized_impact_reporting_consent
               ? "border-destructive/50 bg-destructive/5"
               : "border-border bg-background",
         )}
@@ -335,7 +428,7 @@ export const HealthDeclaration = ({
           <span
             className={cn(
               "grid h-11 w-11 shrink-0 place-items-center rounded-2xl transition-colors",
-              form.dataPrivacy
+              form.anonymized_impact_reporting_consent
                 ? "bg-primary/10 text-primary"
                 : "bg-muted text-ink-soft",
             )}
@@ -343,19 +436,13 @@ export const HealthDeclaration = ({
             <LockKeyholeIcon size={22} weight="duotone" />
           </span>
           <div>
-            <h4 className="text-sm font-bold text-foreground">Data Privacy</h4>
-            <p className="text-xs text-ink-soft">Your data, your call.</p>
+            <h4 className="text-sm font-bold text-foreground">Privacy Commitment</h4>
+            <p className="text-xs text-ink-soft">Protected, anonymized, and purpose-bound.</p>
           </div>
         </div>
-        <DeclarationRow
-          id="dataPrivacy"
-          label="I authorize Appa Charitable Trust to use participation data for wellness reporting."
-          icon={ShieldCheck}
-          tint="primary"
-          checked={form.dataPrivacy}
-          onChange={onChange}
-          error={errors.dataPrivacy}
-        />
+        <p className="text-sm leading-relaxed text-foreground">
+          Your anonymized impact reporting consent is part of the required checklist above. No personally identifiable health details are published.
+        </p>
       </div>
     </motion.div>
   );

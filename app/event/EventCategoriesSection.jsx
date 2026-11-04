@@ -148,12 +148,12 @@ export default function EventCategoriesSection() {
                     ? "var(--lane-color)"
                     : "color-mix(in srgb, var(--lane-color) 28%, var(--color-border, currentColor))",
                   background: `url(${category.bannerImg}) center / cover no-repeat`,
-                  filter: `saturate(${isActive ? 1.35 : 0.8}) brightness(${isActive ? 0.9 : 0.7})`,
-                  // background: category.bannerImg
-                  //   ? `linear-gradient(120deg, color-mix(in srgb, var(--lane-tint)  ${isActive ? 9 : 5}%, transparent), transparent ${isActive ? 5 : 8}%), linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.75) 100%), url(${category.bannerImg}) center / cover no-repeat`
-                  //   : isActive
-                  //     ? "linear-gradient(120deg, color-mix(in srgb, var(--lane-tint) 60%, transparent), transparent 70%)"
-                  //     : "linear-gradient(120deg, color-mix(in srgb, var(--lane-tint) 40%, transparent), transparent 62%)",
+                  // filter: `saturate(${isActive ? 1.35 : 0.8}) brightness(${isActive ? 0.9 : 0.7})`,
+                  background: category.bannerImg
+                    ? `linear-gradient(120deg, color-mix(in srgb, var(--lane-tint)  ${isActive ? 9 : 5}%, transparent), transparent ${isActive ? 5 : 8}%), linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.75) 100%), url(${category.bannerImg}) center / cover no-repeat`
+                    : isActive
+                      ? "linear-gradient(120deg, color-mix(in srgb, var(--lane-tint) 60%, transparent), transparent 70%)"
+                      : "linear-gradient(120deg, color-mix(in srgb, var(--lane-tint) 40%, transparent), transparent 62%)",
                   boxShadow: isActive
                     ? "0 18px 44px -25px var(--lane-color)"
                     : "0 10px 30px -28px color-mix(in srgb, var(--lane-color) 65%, transparent)",

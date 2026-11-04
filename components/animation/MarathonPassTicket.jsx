@@ -12,7 +12,8 @@ export const PASS_TICKET_PROPS = {
   orientation: "horizontal",
   scrim: false,
   imageRadius: 8,
-  width: 60,
+  imageFit: "contain",
+  width: 460,
   height: 250,
   stubSize: 150,
   radius: 16,
@@ -84,6 +85,7 @@ export function MarathonPassTicket({
   imageAlt = PASS_TICKET_PROPS.imageAlt,
   scrim = PASS_TICKET_PROPS.scrim,
   imageRadius = PASS_TICKET_PROPS.imageRadius,
+  imageFit = PASS_TICKET_PROPS.imageFit,
   orientation = PASS_TICKET_PROPS.orientation,
   width = PASS_TICKET_PROPS.width,
   height = PASS_TICKET_PROPS.height,
@@ -128,6 +130,7 @@ export function MarathonPassTicket({
         imageAlt={imageAlt}
         scrim={scrim}
         imageRadius={imageRadius}
+        imageFit={imageFit}
         orientation={orientation}
         width={width}
         height={height}

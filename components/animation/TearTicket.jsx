@@ -78,6 +78,7 @@ export default function TearTicket({
   stub = null,
   image = '',
   imageAlt = '',
+  imageFit = 'contain',
   scrim = true,
   imageRadius = 8,
   orientation = 'horizontal',
@@ -556,7 +557,10 @@ export default function TearTicket({
                     src={image}
                     alt={imageAlt}
                     draggable={false}
-                    style={reduce ? undefined : { transform: art }}
+                    style={{
+                      objectFit: imageFit,
+                      ...(!reduce ? { transform: art } : {}),
+                    }}
                   />
                   {scrim ? <div className="tear-ticket__scrim" /> : null}
                 </div>

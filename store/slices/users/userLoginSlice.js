@@ -2,6 +2,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { createSlice } from "@reduxjs/toolkit";
+import {
+  applyAuthHeaders,
+  extractAuthTokens,
+  persistAuthTokens,
+} from "./userRefreshTokenSlice";
 
 
 const initialState = {
@@ -17,21 +22,35 @@ const options = {
     'Content-Type': 'application/json'
   },
   data: {
-    email: '',
+    username: '',
     password: ''
   }
 }
 
 export const loginUser = createAsyncThunk(
   "userLogin/loginUser",
-  async ({ email, password }, thunkAPI) => {
+  async ({ username, email, password }, thunkAPI) => {
     try {
-      // Replace this with your actual login API call
-      const response = await axios({ ...options, data: { email, password } });
+      const normalizedUsername = String(username || email || "").trim();
+      const response = await axios({
+        ...options,
+        data: {
+          username: normalizedUsername,
+          email: normalizedUsername,
+          password,
+        },
+      });
       const data = response.data;
-      if (response.status !== 200) {
+      if (response.status < 200 || response.status >= 300) {
         throw new Error(data.message || "Login failed");
       }
+
+      const tokens = extractAuthTokens(data);
+      if (tokens.accessToken) {
+        persistAuthTokens(tokens);
+        applyAuthHeaders(tokens.accessToken);
+      }
+
       return data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
@@ -61,6 +80,24 @@ export const userLoginSlice = createSlice({
       state.success = false;
       state.error = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.error = null;
+        state.userInfo = action.payload;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.error = action.payload || action.error?.message || "Login failed";
+      });
   },
 });
 

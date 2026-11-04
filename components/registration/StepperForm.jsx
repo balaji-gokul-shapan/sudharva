@@ -146,9 +146,9 @@ const STEP_FIELDS = {
     [
       "medical_fitness_declaration",
       "physical_exertion_acknowledgement",
-      "eventUpdates",
-      "terms",
-      "dataPrivacy",
+      "event_rules_acceptance",
+      "event_communication_consent",
+      "anonymized_impact_reporting_consent",
     ],
     [],
     [],
@@ -175,9 +175,6 @@ const STEP_FIELDS = {
       "event_rules_acceptance",
       "event_communication_consent",
       "anonymized_impact_reporting_consent",
-      "eventUpdates",
-      "terms",
-      "dataPrivacy",
     ],
     [],
     [],
@@ -587,7 +584,8 @@ function StepperFormContent({ identifier, setIdentifier }) {
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
   const [isRegistrationSuccessModalOpen, setIsRegistrationSuccessModalOpen] =
     useState(false);
-  const [paymentOrderConfettiKey, setPaymentOrderConfettiKey] = useState(0);
+  const [registrationSuccessConfettiKey, setRegistrationSuccessConfettiKey] =
+    useState(0);
   const getRegistrationType = masterData?.registration_type ?? [];
   console.log(getRegistrationType, "getRegistrationType");
   const initialForm = draft?.form
@@ -646,7 +644,6 @@ function StepperFormContent({ identifier, setIdentifier }) {
           ["payment-order", participantReference],
           order ?? null,
         );
-        setPaymentOrderConfettiKey((current) => current + 1);
       })
       .catch(() => {
         queryClient.setQueryData(["payment-order"], null);
@@ -876,6 +873,7 @@ function StepperFormContent({ identifier, setIdentifier }) {
         }),
       );
 
+      setRegistrationSuccessConfettiKey((current) => current + 1);
       setIsSavingRegistration(true);
       setIsRegistrationSuccessModalOpen(true);
     } catch {
@@ -908,9 +906,7 @@ function StepperFormContent({ identifier, setIdentifier }) {
               : "Save registration";
 
   const isSaveRegistrationCta =
-    stepIndex === STEPS.length - 2 &&
-    !isRegisterSubmitting &&
-    !isSavingRegistration;
+    stepIndex === STEPS.length - 2;
 
   return (
     <section
@@ -1045,16 +1041,36 @@ function StepperFormContent({ identifier, setIdentifier }) {
 
               {stepIndex < STEPS.length - 1 ? (
                 isSaveRegistrationCta ? (
-                  <ConfettiSideCannons
-                    type="submit"
-                    disabled={isRegisterSubmitting}
-                    fireOnClick={true}
-                    triggerKey={paymentOrderConfettiKey}
-                    className="min-h-12 w-full rounded-xl border-0 bg-accent px-6 text-sm font-bold text-accent-foreground shadow-md hover:brightness-105 sm:w-auto"
-                  >
-                    Save registration
-                    <CaretRight size={18} weight="bold" />
-                  </ConfettiSideCannons>
+                  <div className="flex flex-col items-end gap-2">
+                    <ConfettiSideCannons
+                      type="submit"
+                      disabled={isRegisterSubmitting || isSavingRegistration}
+                      fireOnClick={false}
+                      triggerKey={registrationSuccessConfettiKey}
+                      className="min-h-12 w-full rounded-xl border-0 bg-accent px-6 text-sm font-bold text-accent-foreground shadow-md hover:brightness-105 sm:w-auto"
+                    >
+                      {isRegisterSubmitting ? (
+                        <ArrowCounterClockwise
+                          size={18}
+                          className="animate-spin"
+                        />
+                      ) : null}
+                      {isRegisterSubmitting
+                        ? "Saving registration..."
+                        : isSavingRegistration
+                          ? "Continue to payment"
+                          : "Save registration"}
+                      <CaretRight size={18} weight="bold" />
+                    </ConfettiSideCannons>
+                    {error ? (
+                      <p
+                        role="alert"
+                        className="max-w-sm text-right text-sm font-medium text-destructive"
+                      >
+                        {error}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : (
                   <RainbowButton
                     type="submit"
