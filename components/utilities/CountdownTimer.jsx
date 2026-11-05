@@ -138,7 +138,7 @@ export function CountdownTimer({
   return (
     <span
       className={cn(
-        'relative inline-block rounded-md border border-border bg-muted/60',
+        'relative inline-block rounded-md border w-fit border-border bg-muted/60',
         variant === 'hero' ? 'px-3 py-1.5' : 'px-2 py-1',
         className
       )}

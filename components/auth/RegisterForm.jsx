@@ -91,6 +91,45 @@ function validateAccountPayload({ username, password, confirmPassword }) {
   return "";
 }
 
+function toReadableErrorMessage(payload, fallbackMessage) {
+  if (!payload) return fallbackMessage;
+
+  if (typeof payload === "string") {
+    try {
+      return toReadableErrorMessage(JSON.parse(payload), fallbackMessage);
+    } catch {
+      return payload;
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    return payload[0] || fallbackMessage;
+  }
+
+  if (typeof payload === "object") {
+    if (Array.isArray(payload.non_field_errors) && payload.non_field_errors[0]) {
+      return payload.non_field_errors[0];
+    }
+
+    if (payload.detail) return String(payload.detail);
+    if (payload.message) return String(payload.message);
+
+    const firstKey = Object.keys(payload)[0];
+    if (!firstKey) return fallbackMessage;
+
+    const firstValue = payload[firstKey];
+    if (Array.isArray(firstValue) && firstValue[0]) {
+      return `${firstKey}: ${firstValue[0]}`;
+    }
+
+    if (typeof firstValue === "string" && firstValue.trim()) {
+      return `${firstKey}: ${firstValue}`;
+    }
+  }
+
+  return fallbackMessage;
+}
+
 export default function RegisterForm({
   isAuthenticated,
   setIsAuthenticated,
@@ -192,14 +231,13 @@ export default function RegisterForm({
 
   const handleCredsChange = (event) => {
     const { name, value } = event.target;
-    setUserCreds((prev)=> ({
+    setUserCreds((prev) => ({
       ...prev,
-      [name]:value,
-
+      [name]: value,
     }));
     setError("");
     setNotice("");
-  }
+  };
 
   const handleIdentifierSubmit = async (event) => {
     event.preventDefault();
@@ -225,11 +263,10 @@ export default function RegisterForm({
       setIsRequestingOtp(true);
       await dispatch(requestOtp(payload)).unwrap();
     } catch (requestError) {
-      const message =
-        typeof requestError === "string"
-          ? requestError
-          : requestError?.message ||
-            "Unable to send OTP right now. Please try again.";
+      const message = toReadableErrorMessage(
+        requestError,
+        "Unable to send OTP right now. Please try again.",
+      );
       setError(message);
       setNotice("");
       return;
@@ -272,27 +309,20 @@ export default function RegisterForm({
     try {
       await dispatch(verifyOtp(payload)).unwrap();
     } catch (error) {
-      const message =
-        typeof error === "string"
-          ? error
-          : error?.message ||
-            "Unable to verify OTP right now. Please try again.";
+      const message = toReadableErrorMessage(
+        error,
+        "Unable to verify OTP right now. Please try again.",
+      );
       setError(message);
       setNotice("");
       setIsVerifyingOtp(false);
       return;
     }
-    // Demo only: this does not verify a real OTP.
+    setIsVerifyingOtp(false);
     setError("");
     setNotice("OTP verified. Complete your account setup.");
-    setJustVerified(true);
-
-    setTimeout(() => {
-      setDirection(1);
-      setStep("account");
-      setJustVerified(false);
-      setIsVerifyingOtp(false);
-    }, 1400);
+    setDirection(1);
+    setStep("account");
   };
 
   const handleCreateAccountSubmit = async (event) => {
@@ -313,16 +343,18 @@ export default function RegisterForm({
 
     try {
       setIsCreatingAccount(true);
-      await dispatch(registerUser({
-        username: userCreds.username,
-        password: userCreds.password,
-        email: identifier.trim(),
-      })).unwrap();
+      await dispatch(
+        registerUser({
+          username: userCreds.username,
+          password: userCreds.password,
+          email: identifier.trim(),
+        }),
+      ).unwrap();
     } catch (requestError) {
-      const message =
-        typeof requestError === "string"
-          ? requestError
-          : requestError?.message || "Unable to create your account. Please try again.";
+      const message = toReadableErrorMessage(
+        requestError,
+        "Unable to create your account. Please try again.",
+      );
       setError(message);
       setNotice("");
       return;
@@ -331,7 +363,12 @@ export default function RegisterForm({
     }
     setError("");
     setNotice("Account created successfully. Welcome to Sudharva Marathon!");
-    setIsAuthenticated(true);
+    setJustVerified(true);
+    setTimeout(() => {
+      setJustVerified(false);
+      setIsAuthenticated(true);
+    }, 1400);
+
   };
 
   const handleOtpChange = (event) => {
@@ -811,7 +848,8 @@ export default function RegisterForm({
                     Use a different {isEmail ? "email" : "phone number"}
                   </button>
                 </motion.form>
-              ) : (
+              ) 
+              : (
                 <motion.form
                   key="register-account"
                   custom={direction}
@@ -823,7 +861,7 @@ export default function RegisterForm({
                   exit="exit"
                   transition={{ type: "spring", stiffness: 300, damping: 32 }}
                 >
-                  <label
+                  {/* <label
                     htmlFor="register-email"
                     className="mb-2 block text-sm font-semibold text-foreground"
                   >
@@ -845,7 +883,7 @@ export default function RegisterForm({
                       "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
                       error && "border-destructive focus:border-destructive",
                     )}
-                  />
+                  /> */}
                   <label
                     htmlFor="register-username"
                     className="mb-2 mt-4 block text-sm font-semibold text-foreground"
@@ -985,7 +1023,9 @@ export default function RegisterForm({
                     Back to OTP verification
                   </button>
                 </motion.form>
-              )}
+              )
+              }
+             
             </AnimatePresence>
 
             {notice && (

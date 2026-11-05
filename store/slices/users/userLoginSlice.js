@@ -27,16 +27,52 @@ const options = {
   }
 }
 
+const toReadableErrorMessage = (payload) => {
+  if (!payload) return "Login failed";
+  if (typeof payload === "string") {
+    try {
+      return toReadableErrorMessage(JSON.parse(payload));
+    } catch {
+      return payload;
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    return payload[0] || "Login failed";
+  }
+
+  if (typeof payload === "object") {
+    if (Array.isArray(payload.non_field_errors) && payload.non_field_errors[0]) {
+      return payload.non_field_errors[0];
+    }
+    if (payload.detail) return String(payload.detail);
+    if (payload.message) return String(payload.message);
+
+    const firstKey = Object.keys(payload)[0];
+    if (!firstKey) return "Login failed";
+
+    const firstValue = payload[firstKey];
+    if (Array.isArray(firstValue) && firstValue[0]) {
+      return `${firstKey}: ${firstValue[0]}`;
+    }
+
+    if (typeof firstValue === "string" && firstValue.trim()) {
+      return `${firstKey}: ${firstValue}`;
+    }
+  }
+
+  return "Login failed";
+};
+
 export const loginUser = createAsyncThunk(
   "userLogin/loginUser",
-  async ({ username, email, password }, thunkAPI) => {
+  async ({ username, password }, thunkAPI) => {
     try {
-      const normalizedUsername = String(username || email || "").trim();
+      const normalizedUsername = String(username || "").trim();
       const response = await axios({
         ...options,
         data: {
           username: normalizedUsername,
-          email: normalizedUsername,
           password,
         },
       });
@@ -53,7 +89,9 @@ export const loginUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      const responseData = error?.response?.data;
+      const message = toReadableErrorMessage(responseData) || error?.message || "Login failed";
+      return thunkAPI.rejectWithValue(message);
     }
   }
 );

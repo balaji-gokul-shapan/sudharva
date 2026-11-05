@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
+import gsap from "gsap";
 import { EventSubnav } from "@/components/animation/EventSubnav";
 import { OverviewSubnav } from "@/components/animation/OverviewSubnav";
 import { LinksSubnav } from "@/components/animation/LinksSubnav";
@@ -14,8 +15,21 @@ import Link from "next/link";
 
 // Example: "2026-12-14T05:30:00+05:30" (IST morning slot).
 const MARATHON_DATE = "2027-01-24T05:30:00+05:30";
+const MARATHON_DISPLAY_DATE = new Date(MARATHON_DATE).toLocaleDateString(
+  "en-IN",
+  {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  },
+);
 import Image from "next/image";
-import { Cancel01Icon, Menu01Icon } from "@animateicons/react/huge";
+import {
+  ArrowRight02Icon,
+  Cancel01Icon,
+  FilterAddIcon,
+  Menu01Icon,
+} from "@animateicons/react/huge";
 import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "../datas/homepage/data";
 
 /* ------------------------------------------------------------------ */
@@ -63,23 +77,86 @@ const NAV_LINKS = [
 
 export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [isTopBarHidden, setIsTopBarHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openSubnav, setOpenSubnav] = useState(null);
   const leaveTimeoutRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const topBarRef = useRef(null);
+  const lastScrollYRef = useRef(0);
+  const isNavHiddenRef = useRef(false);
 
   useEffect(() => {
+    const topBarNode = topBarRef.current;
+
     const handleScroll = () => {
-      const nextScrolled = window.scrollY > 30;
+      const currentScrollY = window.scrollY;
+      const nextScrolled = currentScrollY > 30;
       setScrolled((currentScrolled) =>
         currentScrolled === nextScrolled ? currentScrolled : nextScrolled,
       );
+
+      if (!topBarRef.current) {
+        lastScrollYRef.current = currentScrollY;
+        return;
+      }
+
+      if (mobileMenuOpen) {
+        gsap.to(topBarRef.current, {
+          y: 0,
+          duration: 0.3,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+        isNavHiddenRef.current = false;
+        setIsTopBarHidden(false);
+        lastScrollYRef.current = currentScrollY;
+        return;
+      }
+
+      const delta = currentScrollY - lastScrollYRef.current;
+
+      if (currentScrollY <= 8) {
+        if (isNavHiddenRef.current) {
+          gsap.to(topBarRef.current, {
+            y: 0,
+            duration: 0.35,
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+          isNavHiddenRef.current = false;
+          setIsTopBarHidden(false);
+        }
+      } else if (delta > 8 && !isNavHiddenRef.current) {
+        gsap.to(topBarRef.current, {
+          y: -40,
+          duration: 0.35,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+        isNavHiddenRef.current = true;
+        setIsTopBarHidden(true);
+      } else if (delta < -8 && isNavHiddenRef.current) {
+        gsap.to(topBarRef.current, {
+          y: 0,
+          duration: 0.35,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+        isNavHiddenRef.current = false;
+        setIsTopBarHidden(false);
+      }
+
+      lastScrollYRef.current = Math.max(currentScrollY, 0);
     };
 
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (topBarNode) gsap.killTweensOf(topBarNode);
+    };
+  }, [mobileMenuOpen]);
 
   // Clear pending subnav-close timeout on unmount
   useEffect(() => {
@@ -92,8 +169,32 @@ export const Navbar = () => {
 
   return (
     <>
-      {/* Spacer so the fixed header never overlaps page content */}
-      <div className="h-19 sm:h-20" aria-hidden="true" />
+      {/* Spacer so the fixed stacked bars never overlap page content */}
+      <div className="h-19 sm:h-30" aria-hidden="true" />
+      <div
+        ref={topBarRef}
+        className="fixed top-0 left-0 right-0 z-50 hidden border-b border-accent/35 bg-primary text-primary-foreground sm:block"
+      >
+        <div className="mx-auto flex h-10 w-full max-w-content items-center justify-center gap-4 px-3 sm:px-4 lg:px-6 xl:px-10">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] sm:text-xs">
+            Sudharva 2027
+          </p>
+           <CountdownTimer
+              target={MARATHON_DATE}
+              variant="navbar"
+              className="hidden 2xl:inline-flex rounded-xl border border-accent/30 bg-background/70 px-0!"
+            />
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] sm:text-xs">
+             {MARATHON_DISPLAY_DATE}
+          </p>
+          {/* <Link
+            href="/register"
+            className="inline-flex items-center rounded-md border border-primary-foreground/35 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] transition-colors hover:bg-primary-foreground/10 sm:px-3 sm:text-xs"
+          >
+            Register Now
+          </Link> */}
+        </div>
+      </div>
       <header
         onKeyDown={(event) => {
           if (event.key === "Escape" && mobileMenuOpen) {
@@ -102,12 +203,14 @@ export const Navbar = () => {
           }
         }}
         className={`fixed top-0 left-0 right-0 z-40 h-19 border-b transition-all duration-300 sm:h-20 ${
+          isTopBarHidden ? "sm:top-0" : "sm:top-10"
+        } ${
           scrolled
             ? "border-border bg-surface/95 shadow-md backdrop-blur-md"
             : "border-border/60 bg-surface/80 backdrop-blur-sm"
         }`}
       >
-        <div className="mx-auto flex h-full w-full max-w-content items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-full w-full max-w-content items-center justify-between gap-2 px-3 sm:gap-4 sm:px-4 lg:px-6 xl:px-10">
           {/* Zone 1: Brand wordmark */}
           <Link
             href="/"
@@ -130,7 +233,7 @@ export const Navbar = () => {
           {/* Zone 2: Desktop nav links */}
           <nav
             aria-label="Main navigation"
-            className="hidden items-center gap-6 text-sm font-semibold tracking-wide text-ink-soft lg:flex xl:gap-8"
+            className="hidden items-center gap-5 text-sm font-semibold tracking-wide text-ink-soft xl:flex 2xl:gap-8"
           >
             {NAV_LINKS.map((link, index) => {
               const isOpen = openSubnav === index;
@@ -150,7 +253,7 @@ export const Navbar = () => {
                       if (hasSubnav) {
                         leaveTimeoutRef.current = setTimeout(
                           () => setOpenSubnav(null),
-                          150
+                          150,
                         );
                       }
                     }}
@@ -164,7 +267,11 @@ export const Navbar = () => {
                         <CaretDownIcon
                           size={14}
                           className="ml-1 text-ink-soft transition-transform duration-200"
-                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                          style={{
+                            transform: isOpen
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                          }}
                         />
                       )}
                     </a>
@@ -186,42 +293,87 @@ export const Navbar = () => {
           </nav>
 
           {/* Zone 3: Desktop actions */}
-          <div className="hidden shrink-0 items-center gap-2 lg:flex">
-            <CountdownTimer
+          <div className="relative hidden shrink-0 items-center gap-2 overflow-visible rounded-2xl border border-accent/30 bg-linear-to-r from-accent/18 via-primary/10 to-accent/18 p-2 shadow-[0_14px_32px_-20px_color-mix(in_srgb,var(--accent)_65%,transparent)] backdrop-blur-sm xl:flex">
+            {/* <CountdownTimer
               target={MARATHON_DATE}
               variant="navbar"
-              className="hidden xl:inline-flex"
-            />
+              className="hidden 2xl:inline-flex rounded-xl border border-accent/30 bg-background/70 px-2.5"
+            /> */}
             <ThemeToggle />
             <RainbowButton
               asChild
               variant="accent"
               size="default"
-              className="shrink-0 px-5 py-2.5 text-sm font-bold uppercase tracking-wider"
+              className="group h-11 shrink-0 border border-accent/35 px-5 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-400 ease-out hover:border-accent"
             >
               <Link
                 href="/register"
-                className="group flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap"
+                className="group inline-flex h-full shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap"
               >
-                Register Now
+                {/* <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] opacity-0 transition-[max-width,opacity,margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:mr-2 group-hover:max-w-35 group-hover:opacity-100"> */}
+                Register
+                {/* </span> */}
+                {/* <span className="text-base leading-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 group-hover:scale-[1.06]" aria-hidden="true"> */}
+                <ArrowRight02Icon />
+                {/* </span> */}
               </Link>
             </RainbowButton>
+            <RainbowButton
+              asChild
+              variant=""
+              size="default"
+              className="h-11 shrink-0 border border-accent/35 px-5 py-2.5 text-sm font-bold uppercase tracking-wider transition-all duration-400 ease-out hover:border-accent"
+            >
+              <Link
+                href="/login"
+                className="inline-flex h-full items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <FilterAddIcon
+                  size={18}
+                  duration={1}
+                  color="currentColor"
+                />
+                Login
+              </Link>
+            </RainbowButton>
+            {/* <span className="pointer-events-none absolute -bottom-3 right-4 rounded-full border border-accent/35 bg-surface px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-[0.2em] text-accent shadow-sm">
+              Sudharva 2027
+            </span> */}
           </div>
 
           {/* Mobile actions */}
-          <div className="flex shrink-0 items-center gap-2 lg:hidden">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2 xl:hidden">
             <ThemeToggle />
             <RainbowButton
               asChild
+              variant="accent"
               size="sm"
-              className="shrink-0 px-3 py-1.5 text-xs font-bold uppercase"
+              className="h-9 min-w-10 shrink-0 px-2 py-1.5 text-xs font-bold uppercase sm:min-w-21 sm:px-3"
             >
               <Link
                 href="/register"
                 onClick={() => setMobileMenuOpen(false)}
-                className="cursor-pointer whitespace-nowrap"
+                aria-label="Register"
+                className="inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                Register
+                <ArrowRight02Icon className="h-4 w-4" />
+                <span className="sr-only sm:not-sr-only">Register</span>
+              </Link>
+            </RainbowButton>
+            <RainbowButton
+              asChild
+              variant="default"
+              size="sm"
+              className="h-9 min-w-10 shrink-0 px-2 py-1.5 text-xs font-bold uppercase sm:min-w-21 sm:px-3"
+            >
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Login"
+                className="inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap"
+              >
+                <FilterAddIcon size={16} duration={1} color="currentColor" />
+                <span className="sr-only sm:not-sr-only">Login</span>
               </Link>
             </RainbowButton>
             <button
@@ -249,7 +401,7 @@ export const Navbar = () => {
         {mobileMenuOpen && (
           <div
             id="mobile-navigation"
-            className="absolute left-0 right-0 top-full max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-surface shadow-lg lg:hidden"
+            className="absolute left-0 right-0 top-full max-h-[calc(100vh-4rem)] overflow-y-auto border-b border-border bg-surface shadow-lg xl:hidden"
           >
             <nav
               aria-label="Mobile navigation"
@@ -262,7 +414,10 @@ export const Navbar = () => {
                 className="mb-2 justify-center"
               />
               {NAV_LINKS.map((link) => (
-                <div key={link.href} className="border-b border-border/40 last:border-b-0">
+                <div
+                  key={link.href}
+                  className="border-b border-border/40 last:border-b-0"
+                >
                   <a
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
@@ -317,7 +472,7 @@ export const Navbar = () => {
                               </span>
                             </a>
                           </li>
-                        )
+                        ),
                       )}
                     </ul>
                   )}
@@ -346,4 +501,3 @@ export const Navbar = () => {
     </>
   );
 };
-

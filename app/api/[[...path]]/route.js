@@ -100,21 +100,29 @@ async function proxyRequest(request, { params }) {
       responseType: "arraybuffer",
       validateStatus: () => true,
       maxRedirects: shouldFollowRedirects ? 5 : 0,
+      httpsAgent:
+        INSECURE_DEV_SSL_ENABLED && upstreamUrl.protocol === "https:"
+          ? INSECURE_HTTPS_AGENT
+          : undefined,
     });
   } catch (error) {
     const cause = error?.cause;
+    const isTlsError = isTlsCertificateError(error);
 
     return Response.json(
       {
         error: "Could not reach the configured API server.",
-        // ...(process.env.NODE_ENV !== "production" && {
-        //   details:
-        //     cause?.code ||
-        //     cause?.message ||
-        //     error?.code ||
-        //     error?.message,
-         
-        // }),
+        ...(process.env.NODE_ENV !== "production" && {
+          details:
+            cause?.code ||
+            cause?.message ||
+            error?.code ||
+            error?.message,
+          ...(isTlsError && {
+            hint:
+              "TLS certificate validation failed. Install the upstream root CA, or set ALLOW_INSECURE_DEV_SSL=true for local development only.",
+          }),
+        }),
       },
       { status: 502 },
     );

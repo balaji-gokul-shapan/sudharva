@@ -21,6 +21,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { RainbowButton } from "@/components/animation/rainbowButton";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
+import { useRouter } from "next/navigation";
 
 const panelVariants = {
   enter: (dir) => ({
@@ -68,6 +69,7 @@ export default function LoginForm({ setIsAuthenticated }) {
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const visualRef = useRef(null);
   const formPanelRef = useRef(null);
@@ -160,13 +162,24 @@ export default function LoginForm({ setIsAuthenticated }) {
       setNotice("");
       return;
     }
-    const payload = { username: username.trim(), password: password.trim() };
+    const payload = { username: username.trim(), password };
 
+    let loginResponse;
     try {
       setIsSubmitting(true);
       // Hook your login API call here when backend endpoint is ready.
-      await dispatch(loginUser(payload)).unwrap();
-      await Promise.resolve();
+      loginResponse = await dispatch(loginUser(payload)).unwrap();
+    } catch (requestError) {
+      const message =
+        typeof requestError === "string"
+          ? requestError
+          : requestError?.non_field_errors?.[0] ||
+            requestError?.message ||
+            "Invalid credentials. Please check your username and password.";
+      setError(message);
+      setNotice("");
+      setJustLoggedIn(false);
+      return;
     } finally {
       setIsSubmitting(false);
     }
@@ -175,6 +188,16 @@ export default function LoginForm({ setIsAuthenticated }) {
     setNotice("Login successful. Redirecting to your dashboard...");
     setJustLoggedIn(true);
 
+    const userId =
+      loginResponse?.user?.id ||
+      loginResponse?.user?.user_id ||
+      loginResponse?.user_id ||
+      loginResponse?.id ||
+      loginResponse?.data?.user?.id ||
+      loginResponse?.data?.user_id ||
+      loginResponse?.data?.id ||
+      null;
+
     if (loginTimerRef.current) {
       clearTimeout(loginTimerRef.current);
     }
@@ -182,6 +205,14 @@ export default function LoginForm({ setIsAuthenticated }) {
     loginTimerRef.current = setTimeout(() => {
       setIsAuthenticated(true);
       setJustLoggedIn(false);
+      if (userId) {
+        const searchParams = new URLSearchParams({
+          userId: String(userId),
+        });
+        router.push(`/users?${searchParams.toString()}`);
+      } else {
+        router.push("/users");
+      }
     }, 1400);
   };
 

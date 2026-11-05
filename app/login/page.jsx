@@ -3,6 +3,9 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import Image from "next/image";
 import Link from "next/link";
 import Index from "./pages/Index";
+import { Suspense } from "react";
+import { LightRays } from "@/components/animation/light-rays";
+import { GridPattern } from "@/components/animation/GridPattern";
 
 export const metadata = {
   title: "Login — Sudharva Marathon",
@@ -21,7 +24,7 @@ export default function LoginPage() {
     // </section>
     <div className="flex flex-col min-h-screen">
       {/* Registration area */}
-       <header className="border-b border-border bg-surface">
+      <header className="border-b border-border bg-surface">
         <div className="container-page flex min-h-[76px] items-center justify-between gap-3 sm:min-h-20">
           <Link
             href="/"
@@ -51,7 +54,7 @@ export default function LoginPage() {
       </header>
       <main className="relative flex flex-1 isolate  overflow-hidden bg-background">
         {/* Animated grid background */}
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        {/* <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
           <FlickeringGrid
             className="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_at_center,black_0%,transparent_100%)]"
             squareSize={4}
@@ -60,6 +63,22 @@ export default function LoginPage() {
             darkColor="#2563EB"
             maxOpacity={0.5}
             flickerChance={0.1}
+          />
+        </div> */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <Suspense fallback={null}>
+            <LightRays
+              color="color-mix(in srgb, var(--accent) 36%, transparent)"
+              blur={44}
+              speed={16}
+            />
+          </Suspense>
+          <GridPattern
+            width={62}
+            height={62}
+            x={0}
+            y={0}
+            className="opacity-[0.2] [mask-image:radial-gradient(circle_at_center,black,transparent_98%)]"
           />
         </div>
 

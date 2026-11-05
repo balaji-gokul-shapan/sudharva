@@ -196,12 +196,12 @@ export default function EventMotto() {
             <div className="mb-5 flex items-center gap-3 text-accent">
               <HeartIcon size={23} strokeWidth={1.6} />
               <span className="text-xs font-bold uppercase tracking-[0.2em]">
-                Appa Health Run 2027
+                Sudharva 2027
               </span>
             </div>
 
             <p className="max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">
-              Every step can start a conversation about prevention. Appa Health
+              Every step can start a conversation about prevention. Sudharva
               Run 2027 brings people and families together to champion
               awareness, regular screening, physical activity, and healthier
               living.
@@ -366,7 +366,7 @@ export default function EventMotto() {
         {/* Closing campaign line */}
         <div className="diabetes-bottom mt-12 flex flex-col justify-between gap-5 border-t border-border pt-7 sm:flex-row sm:items-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Appa Health Run 2027
+            Sudharva 2027
           </p>
 
           <span className="flex items-center gap-2 text-sm text-muted-foreground">

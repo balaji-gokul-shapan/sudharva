@@ -11,6 +11,7 @@ const CHROMELESS_PATHS = [
   "/login",
   "/users",
   "/users/",
+  "/user-account",
 ];
 
 export const dynamic = "force-dynamic";
