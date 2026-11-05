@@ -278,7 +278,7 @@ export function HeroPreloader() {
       if (!mounted) return;
 
       try {
-        sessionStorage.setItem(PRELOADER_SESSION_KEY, "3");
+        sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
       } catch {
         // Ignore storage failures and continue animation.
       }
@@ -542,8 +542,8 @@ export function HeroHeading() {
             <Image
               src="/image/cta/logo.png"
               alt="Sudharva 2027"
-              width={400}
-              height={400}
+              width={300}
+              height={300}
               priority
               className="mx-auto block sm:mx-0"
             />
@@ -561,7 +561,7 @@ export function HeroHeading() {
           <div className="tagline">
             <span
               data-text-anim="bodyAnimation"
-              className="hero-tagline invisible block text-lg font-bold leading-[1.05] text-white/80 sm:text-xl lg:text-2xl"
+              className="hero-tagline invisible block text-md font-bold leading-[1.05] text-white/80 sm:text-lg lg:text-xl"
             >
               Run Against <AuroraText>Diabetes</AuroraText>
             </span>

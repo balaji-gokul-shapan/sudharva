@@ -456,7 +456,7 @@ export default function RegisterForm({
 
             <h1 className="register-headline mt-4 text-2xl font-bold leading-[1.08] text-volunteer-tint sm:text-3xl lg:text-4xl">
               Don&apos;t just watch the movement.
-              <span className="mt-2 block text-accent">
+              <span className="mt-2 block text-secondary/80">
                 Be the reason it moves.
               </span>
             </h1>

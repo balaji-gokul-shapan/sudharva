@@ -2130,6 +2130,9 @@
   .event-spotlight-dot {
     color: var(--color-ink-soft);
   }
+  .hero-tagline{
+    text-box-trim: trim-end;
+  }
 
   .event-spotlight-tagline {
     color: var(--color-ink-soft);
