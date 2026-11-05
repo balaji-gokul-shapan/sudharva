@@ -18,7 +18,9 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## API proxy
 
-Set `NEXT_APP_API_URL` in `.env.local` to the backend base URL. Browser requests to `/api/...` are forwarded to that server, so the backend does not need to allow browser CORS requests. The default upstream prefix is `/api`, unless the base URL already ends in `/api`. Set `NEXT_APP_API_PREFIX` to override the prefix, or set it to an empty value to use the base URL as-is. For example, `/api/pincode/600012` is forwarded to `https://your-backend/api/pincode/600012`. Restart the dev server after changing environment variables.
+Set `API_BASE_URL` in `.env.local` to the backend base URL. Browser requests to `/api/...` are forwarded to that server, so the backend does not need to allow browser CORS requests. The default upstream prefix is `/api`, unless the base URL already ends in `/api`. Set `NEXT_APP_API_PREFIX` to override the prefix, or set it to an empty value to use the base URL as-is. For example, `/api/pincode/600012` is forwarded to `https://your-backend/api/pincode/600012`. Restart the dev server after changing environment variables.
+
+If your local backend uses a private or self-signed TLS certificate and OTP requests fail with certificate verification errors, you can set `ALLOW_INSECURE_DEV_SSL=true` in `.env.local` during local development. Never enable this in production.
 
 You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 

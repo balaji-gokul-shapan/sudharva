@@ -11,11 +11,7 @@ const initialState = {
 const DEFAULT_ERROR_MESSAGE = "OTP request failed";
 
 const getRequestOtpUrl = () => {
-  // Same-origin call to avoid browser CORS; handled server-side in Next route.
-  // const baseUrl = process.env.API_BASE_URL || "";
-  // if (!baseUrl) {
-  //   throw new Error("API_BASE_URL is not configured on the server.");
-  // }
+  // The Next.js route proxies this same-origin request to API_BASE_URL.
   return "/api/auth/otp/request";
 };
 

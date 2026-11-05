@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,7 +65,7 @@ const statusStyles = {
   },
 };
 
-export default function RazorpayPopupPage() {
+function RazorpayPopupContent() {
   const params = useSearchParams();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
@@ -320,6 +327,7 @@ export default function RazorpayPopupPage() {
             )}`,
           );
         }
+
       },
       modal: {
         escape: false,
@@ -632,5 +640,15 @@ export default function RazorpayPopupPage() {
         )}
       </main>
     </>
+  );
+}
+
+export default function RazorpayPopupPage() {
+  return (
+    <Suspense
+      fallback={<main aria-busy="true" style={{ minHeight: "100vh" }} />}
+    >
+      <RazorpayPopupContent />
+    </Suspense>
   );
 }

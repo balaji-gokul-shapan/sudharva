@@ -346,8 +346,8 @@ export default function RegisterForm({
 
     if (step === "account") {
       setStep("otp");
-      setPassword("");
-      setConfirmPassword("");
+      // setPassword("");
+      // setConfirmPassword("");
     } else {
       setStep("identifier");
       setOtp("");

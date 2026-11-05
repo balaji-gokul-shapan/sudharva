@@ -188,6 +188,8 @@ const REGISTRATION_TYPE_IDS = {
 };
 
 function createInitialForm(identifier, getRegistrationType) {
+  console.log(identifier,"identifier");
+  
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier || "");
   const registrationTypes = Array.isArray(getRegistrationType)
     ? getRegistrationType
@@ -592,6 +594,12 @@ function StepperFormContent({ identifier, setIdentifier }) {
     ? { ...createInitialForm(identifier, getRegistrationType), ...draft.form }
     : createInitialForm(identifier, getRegistrationType);
   const [form, setForm] = useState(initialForm);
+  const normalizedIdentifier = String(identifier || "").trim();
+  const lockedIdentifierField = normalizedIdentifier
+    ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedIdentifier)
+      ? "email"
+      : "mobile_number"
+    : null;
 
   const calculatedAge = form.date_of_birth
     ? String(calculateAge(form.date_of_birth))
@@ -969,6 +977,7 @@ function StepperFormContent({ identifier, setIdentifier }) {
                 form={form}
                 errors={errors}
                 onChange={handleDetailsChange}
+                lockedIdentifierField={lockedIdentifierField}
                 age={calculatedAge}
                 hasCities={hasCities}
                 hasStates={hasStates}

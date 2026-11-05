@@ -1,22 +1,40 @@
+import axios from "axios";
+import https from "node:https";
+
 const FORWARDED_HEADERS = ["accept", "authorization", "content-type"];
 
-const getApiBaseUrl = (path = []) => {
-  const isPincodeRequest = path[0] === "pincode";
+const INSECURE_DEV_SSL_ENABLED =
+  process.env.NODE_ENV !== "production" &&
+  process.env.ALLOW_INSECURE_DEV_SSL === "true";
 
-  const rawUrl = isPincodeRequest
-    ? process.env.NEXT_APP_API_URL || process.env.NEXT_PUBLIC_API_URL
-    : process.env.API_DEV_URL ||
-      process.env.API_BASE_URL ||
-      process.env.NEXT_APP_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL;
+const INSECURE_HTTPS_AGENT = INSECURE_DEV_SSL_ENABLED
+  ? new https.Agent({ rejectUnauthorized: false })
+  : null;
+
+const isTlsCertificateError = (error) => {
+  const code = error?.cause?.code || error?.code;
+  return [
+    "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+    "UNABLE_TO_GET_ISSUER_CERT",
+    "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+    "SELF_SIGNED_CERT_IN_CHAIN",
+    "DEPTH_ZERO_SELF_SIGNED_CERT",
+  ].includes(code);
+};
+
+const getApiBaseUrl = (path = []) => { 
+  const isPincodeRequest = path[0] === "pincode";
+   const rawUrl = isPincodeRequest
+     ? process.env.PINCODE_API_BASE_URL
+     : process.env.API_BASE_URL;
 
   if (!rawUrl) {
-    throw new Error("API URL is not configured on the server.");
+    throw new Error("API_BASE_URL is not configured on the server.");
   }
 
   const baseUrl = new URL(rawUrl);
   if (!["http:", "https:"].includes(baseUrl.protocol)) {
-    throw new Error("API URL must use HTTP or HTTPS.");
+    throw new Error("API_BASE_URL must use HTTP or HTTPS.");
   }
 
   return baseUrl;
@@ -70,19 +88,42 @@ async function proxyRequest(request, { params }) {
   const method = request.method.toUpperCase();
   const hasBody = !["GET", "HEAD"].includes(method);
   const shouldFollowRedirects = ["GET", "HEAD"].includes(method);
+  const requestBody = hasBody ? await request.arrayBuffer() : undefined;
   let upstreamResponse;
 
   try {
-    upstreamResponse = await fetch(upstreamUrl, {
+    upstreamResponse = await axios.request({
+      url: upstreamUrl.toString(),
       method,
-      headers,
-      body: hasBody ? await request.arrayBuffer() : undefined,
-      cache: "no-store",
-      redirect: shouldFollowRedirects ? "follow" : "manual",
+      headers: Object.fromEntries(headers.entries()),
+      data: requestBody,
+      responseType: "arraybuffer",
+      validateStatus: () => true,
+      maxRedirects: shouldFollowRedirects ? 5 : 0,
+      httpsAgent:
+        INSECURE_DEV_SSL_ENABLED && upstreamUrl.protocol === "https:"
+          ? INSECURE_HTTPS_AGENT
+          : undefined,
     });
-  } catch {
+  } catch (error) {
+    const cause = error?.cause;
+    const isTlsError = isTlsCertificateError(error);
+
     return Response.json(
-      { error: "Could not reach the configured API server." },
+      {
+        error: "Could not reach the configured API server.",
+        ...(process.env.NODE_ENV !== "production" && {
+          details:
+            cause?.code ||
+            cause?.message ||
+            error?.code ||
+            error?.message,
+          ...(isTlsError && {
+            hint:
+              "TLS certificate validation failed. Install the upstream root CA, or set ALLOW_INSECURE_DEV_SSL=true for local development only.",
+          }),
+        }),
+      },
       { status: 502 },
     );
   }
@@ -95,13 +136,17 @@ async function proxyRequest(request, { params }) {
     "etag",
     "location",
   ]) {
-    const value = upstreamResponse.headers.get(name);
+    const value = upstreamResponse.headers?.[name];
     if (value) responseHeaders.set(name, value);
   }
 
   const bodyAllowed =
     method !== "HEAD" && ![204, 205, 304].includes(upstreamResponse.status);
-  return new Response(bodyAllowed ? upstreamResponse.body : null, {
+  const responseBody = bodyAllowed
+    ? new Uint8Array(upstreamResponse.data)
+    : null;
+
+  return new Response(responseBody, {
     status: upstreamResponse.status,
     headers: responseHeaders,
   });

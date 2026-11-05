@@ -19,6 +19,7 @@ export const IndividualDetails = ({
   form,
   errors,
   onChange,
+  lockedIdentifierField,
   age,
   hasCities,
   hasStates,
@@ -98,6 +99,7 @@ export const IndividualDetails = ({
           icon={Mail01Icon}
           error={errors.email}
           autoComplete="email"
+          readOnly={lockedIdentifierField === "email"}
         />
         <Field
           id="mobile_number"
@@ -113,6 +115,7 @@ export const IndividualDetails = ({
           icon={PhoneIcon}
           error={errors.mobile_number}
           autoComplete="tel"
+          readOnly={lockedIdentifierField === "mobile_number"}
         />
         <Field
           id="alternatePhone"

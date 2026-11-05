@@ -10,6 +10,7 @@ export const PersonalDetails = ({
   form,
   errors,
   onChange,
+  lockedIdentifierField,
   age,
   hasCities,
   hasStates,
@@ -111,6 +112,7 @@ export const PersonalDetails = ({
           form={form}
           errors={errors}
           onChange={onChange}
+          lockedIdentifierField={lockedIdentifierField}
           age={age}
           hasCities={hasCities}
           hasStates={hasStates}
