@@ -87,6 +87,11 @@ export default function TearTicket({
   onTear,
   width = 460,
   height = 250,
+  bodyWidth,
+  bodyHeight,
+  artWidth,
+  artHeight,
+  artSpan = ART_SPAN,
   stubSize = 150,
   radius = 16,
   holes = 12,
@@ -113,8 +118,10 @@ export default function TearTicket({
   fluid = false,
   ariaLabel = 'Tear off the stub',
   className = '',
+  style,
   tearTicketContentClassName = '',
-  tearTicketStubClassName = ''
+  tearTicketStubClassName = '',
+  ...restProps
 }) {
   const reduce = useReducedMotion();
   const controlled = torn !== undefined;
@@ -129,6 +136,10 @@ export default function TearTicket({
   const stubRef = useRef(null);
   const fibres = useRef([]);
   const vertical = orientation === 'vertical';
+  const resolvedBodyWidth = bodyWidth ?? (vertical ? width : width - stubSize);
+  const resolvedBodyHeight = bodyHeight ?? (vertical ? height - stubSize : height);
+  const resolvedArtWidth = artWidth ?? Math.max(0, resolvedBodyWidth - ART_INSET * 2);
+  const resolvedArtHeight = artHeight ?? Math.max(0, resolvedBodyHeight * artSpan - ART_INSET * 2);
   const geo = useMemo(
     () => buildGeometry(width, height, stubSize, radius, holes, holeSize, notch, roughness, vertical),
     [width, height, stubSize, radius, holes, holeSize, notch, roughness, vertical]
@@ -532,14 +543,18 @@ export default function TearTicket({
         '--tt-edge': borderColor || `color-mix(in srgb, ${color} 16%, transparent)`,
         '--tt-edge-w': borderWidth,
         '--tt-parallax': `${parallax}px`,
-        '--tt-body-w': `${vertical ? width : width - stubSize}px`,
-        '--tt-body-h': `${vertical ? height - stubSize : height}px`,
+        '--tt-body-w': `${resolvedBodyWidth}px`,
+        '--tt-body-h': `${resolvedBodyHeight}px`,
+        '--tt-art-w': `${resolvedArtWidth}px`,
+        '--tt-art-h': `${resolvedArtHeight}px`,
         '--tt-inset': `${ART_INSET}px`,
-        '--tt-span': ART_SPAN,
+        '--tt-span': artSpan,
         '--tt-art-radius': `${imageRadius}px`,
         '--tt-fit': fit,
-        height: `${height * fit}px`
+        height: `${height * fit}px`,
+        ...style
       }}
+      {...restProps}
     >
       <div ref={stageRef} className="tear-ticket__stage">
         <motion.div className="tear-ticket__plane" style={{ transform: plane }}>

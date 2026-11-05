@@ -89,6 +89,8 @@ export function MarathonPassTicket({
   orientation = PASS_TICKET_PROPS.orientation,
   width = PASS_TICKET_PROPS.width,
   height = PASS_TICKET_PROPS.height,
+  bodyWidth,
+  bodyHeight,
   stubSize = PASS_TICKET_PROPS.stubSize,
   radius = PASS_TICKET_PROPS.radius,
   holes = PASS_TICKET_PROPS.holes,
@@ -113,6 +115,7 @@ export function MarathonPassTicket({
   isCustom = false,
   fluid = false,
   participantName,
+  style,
   tearTicketContentClassName,
   tearTicketStubClassName,
   showQRCode = true,
@@ -134,6 +137,8 @@ export function MarathonPassTicket({
         orientation={orientation}
         width={width}
         height={height}
+        bodyWidth={bodyWidth}
+        bodyHeight={bodyHeight}
         stubSize={stubSize}
         radius={radius}
         holes={holes}
@@ -172,6 +177,7 @@ export function MarathonPassTicket({
         }
         onTear={onTear}
         className={cn(fluid && "w-full", className)}
+        style={style}
         tearTicketContentClassName={tearTicketContentClassName}
         tearTicketStubClassName={tearTicketStubClassName}
         {...props}

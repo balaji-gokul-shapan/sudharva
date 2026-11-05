@@ -302,7 +302,11 @@ function PromoCodeCard({
               </button>
             </div>
 
-            <div id="premium-promo-code-status" aria-live="polite" className="min-h-6">
+            <div
+              id="premium-promo-code-status"
+              aria-live="polite"
+              className="min-h-6"
+            >
               <AnimatePresence mode="wait" initial={false}>
                 {message && (
                   <motion.p
@@ -664,7 +668,10 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
     return getPromoDiscount(appliedPremiumPromo, remainingAfterRegular);
   }, [appliedPremiumPromo, effectivePrice, regularDiscount]);
 
-  const totalDiscount = Math.min(effectivePrice, regularDiscount + premiumDiscount);
+  const totalDiscount = Math.min(
+    effectivePrice,
+    regularDiscount + premiumDiscount,
+  );
   const payable = Math.max(0, effectivePrice - totalDiscount);
   const premiumBibNumber = (form.premiumBibNumber || "").trim();
   const bibTicketValue = premiumBibNumber
@@ -757,38 +764,41 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
           <dl className="mt-5 space-y-3 border-t border-border/70 pt-4 text-sm">
             <div className="">
               {/* <div className=""> */}
-                <MarathonPassTicket
-                  fluid
-                  onTear={() => setTicketUsed(true)}
-                  tearTicketContentClassName="bg-transparent"
-                  tearTicketStubClassName="bg-gradient-mesh"
-                  width={820}
-                  height={320}
-                  imageFit="cover"
-                  imageRadius={16}
-                  radius={24}
-                  stubSize={300}
-                  holes={8}
-                  holeSize={4}
-                  notch={4}
-                  tearAngle={0}
-                  stretch={0}
-                  rotate={0}
-                  tiltMax={0}
-                  parallax={0}
-                  tilt={false}
-                  background="var(--card-background)"
-                  color="#c679c4"
-                  stubEvent={form?.event ?? "City Marathon 2027"}
-                  participantName={
-                    form?.first_name && form?.last_name
-                      ? `${form?.first_name} ${form?.last_name}`
-                      : "John Doe"
-                  }
-                  stubDistance={getData?.name}
-                  stubLocation="Avadi"
-                  stubRegNo={bibTicketValue}
-                />
+              <MarathonPassTicket
+                fluid
+                onTear={() => setTicketUsed(true)}
+                tearTicketContentClassName="bg-transparent"
+                tearTicketStubClassName="bg-gradient-mesh"
+                width={820}
+                height={320}
+                imageFit="fill"
+                bodyWidth={520}
+                bodyHeight={320}
+                artSpan={1}
+                imageRadius={16}
+                radius={24}
+                stubSize={300}
+                holes={8}
+                holeSize={4}
+                notch={4}
+                tearAngle={0}
+                stretch={0}
+                rotate={0}
+                tiltMax={0}
+                parallax={0}
+                tilt={false}
+                background="var(--card-background)"
+                color="#c679c4"
+                stubEvent={form?.event ?? "City Marathon 2027"}
+                participantName={
+                  form?.first_name && form?.last_name
+                    ? `${form?.first_name} ${form?.last_name}`
+                    : "John Doe"
+                }
+                stubDistance={getData?.name}
+                stubLocation="Avadi"
+                stubRegNo={bibTicketValue}
+              />
               {/* </div> */}
               {/* <PromoCodeCard
                 code={form.premiumPromoCode ?? ""}
@@ -946,7 +956,7 @@ export default function PaymentStep({ form, category, teamSize, onChange }) {
                     onClick={() => setPaymentLinkOpened(true)}
                     className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/15 transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:w-auto"
                   >
-                   Continue to Secure Payment
+                    Continue to Secure Payment
                     <ArrowSquareOut
                       size={17}
                       weight="bold"

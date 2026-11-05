@@ -92,6 +92,8 @@ export function AddonsIntro({ items }) {
 /* ------------------------------------------------------------------ */
 
 export function ShareHealthCard({ items }) {
+  const [, setTicketUsed] = useState(false);
+
   return (
     <GsParallax speed={0.05} direction="up">
       <Reveal
@@ -135,13 +137,18 @@ export function ShareHealthCard({ items }) {
           ))}
         </ul>
         <MarathonPassTicket
+          fluid
           image="/image/cta/marathon-bib.webp"
           onTear={() => setTicketUsed(true)}
           tearTicketContentClassName="bg-transparent"
           tearTicketStubClassName="bg-donate-paper"
           width={460}
           height={250}
+          bodyWidth={310}
+          bodyHeight={250}
+          artSpan={1}
           stubSize={150}
+          imageFit="fill"
           radius={16}
           holes={12}
           holeSize={6}
@@ -165,6 +172,19 @@ export function ShareHealthCard({ items }) {
           stubLocation="Chennai, Tamil Nadu"
           stubRegNo="SM-284619"
           showQRCode={false}
+          style={{
+            "--tt-w": "460px",
+            "--tt-h": "250px",
+            "--tt-stub": "150px",
+            "--tt-bg": "var(--brand-surface)",
+            "--tt-stub-bg": "var(--brand-surface)",
+            "--tt-ink": "var(--brand-ink)",
+            "--tt-edge": "transparent",
+            "--tt-edge-w": 1,
+            "--tt-parallax": "6px",
+            "--tt-body-w": "310px",
+            "--tt-body-h": "250px",
+          }}
         />
       </Reveal>
     </GsParallax>

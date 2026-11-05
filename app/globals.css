@@ -3853,8 +3853,8 @@
   position: absolute;
   top: var(--tt-inset);
   left: var(--tt-inset);
-  width: calc(var(--tt-body-w) - var(--tt-inset) * 2);
-  height: calc(var(--tt-body-h) * var(--tt-span) - var(--tt-inset) * 2);
+  width: var(--tt-art-w, calc(var(--tt-body-w) - var(--tt-inset) * 2));
+  height: var(--tt-art-h, calc(var(--tt-body-h) * var(--tt-span) - var(--tt-inset) * 2));
   border-radius: var(--tt-art-radius);
   overflow: hidden;
 }
