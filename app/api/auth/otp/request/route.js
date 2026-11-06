@@ -1,5 +1,9 @@
 import axios from "axios";
-import https from "node:https";
+
+import {
+  getUpstreamHttpsAgent,
+  isTlsCertificateError,
+} from "@/lib/upstreamHttps";
 
 const buildOtpRequestUrl = () => {
   const rawBase = process.env.API_BASE_URL || "";
@@ -30,25 +34,6 @@ const buildOtpRequestUrl = () => {
     basePath
   }${apiPrefix ? `/${apiPrefix}` : ""}/auth/otp/request/`;
   return baseUrl;
-};
-
-const INSECURE_DEV_SSL_ENABLED =
-  process.env.NODE_ENV !== "production" &&
-  process.env.ALLOW_INSECURE_DEV_SSL === "true";
-
-const INSECURE_HTTPS_AGENT = INSECURE_DEV_SSL_ENABLED
-  ? new https.Agent({ rejectUnauthorized: false })
-  : null;
-
-const isTlsCertificateError = (error) => {
-  const code = error?.cause?.code || error?.code;
-  return [
-    "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
-    "UNABLE_TO_GET_ISSUER_CERT",
-    "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
-    "SELF_SIGNED_CERT_IN_CHAIN",
-    "DEPTH_ZERO_SELF_SIGNED_CERT",
-  ].includes(code);
 };
 
 export async function POST(request) {
@@ -94,10 +79,7 @@ export async function POST(request) {
         Accept: "application/json",
         "ngrok-skip-browser-warning": "true",
       },
-      httpsAgent:
-        INSECURE_DEV_SSL_ENABLED && upstreamUrl.protocol === "https:"
-          ? INSECURE_HTTPS_AGENT
-          : undefined,
+      httpsAgent: getUpstreamHttpsAgent(resolvedUpstreamUrl),
     });
 
     const contentType = upstreamResponse.headers["content-type"] || "application/json";
@@ -121,7 +103,9 @@ export async function POST(request) {
       code: cause?.code,
       cause: cause?.message,
       tlsError: isTlsError,
-      insecureDevSslEnabled: INSECURE_DEV_SSL_ENABLED,
+      insecureDevSslEnabled:
+        process.env.NODE_ENV !== "production" &&
+        process.env.ALLOW_INSECURE_DEV_SSL === "true",
     });
 
     return Response.json(
