@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -24,7 +25,37 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CategoryPage({ params }) {
+function CategoryLoading() {
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <section
+        aria-label="Loading event category"
+        className="container-page animate-pulse py-10 sm:py-16"
+      >
+        <div className="h-4 w-24 rounded bg-muted" />
+        <div className="mt-8 grid overflow-hidden rounded-3xl border bg-surface lg:grid-cols-2">
+          <div className="min-h-72 bg-muted sm:min-h-96 lg:min-h-[560px]" />
+          <div className="space-y-5 p-6 sm:p-10 lg:p-12">
+            <div className="h-4 w-32 rounded bg-muted" />
+            <div className="h-10 w-3/4 rounded bg-muted" />
+            <div className="h-20 rounded bg-muted" />
+            <div className="h-24 rounded bg-muted" />
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default function CategoryPage({ params }) {
+  return (
+    <Suspense fallback={<CategoryLoading />}>
+      <CategoryContent params={params} />
+    </Suspense>
+  );
+}
+
+async function CategoryContent({ params }) {
   const { category: categoryId } = await params;
   const category = eventCategoryRecords.find(
     ({ anchorId }) => anchorId === categoryId,
