@@ -73,9 +73,18 @@ export async function POST(request) {
     return Response.json({ error: "Invalid JSON payload." }, { status: 400 });
   }
 
+  const resolvedUpstreamUrl = upstreamUrl.toString();
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      "[api-proxy] API_BASE_URL POST /api/auth/otp/request ->",
+      resolvedUpstreamUrl,
+    );
+  }
+
   try {
     const upstreamResponse = await axios.request({
-      url: upstreamUrl.toString(),
+      url: resolvedUpstreamUrl,
       method: "POST",
       data: payload,
       responseType: "text",
@@ -107,6 +116,7 @@ export async function POST(request) {
     const cause = error?.cause;
     const isTlsError = isTlsCertificateError(error);
     console.error("OTP upstream request failed", {
+      url: resolvedUpstreamUrl,
       message: error?.message,
       code: cause?.code,
       cause: cause?.message,
@@ -118,6 +128,8 @@ export async function POST(request) {
       {
         error: "Could not reach OTP service.",
         ...(process.env.NODE_ENV !== "production" && {
+          env: "API_BASE_URL",
+          url: resolvedUpstreamUrl,
           details:
             cause?.code ||
             cause?.message ||

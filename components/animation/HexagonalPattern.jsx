@@ -4,6 +4,10 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
 
+function roundCoord(value) {
+  return Math.round(value * 1e4) / 1e4;
+}
+
 function hexVertexList(cx, cy, r, direction) {
   const startAngle = direction === "horizontal" ? 0 : 30;
 
@@ -11,8 +15,8 @@ function hexVertexList(cx, cy, r, direction) {
     const angle = ((startAngle + i * 60) * Math.PI) / 180;
 
     return [
-      cx + r * Math.cos(angle),
-      cy + r * Math.sin(angle),
+      roundCoord(cx + r * Math.cos(angle)),
+      roundCoord(cy + r * Math.sin(angle)),
     ];
   });
 }

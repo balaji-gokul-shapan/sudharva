@@ -251,6 +251,7 @@ export default function LoginForm({ setIsAuthenticated }) {
                 priority
                 sizes="(max-width: 639px) 128px, 190px"
                 className="h-auto w-32 sm:w-40"
+                style={{ height: "auto" }}
               />
 
               <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/75">

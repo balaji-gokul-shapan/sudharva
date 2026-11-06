@@ -46,16 +46,21 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${exo2.variable} ${fraunces.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: preloaderInitScript }} />
       </head>
-      <body className="min-h-screen flex flex-col bg-background text-foreground font-sans antialiased selection:bg-accent selection:text-accent-foreground">
+      <body
+        suppressHydrationWarning
+        className="min-h-screen flex flex-col bg-background text-foreground font-sans antialiased selection:bg-accent selection:text-accent-foreground"
+      >
         <Providers>
           <a
             href="#main-content"
+            suppressHydrationWarning
             className="sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:not-sr-only focus:rounded-md focus:bg-background focus:px-4 focus:py-3 focus:text-foreground focus:shadow-lg"
           >
             Skip to main content

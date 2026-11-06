@@ -22,22 +22,21 @@ const isTlsCertificateError = (error) => {
   ].includes(code);
 };
 
-const getApiBaseUrl = (path = []) => { 
+const getApiBaseUrl = (path = []) => {
   const isPincodeRequest = path[0] === "pincode";
-   const rawUrl = isPincodeRequest
-     ? process.env.PINCODE_API_BASE_URL
-     : process.env.API_BASE_URL;
+  const envName = isPincodeRequest ? "PINCODE_API_BASE_URL" : "API_BASE_URL";
+  const rawUrl = process.env[envName];
 
   if (!rawUrl) {
-    throw new Error("API_BASE_URL is not configured on the server.");
+    throw new Error(`${envName} is not configured on the server.`);
   }
 
   const baseUrl = new URL(rawUrl);
   if (!["http:", "https:"].includes(baseUrl.protocol)) {
-    throw new Error("API_BASE_URL must use HTTP or HTTPS.");
+    throw new Error(`${envName} must use HTTP or HTTPS.`);
   }
 
-  return baseUrl;
+  return { baseUrl, envName };
 };
 
 const getApiPrefix = (baseUrl) => {
@@ -61,8 +60,9 @@ async function proxyRequest(request, { params }) {
   }
 
   let baseUrl;
+  let envName;
   try {
-    baseUrl = getApiBaseUrl(path);
+    ({ baseUrl, envName } = getApiBaseUrl(path));
   } catch (error) {
     return Response.json(
       { error: error.message || "API URL is not configured on the server." },
@@ -78,6 +78,18 @@ async function proxyRequest(request, { params }) {
     trailingSlash ? "/" : ""
   }`;
   upstreamUrl.search = new URL(request.url).search;
+  const resolvedUpstreamUrl = upstreamUrl.toString();
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      "[api-proxy]",
+      envName,
+      request.method.toUpperCase(),
+      new URL(request.url).pathname,
+      "->",
+      resolvedUpstreamUrl,
+    );
+  }
 
   const headers = new Headers();
   for (const name of FORWARDED_HEADERS) {
@@ -93,7 +105,7 @@ async function proxyRequest(request, { params }) {
 
   try {
     upstreamResponse = await axios.request({
-      url: upstreamUrl.toString(),
+      url: resolvedUpstreamUrl,
       method,
       headers: Object.fromEntries(headers.entries()),
       data: requestBody,
@@ -113,6 +125,8 @@ async function proxyRequest(request, { params }) {
       {
         error: "Could not reach the configured API server.",
         ...(process.env.NODE_ENV !== "production" && {
+          env: envName,
+          url: resolvedUpstreamUrl,
           details:
             cause?.code ||
             cause?.message ||
@@ -138,6 +152,17 @@ async function proxyRequest(request, { params }) {
   ]) {
     const value = upstreamResponse.headers?.[name];
     if (value) responseHeaders.set(name, value);
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      "[api-proxy]",
+      envName,
+      method,
+      resolvedUpstreamUrl,
+      "status",
+      upstreamResponse.status,
+    );
   }
 
   const bodyAllowed =

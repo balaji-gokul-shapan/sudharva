@@ -81,6 +81,7 @@ function UserLayoutInner({ children, params }) {
                 height={49}
                 priority
                 className="h-auto w-32 sm:w-40"
+                style={{ height: "auto" }}
               />
               <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-ink">
                 Run against Diabetes.

@@ -368,13 +368,14 @@ export function HeroPreloader() {
         delay: 0.2,
       });
 
-      heroTimeline
-        .call(() => {
-          animateHeroText(".hero-tagline");
-        })
+      heroTimeline.call(() => {
+        animateHeroText(".hero-tagline");
+      });
 
-        .fromTo(
-          document.querySelector(".hero-divider"),
+      const divider = document.querySelector(".hero-divider");
+      if (divider) {
+        heroTimeline.fromTo(
+          divider,
           {
             scaleY: 0,
             transformOrigin: "top",
@@ -384,8 +385,9 @@ export function HeroPreloader() {
             duration: 0.5,
             ease: "back.inOut",
           },
-          "+=0.4"
+          "+=0.4",
         );
+      }
 
       heroTimeline.call(
         () => animateHeroText(".hero-main-title"),
@@ -469,6 +471,7 @@ export function HeroPreloader() {
             priority
             unoptimized
             className="preloader-gif"
+            style={{ width: "auto", height: "auto" }}
           />
 
           <p className="preloader-sun-text">
@@ -545,7 +548,8 @@ export function HeroHeading() {
               width={300}
               height={300}
               priority
-              className="mx-auto block sm:mx-0"
+              className="mx-auto block h-auto w-auto sm:mx-0"
+              style={{ width: "auto", height: "auto" }}
             />
 
             <LineShadowText

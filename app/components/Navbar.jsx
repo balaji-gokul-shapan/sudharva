@@ -224,6 +224,7 @@ export const Navbar = () => {
               height={64}
               className="block h-auto w-28 max-w-full min-[375px]:w-32 sm:w-40 lg:w-48"
               sizes="(max-width: 374px) 112px, (max-width: 639px) 128px, (max-width: 1023px) 160px, 192px"
+              style={{ height: "auto" }}
             />
             <span className="mt-0.5 block max-w-full px-1 text-center text-[7px] font-bold uppercase leading-none tracking-[0.12em] text-ink-soft min-[375px]:text-[8px] sm:mt-0 sm:text-[10px]">
               Run Against Diabetes

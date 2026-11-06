@@ -9,10 +9,21 @@ import {
   persistReducer,
   persistStore,
 } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 import rootReducer from "./rootReducer";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
+
+const createNoopStorage = () => ({
+  getItem: () => Promise.resolve(null),
+  setItem: (_key, value) => Promise.resolve(value),
+  removeItem: () => Promise.resolve(),
+});
+
+const storage =
+  typeof window === "undefined"
+    ? createNoopStorage()
+    : createWebStorage("local");
 
 const persistConfig = {
   key: "root",

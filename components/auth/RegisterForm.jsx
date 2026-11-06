@@ -434,13 +434,14 @@ export default function RegisterForm({
               height={49}
               priority
               className="h-auto w-32 sm:w-40"
+              style={{ height: "auto" }}
             />
             <span className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/75">
               Run against Diabetes
             </span>
           </Link>
 
-          <div className="my-6` max-w-lg lg:my-0 lg:py-8">
+            <div className="my-6 max-w-lg lg:my-0 lg:py-8">
             <motion.span
               initial={reducedMotion ? false : { opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
