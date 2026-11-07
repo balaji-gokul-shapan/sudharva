@@ -1,5 +1,5 @@
 import { combineReducers } from "@reduxjs/toolkit";
-import appReducer from "./slices/appSlice";
+import appSliceReducer from "./slices/appSlice";
 import pincodeReducer from "./slices/pincodeSlice";
 import otpRequestReducer from "./slices/otp/otpRequestSlice";
 import otpVerifyReducer from "./slices/otp/otpVerifySlice";
@@ -15,8 +15,8 @@ import userRegisterReducer from "./slices/users/userRegisterSlice";
 import userRefreshTokenReducer from "./slices/users/userRefreshTokenSlice";
 import getUserDetailsReducer from "./slices/users/getuserDetailsSlice";
 
-const rootReducer = combineReducers({
-  app: appReducer,
+const combinedReducer = combineReducers({
+  app: appSliceReducer,
   pincode: pincodeReducer,
   otpRequest: otpRequestReducer,
   otpVerify: otpVerifyReducer,
@@ -32,5 +32,13 @@ const rootReducer = combineReducers({
   userRefreshToken: userRefreshTokenReducer,
   getUserDetails: getUserDetailsReducer,
 });
+
+const rootReducer = (state, action) => {
+  if (action?.type === "app/resetState") {
+    return combinedReducer(undefined, action);
+  }
+
+  return combinedReducer(state, action);
+};
 
 export default rootReducer;

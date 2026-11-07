@@ -1,11 +1,18 @@
 'use client'
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import LoginForm from "@/components/auth/LoginForm";
-import Link from "next/link";
+import { useAppDispatch } from "@/store/hooks";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [identifier, setIdentifier] = useState("");
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    resetClientSessionData(dispatch);
+  }, [dispatch]);
+
   return (
     <div className="relative">
       <AnimatePresence mode="wait" initial={false}>

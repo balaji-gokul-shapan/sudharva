@@ -1,5 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { refreshUserToken } from "../users/userRefreshTokenSlice";
+
+const ACCESS_TOKEN_KEY = "auth.accessToken";
+
+const readStoredAccessToken = () => {
+  if (typeof window === "undefined") return "";
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+};
 
 const initialState = {
   loading: false,
@@ -71,18 +79,22 @@ const extractApiErrorMessage = (error) => {
   return fallbackMessage;
 };
 
-const getEnterBibOptions = (requestBody) => ({
+const getEnterBibOptions = (requestBody, token = "") => ({
   method: "POST",
   url: "/api/registrations/premium-bib",
   headers: {
     "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   },
   data: requestBody,
 });
 
 export const enterBibNumber = createAsyncThunk(
   "bibNumber/enterBibNumber",
-  async (bibData, { rejectWithValue }) => {
+  async (bibData, { rejectWithValue, dispatch, getState }) => {
+    const stateAccessToken = getState()?.userRefreshToken?.accessToken || "";
+    const accessToken = stateAccessToken || readStoredAccessToken();
+
     try {
       const requestBody = {
         participant_reference:
@@ -93,11 +105,43 @@ export const enterBibNumber = createAsyncThunk(
           .toUpperCase(),
       };
 
-      const options = getEnterBibOptions(requestBody);
+      const options = getEnterBibOptions(requestBody, accessToken);
       const { data } = await axios.request(options);
 
       return data;
     } catch (error) {
+      const status = error?.response?.status;
+      const authMessage = String(
+        error?.response?.data?.detail ||
+          error?.response?.data?.message ||
+          "",
+      ).toLowerCase();
+      const isAuthFailure =
+        status === 401 ||
+        authMessage.includes("authentication") ||
+        authMessage.includes("credentials");
+
+      if (isAuthFailure) {
+        try {
+          const refreshResult = await dispatch(refreshUserToken()).unwrap();
+          const refreshedAccessToken =
+            refreshResult?.accessToken ||
+            getState()?.userRefreshToken?.accessToken ||
+            readStoredAccessToken();
+
+          if (refreshedAccessToken) {
+            const retryOptions = getEnterBibOptions(
+              requestBody,
+              refreshedAccessToken,
+            );
+            const { data } = await axios.request(retryOptions);
+            return data;
+          }
+        } catch {
+          // Fall through to default error extraction.
+        }
+      }
+
       return rejectWithValue(extractApiErrorMessage(error));
     }
   },

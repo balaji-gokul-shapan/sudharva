@@ -209,11 +209,12 @@ function mapRegistrationToForm(registerData, identifier) {
   const isIdentifierEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     normalizedIdentifier,
   );
-  
-  const emergency = details?.emergency_contact || registerData?.emergency_contact || {};
+
+  const emergency =
+    details?.emergency_contact || registerData?.emergency_contact || {};
   const emergencyName =
-  details?.emergency_contact_name ||
-  details?.emergencyName ||
+    details?.emergency_contact_name ||
+    details?.emergencyName ||
     runner?.emergencyName ||
     runner?.emergency_contact_name ||
     emergency?.name ||
@@ -221,8 +222,8 @@ function mapRegistrationToForm(registerData, identifier) {
     registerData?.emergency_contact_name ||
     "";
   const emergencyPhone =
-  details?.emergency_contact_mobile ||
-  details?.emergencyPhone ||
+    details?.emergency_contact_mobile ||
+    details?.emergencyPhone ||
     details?.emergency_contact_phone ||
     runner?.emergencyPhone ||
     runner?.emergency_contact_mobile ||
@@ -234,8 +235,8 @@ function mapRegistrationToForm(registerData, identifier) {
     registerData?.emergency_contact_phone ||
     "";
   const emergencyRelation =
-  details?.emergency_contact_relationship ||
-  details?.emergencyRelation ||
+    details?.emergency_contact_relationship ||
+    details?.emergencyRelation ||
     details?.emergency_contact_relation ||
     runner?.emergencyRelation ||
     runner?.emergency_contact_relationship ||
@@ -317,7 +318,10 @@ function mapRegistrationToForm(registerData, identifier) {
 }
 
 function createInitialForm(identifier, getRegistrationType, registerData) {
-  const mappedRegistrationData = mapRegistrationToForm(registerData, identifier);
+  const mappedRegistrationData = mapRegistrationToForm(
+    registerData,
+    identifier,
+  );
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier || "");
   const registrationTypes = Array.isArray(getRegistrationType)
     ? getRegistrationType
@@ -700,19 +704,32 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     registrationResult?.amount_payable ||
     registrationResult?.amount;
   const hasRequestedPaymentOrderRef = useRef(false);
-  const error =
-    createRegistrationMutation.error?.response?.data?.message ||
-    createRegistrationMutation.error?.message ||
-    null;
+  const resolveRegistrationError = (errorLike) => {
+    if (!errorLike) return null;
+    if (typeof errorLike === "string") return errorLike;
+
+    return (
+      errorLike?.response?.data?.message ||
+      errorLike?.response?.data?.error ||
+      errorLike?.data?.message ||
+      errorLike?.message ||
+      "Unable to save registration. Please try again."
+    );
+  };
+
+  const error = resolveRegistrationError(createRegistrationMutation.error);
 
   const safeDraftStep =
     typeof draft?.stepIndex === "number"
       ? Math.min(Math.max(draft.stepIndex, 0), STEPS.length - 1)
       : 0;
-  const isFixedStepFlow = step !== undefined && step !== null && String(step).trim() !== "";
+  const isFixedStepFlow =
+    step !== undefined && step !== null && String(step).trim() !== "";
 
   // const [stepIndex, setStepIndex] = useState(4);
-  const [stepIndex, setStepIndex] = useState(step ? parseInt(step, 10) : safeDraftStep);
+  const [stepIndex, setStepIndex] = useState(
+    step ? parseInt(step, 10) : safeDraftStep,
+  );
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const { data: masterData = null, refetch: refetchMasterData } = useQuery({
@@ -724,6 +741,9 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
   const [isRegistrationSuccessModalOpen, setIsRegistrationSuccessModalOpen] =
     useState(false);
+  const [isRegistrationErrorModalOpen, setIsRegistrationErrorModalOpen] =
+    useState(false);
+  const [registrationErrorMessage, setRegistrationErrorMessage] = useState("");
   const [registrationSuccessConfettiKey, setRegistrationSuccessConfettiKey] =
     useState(0);
   const getRegistrationType = masterData?.registration_type ?? [];
@@ -736,8 +756,8 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     getRegistrationType,
     registerData,
   );
-  console.log(registerData,"hasRegisterData");
-  
+  console.log(registerData, "hasRegisterData");
+
   const initialForm = draft?.form
     ? hasRegisterData
       ? { ...draft.form, ...seededForm }
@@ -781,9 +801,18 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   }, [dispatch, form, stepIndex, success]);
 
   useEffect(() => {
-    console.log(participantReference, success, registrationStatus, payableAmount);
+    console.log(
+      participantReference,
+      success,
+      registrationStatus,
+      payableAmount,
+    );
 
-    if (!success || !participantReference || hasRequestedPaymentOrderRef.current)
+    if (
+      !success ||
+      !participantReference ||
+      hasRequestedPaymentOrderRef.current
+    )
       return;
 
     dispatch(
@@ -985,6 +1014,8 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     // if (form.paymentReported !== true) return;
     hasRequestedPaymentOrderRef.current = false;
     queryClient.setQueryData(["payment-order"], null);
+    setIsRegistrationErrorModalOpen(false);
+    setRegistrationErrorMessage("");
     setIsRegisterSubmitting(true);
 
     const {
@@ -1022,12 +1053,37 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     payload.emergency_contact_mobile = normalizePhoneForApi(
       payload.emergency_contact_mobile,
     );
-    payload.beneficiary_mobile = normalizePhoneForApi(payload.beneficiary_mobile);
+    payload.beneficiary_mobile = normalizePhoneForApi(
+      payload.beneficiary_mobile,
+    );
     payload.companyPhone = normalizePhoneForApi(payload.companyPhone);
     console.log("payload", payload);
 
     try {
-      const registrationResponse = await createRegistrationMutation.mutateAsync(payload);
+      const registrationResponse =
+        await createRegistrationMutation.mutateAsync(payload);
+      const savedRegistration =
+        registrationResponse?.data ||
+        registrationResponse?.result ||
+        registrationResponse?.registration ||
+        registrationResponse ||
+        null;
+      const savedParticipantReference =
+        savedRegistration?.participant_reference ||
+        savedRegistration?.participantReference ||
+        savedRegistration?.reference ||
+        savedRegistration?.id ||
+        "";
+
+      if (savedParticipantReference) {
+        setForm((current) => ({
+          ...current,
+          participant_reference: savedParticipantReference,
+          participantReference: savedParticipantReference,
+          reference: savedParticipantReference,
+        }));
+      }
+
       dispatch(
         setCreateRegistrationSnapshot({
           requestPayload: payload,
@@ -1039,8 +1095,13 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       setRegistrationSuccessConfettiKey((current) => current + 1);
       setIsSavingRegistration(true);
       setIsRegistrationSuccessModalOpen(true);
-    } catch {
-      // Error state is handled by createRegistrationMutation.error.
+    } catch (caughtError) {
+      const saveErrorMessage = resolveRegistrationError(caughtError);
+      setRegistrationErrorMessage(
+        saveErrorMessage || "Unable to save registration. Please try again.",
+      );
+      setIsRegistrationErrorModalOpen(true);
+      setIsSavingRegistration(false);
     } finally {
       setIsRegisterSubmitting(false);
     }
@@ -1068,8 +1129,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
               ? "Continue to payment"
               : "Save registration";
 
-  const isSaveRegistrationCta =
-    stepIndex === STEPS.length - 2;
+  const isSaveRegistrationCta = stepIndex === STEPS.length - 2;
 
   return (
     <section
@@ -1186,6 +1246,19 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                   (item) => item.value === form.teamSize,
                 )}
                 onChange={updateField}
+                participantReferenceNo={
+                  registrationResult?.participant_reference ||
+                  registrationResult?.participantReference ||
+                  registrationResult?.reference ||
+                  registrationResult?.id ||
+                  form?.participant_reference ||
+                  form?.participantReference ||
+                  form?.reference ||
+                  registerData?.participant_reference ||
+                  registerData?.participantReference ||
+                  registerData?.reference ||
+                  ""
+                }
               />
             )}
 
@@ -1246,7 +1319,10 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                     disabled={isRegisterSubmitting}
                   >
                     {isRegisterSubmitting && stepIndex === STEPS.length - 2 ? (
-                      <ArrowCounterClockwise size={18} className="animate-spin" />
+                      <ArrowCounterClockwise
+                        size={18}
+                        className="animate-spin"
+                      />
                     ) : null}
                     {primaryCtaLabel}
                     <CaretRight size={18} weight="bold" />
@@ -1261,7 +1337,8 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                       </p>
                       {data && (
                         <p className="text-ink-soft/80">
-                          Reference: {String(
+                          Reference:{" "}
+                          {String(
                             registrationResult?.participant_reference ??
                               registrationResult?.reference ??
                               registrationResult?.id ??
@@ -1341,13 +1418,48 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog
+          open={isRegistrationErrorModalOpen}
+          onOpenChange={setIsRegistrationErrorModalOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Unable to Save Registration</DialogTitle>
+              <DialogDescription>
+                {registrationErrorMessage ||
+                  "Something went wrong while saving your registration. Please try again."}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <RainbowButton
+                size="sm"
+                variant="accent"
+                onClick={() => setIsRegistrationErrorModalOpen(false)}
+                className="min-w-28"
+              >
+                OK
+              </RainbowButton>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     </section>
   );
 }
 
-export default function StepperForm({ identifier, setIdentifier, step, registerData }) {
+export default function StepperForm({
+  identifier,
+  setIdentifier,
+  step,
+  registerData,
+}) {
   return (
-    <StepperFormContent identifier={identifier} setIdentifier={setIdentifier} step={step} registerData={registerData} />
+    <StepperFormContent
+      identifier={identifier}
+      setIdentifier={setIdentifier}
+      step={step}
+      registerData={registerData}
+    />
   );
 }

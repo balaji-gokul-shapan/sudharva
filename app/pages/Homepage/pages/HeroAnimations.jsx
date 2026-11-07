@@ -467,12 +467,11 @@ export function HeroPreloader() {
           <Image
             src="/video/preloader.gif"
             alt="Sudharva preloader"
-            width={320}
-            height={320}
+            width={400}
+            height={400}
             priority
             unoptimized
             className="preloader-gif"
-            style={{ width: "auto", height: "auto" }}
           />
 
           <p className="preloader-sun-text">

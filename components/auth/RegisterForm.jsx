@@ -22,6 +22,7 @@ import { RainbowButton } from "@/components/animation/rainbowButton";
 import { useAppDispatch } from "@/store/hooks";
 import { requestOtp } from "@/store/slices/otp/otpRequestSlice";
 import { registerUser } from "@/store/slices/users/userRegisterSlice";
+import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { verifyOtp } from "@/store/slices/otp/otpVerifySlice";
 import { EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
 
@@ -389,10 +390,18 @@ export default function RegisterForm({
           email: identifier.trim(),
         }),
       ).unwrap();
+
+      // Stepper APIs require runner auth token; login immediately after account creation.
+      await dispatch(
+        loginUser({
+          username: userCreds.username,
+          password: userCreds.password,
+        }),
+      ).unwrap();
     } catch (requestError) {
       const message = toReadableErrorMessage(
         requestError,
-        "Unable to create your account. Please try again.",
+        "Account created, but auto-login failed. Please login and continue.",
       );
       setError(message);
       setNotice("");

@@ -4557,16 +4557,14 @@ html[data-hero-preloader="seen"] .hero-preloader-shell {
 }
 
 .compact-phone .PhoneInputCountrySelect {
-  position: static;
-  width: 3.5rem;
-  min-width: 3.5rem;
-  height: 1.5rem;
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  min-width: 40%;
+  height: 40%;
   border: 0;
   background: transparent;
-  color: var(--color-ink);
-  font-size: 0.75rem;
-  line-height: 1;
-  appearance: none;
+  opacity: 0;
   cursor: pointer;
 }
 
@@ -4603,7 +4601,7 @@ html[data-hero-preloader="seen"] .hero-preloader-shell {
 .preloader-logo::before {
   content: "";
   position: absolute;
-  width: clamp(230px, 42vw, 440px);
+  width: clamp(190px, 34vw, 380px);
   aspect-ratio: 1;
   left: 50%;
   top: 20%;
@@ -4618,7 +4616,8 @@ html[data-hero-preloader="seen"] .hero-preloader-shell {
 }
 
 .preloader-gif {
-  width: min(62vw, 320px);
+  width: clamp(160px, 42vw, 420px);
+  max-width: 78vw;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 16px 36px rgb(0 0 0 / 0.35));
@@ -4682,7 +4681,7 @@ html[data-hero-preloader="seen"] .hero-preloader-shell {
 
 @media (max-width: 640px) {
   .preloader-logo::before {
-    width: clamp(200px, 72vw, 360px);
+    width: clamp(170px, 58vw, 280px);
     transform: translate(-50%, 18%);
   }
 
@@ -4692,7 +4691,7 @@ html[data-hero-preloader="seen"] .hero-preloader-shell {
   }
 
   .preloader-gif {
-    width: min(70vw, 280px);
+    width: clamp(140px, 58vw, 180px);
   }
 }
 

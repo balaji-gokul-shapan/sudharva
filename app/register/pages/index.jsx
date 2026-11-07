@@ -3,22 +3,17 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import StepperForm from "@/components/registration/StepperForm";
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/store/hooks";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [identifier, setIdentifier] = useState("");
-  const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     const redirectTimer = setTimeout(() => {
-  //       router.push("/login");
-  //     }, 850);
-
-  //     return () => clearTimeout(redirectTimer);
-  //   }
-  // }, [isAuthenticated, router]);
+  useEffect(() => {
+    resetClientSessionData(dispatch);
+  }, [dispatch]);
 
   return (
     <div className="relative">

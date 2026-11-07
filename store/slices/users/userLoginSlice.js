@@ -4,6 +4,7 @@ import axios from "axios";
 import { createSlice } from "@reduxjs/toolkit";
 import {
   extractAuthTokens,
+  refreshUserToken,
   setAuthTokens,
 } from "./userRefreshTokenSlice";
 
@@ -107,13 +108,19 @@ export const loginUser = createAsyncThunk(
       }
 
       const tokens = extractAuthTokens(data);
-      if (tokens.accessToken) {
+      if (tokens.accessToken || tokens.refreshToken) {
         thunkAPI.dispatch(
           setAuthTokens({
-            accessToken: tokens.accessToken,
+            accessToken: tokens.accessToken || null,
             refreshToken: tokens.refreshToken || null,
           }),
         );
+
+        if (!tokens.accessToken && tokens.refreshToken) {
+          await thunkAPI.dispatch(
+            refreshUserToken({ refresh: tokens.refreshToken }),
+          ).unwrap();
+        }
       }
 
       return data;

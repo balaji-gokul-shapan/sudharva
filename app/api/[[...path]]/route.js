@@ -24,7 +24,10 @@ const normalizeJwtToken = (value = "") => {
   const token = decoded.trim();
   if (!token) return "";
   if (["undefined", "null", "[object Object]"].includes(token)) return "";
-  if (token.split(".").length !== 3) return "";
+
+  // Accept both JWT-style and opaque bearer tokens.
+  // Some auth providers return non-JWT access tokens.
+  if (/\s/.test(token)) return "";
 
   return token;
 };
@@ -181,6 +184,12 @@ async function proxyRequest(request, { params }) {
   ]) {
     const value = upstreamResponse.headers?.[name];
     if (value) responseHeaders.set(name, value);
+  }
+
+  // Preserve upstream auth/session cookies for browser clients.
+  const setCookieHeader = upstreamResponse.headers?.["set-cookie"];
+  if (setCookieHeader) {
+    responseHeaders.append("set-cookie", setCookieHeader);
   }
 
   if (process.env.NODE_ENV !== "production") {

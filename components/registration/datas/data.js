@@ -163,18 +163,18 @@ export const HEALTH_SNAPSHOT = [
   //   icon: FileCheckIcon,
   //   tint: "primary",
   // },
-  {
-    id: "eventRulesAcceptance",
-    kind: "toggle",
-    label: "I agree to event rules and regulations.",
-    icon: FileCheckIcon,
-    tint: "volunteer",
-    options: [
-      { value: false, label: "No", tint: "success" },
-      { value: true, label: "Yes", tint: "warning" },
-    ],
-    hint: "You must agree to the event rules to participate.",
-  },
+  // {
+  //   id: "eventRulesAcceptance",
+  //   kind: "toggle",
+  //   label: "I agree to event rules and regulations.",
+  //   icon: FileCheckIcon,
+  //   tint: "volunteer",
+  //   options: [
+  //     { value: false, label: "No", tint: "success" },
+  //     { value: true, label: "Yes", tint: "warning" },
+  //   ],
+  //   hint: "You must agree to the event rules to participate.",
+  // },
   {
     id: "anonymized_impact_reporting_consent",
     kind: "toggle",

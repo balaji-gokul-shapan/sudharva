@@ -17,18 +17,31 @@ const initialState = {
 
 export const extractAuthTokens = (payload = {}) => {
   const source = payload?.data ?? payload;
+  const tokenContainer =
+    source?.tokens ||
+    source?.token_data ||
+    source?.auth ||
+    source?.token ||
+    {};
 
   const accessToken =
     source?.access ||
     source?.access_token ||
     source?.accessToken ||
-    source?.token ||
+    tokenContainer?.access ||
+    tokenContainer?.access_token ||
+    tokenContainer?.accessToken ||
+    (typeof source?.token === "string" ? source.token : null) ||
+    (typeof tokenContainer?.token === "string" ? tokenContainer.token : null) ||
     null;
 
   const refreshToken =
     source?.refresh ||
     source?.refresh_token ||
     source?.refreshToken ||
+    tokenContainer?.refresh ||
+    tokenContainer?.refresh_token ||
+    tokenContainer?.refreshToken ||
     null;
 
   return { accessToken, refreshToken };

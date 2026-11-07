@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AnimatePresence,
@@ -36,6 +36,7 @@ import {
   createPaymentOrder,
   selectPaymentOrder,
 } from "@/store/slices/payment/createPaymentOrderSlice";
+import { selectCreateRegistrationData } from "@/store/slices/registration/createRegistrationSlice";
 import { Input } from "../ui/input";
 
 const PROMO_CODES = [
@@ -707,13 +708,16 @@ export default function PaymentStep({
   onChange,
   step,
   registerData,
+  participantReferenceNo
 }) {
   console.log(registerData, "registerData");
 
   const dispatch = useAppDispatch();
   const paymentOrder = useAppSelector(selectPaymentOrder);
+  const savedRegistrationData = useAppSelector(selectCreateRegistrationData);
   const bibNumberState = useAppSelector(selectEnterBibNumberState);
   const [paymentLinkOpened, setPaymentLinkOpened] = useState(false);
+  const paymentOrderRequestRef = useRef("");
   const [, setTicketUsed] = useState(false);
   const [bibClientError, setBibClientError] = useState("");
   const price = category?.price ?? 0;
@@ -731,8 +735,15 @@ export default function PaymentStep({
   console.log(form, "form");
   console.log(masterEventCategoriesData, "masterEventCategoriesData");
   console.log(masterData, "masterData");
+  console.log(registerData, "registerData");
+  
 
   const participantReference =
+    participantReferenceNo ||
+    savedRegistrationData?.participant_reference ||
+    savedRegistrationData?.participantReference ||
+    savedRegistrationData?.reference ||
+    savedRegistrationData?.id ||
     form?.participant_reference ||
     form?.participantReference ||
     form?.reference ||
@@ -740,6 +751,7 @@ export default function PaymentStep({
     registerData?.participantReference ||
     registerData?.reference ||
     "";
+console.log(participantReferenceNo,"participantReferenceNo");
 
   const bibError = bibClientError || bibNumberState?.error || "";
 
@@ -786,7 +798,9 @@ export default function PaymentStep({
       return;
     }
 
-    const selectedCategoryForRule = selectedCategoryFromMasters || getData;
+    const selectedCategoryForRule =   getData || selectedCategoryFromMasters;
+    console.log(selectedCategoryForRule,"selectedCategoryForRule");
+    
     const bibRangeRule = getBibRangeRuleForCategory(selectedCategoryForRule);
     const isNumericBib = /^\d+$/.test(bibValue);
 
@@ -851,15 +865,6 @@ export default function PaymentStep({
   //   staleTime: Infinity,
   // });
   // console.log(paymentOrder, "paymentOrder");
-  useEffect(() => {
-    if (!participantReference || paymentOrder) return;
-
-    dispatch(
-      createPaymentOrder({
-        participant_reference: participantReference,
-      }),
-    );
-  }, [dispatch, participantReference, paymentOrder]);
 
   // useEffect(() => {
   //   const fetchPaymentOrder = async () => {
@@ -991,6 +996,35 @@ export default function PaymentStep({
     0,
     effectivePrice - totalDiscount + premiumBibCharge,
   );
+
+  useEffect(() => {
+    if (!participantReference) return;
+
+    const expectedAmountPaise = Math.max(0, Math.round(payable * 100));
+    const currentOrderAmountPaise = Number(
+      paymentOrder?.amount || paymentOrder?.amount_paise || 0,
+    );
+
+    if (
+      paymentOrder &&
+      currentOrderAmountPaise > 0 &&
+      currentOrderAmountPaise === expectedAmountPaise
+    ) {
+      return;
+    }
+
+    const requestKey = `${participantReference}:${expectedAmountPaise}`;
+    if (paymentOrderRequestRef.current === requestKey) return;
+    paymentOrderRequestRef.current = requestKey;
+
+    dispatch(
+      createPaymentOrder({
+        participant_reference: participantReference,
+        payable_amount: payable,
+      }),
+    );
+  }, [dispatch, participantReference, paymentOrder, payable]);
+
   const premiumBibNumber = (form.premiumBibNumber || "").trim();
   const bibTicketValue = premiumBibNumber
     ? `CM-${premiumBibNumber}`
