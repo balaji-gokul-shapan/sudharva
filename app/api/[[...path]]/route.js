@@ -62,8 +62,7 @@ const getApiPrefix = (baseUrl) => {
 
 async function proxyRequest(request, { params }) {
   const { path = [] } = await params;
-  const isMasterValuesRequest =
-    path[0] === "masters" && path[1] === "master-values";
+  const isMastersRequest = path[0] === "masters";
 
   if (
     path.length === 0 ||
@@ -114,8 +113,8 @@ async function proxyRequest(request, { params }) {
     request.cookies.get("auth_access_token")?.value,
   );
 
-  if (isMasterValuesRequest) {
-    // Master endpoint is public in this setup; never forward auth headers.
+  if (isMastersRequest) {
+    // Master values are public in this setup; never forward auth headers.
     headers.delete("authorization");
   } else {
     // Fallback to auth cookie when Authorization is missing or malformed

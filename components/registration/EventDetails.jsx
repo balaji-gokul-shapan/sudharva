@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import {
   Check,
   Home01Icon,
@@ -20,6 +21,13 @@ import { Label } from "../ui/label";
 import { PincodeField } from "./components/PincodeField";
 import { SelectField } from "./components/SelectField";
 import { AnimatedShinyText } from "../animation/AnimatedShinyText";
+import PhoneInput from "react-phone-number-input/input";
+import {
+  getCountries,
+  getCountryCallingCode,
+} from "react-phone-number-input";
+import countryFlags from "react-phone-number-input/flags";
+import countryLabels from "react-phone-number-input/locale/en.json";
 
 const resolveCategoryMeta = (name = "") => {
   const normalizedName = String(name).toLowerCase();
@@ -37,6 +45,43 @@ export const EventDetails = ({
   masterData,
   fetchMasterData,
 }) => {
+  const [emergencyCountry, setEmergencyCountry] = useState("IN");
+
+  const countryOptions = useMemo(
+    () =>
+      getCountries().map((code) => ({
+        code,
+        label: countryLabels[code] || code,
+        dialCode: `+${getCountryCallingCode(code)}`,
+      })),
+    [],
+  );
+
+  const selectedEmergencyCountry =
+    countryOptions.find((item) => item.code === emergencyCountry) ?? null;
+  const EmergencyFlagIcon = selectedEmergencyCountry
+    ? countryFlags[selectedEmergencyCountry.code]
+    : null;
+
+  const getPhoneInputValue = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("+")) return raw;
+    const digits = raw.replace(/\D/g, "");
+    return digits ? `+${digits}` : "";
+  };
+
+  const handlePhoneChange = (field, value) => {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      onChange(field, "");
+      return;
+    }
+
+    const digits = raw.replace(/\D/g, "");
+    onChange(field, digits ? `+${digits}` : "");
+  };
+
   const useResident = Boolean(form.useResidentAddress);
   const hasResidentAddress = form.entryType !== "corporate";
 
@@ -149,7 +194,7 @@ export const EventDetails = ({
               <label
                 key={category.id}
                 className={cn(
-                  "relative flex  cursor-pointer flex-col items-center  rounded-2xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                  "relative flex cursor-pointer flex-col items-center rounded-2xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
                   selected ? category.selected : category.className,
                   "has-focus-visible:ring-accent/15",
                 )}
@@ -164,7 +209,7 @@ export const EventDetails = ({
                   aria-describedby={
                     errors.runner_category_id ? "category-error" : undefined
                   }
-                  className="sr-only"
+                  className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
                 />
                 <span className="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-surface shadow-sm">
                   <Trophy
@@ -228,7 +273,7 @@ export const EventDetails = ({
             <label
               key={sizeOption.value}
               className={cn(
-                "flex cursor-pointer justify-center rounded-xl border px-3 py-3 text-sm font-bold transition",
+                "relative flex cursor-pointer justify-center rounded-xl border px-3 py-3 text-sm font-bold transition",
                 String(form.tshirt_size_id) === sizeOption.value
                   ? "border-accent bg-accent text-accent-foreground shadow-sm"
                   : "border-border bg-background text-ink-soft hover:border-accent/50",
@@ -245,7 +290,7 @@ export const EventDetails = ({
                 aria-describedby={
                   errors.tshirt_size_id ? "shirt-error" : undefined
                 }
-                className="sr-only"
+                className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
               />
               {sizeOption.label}
             </label>
@@ -272,7 +317,7 @@ export const EventDetails = ({
           Someone we can reach on race day if anything comes up. We only use
           this in an emergency.
         </p>
-        <div className="grid gap-5 sm:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
           <span className="sr-only">Emergency Contact Details</span>
           <Field
             id="emergency_contact_name"
@@ -287,23 +332,94 @@ export const EventDetails = ({
             icon={UserIcon}
             error={errors.emergency_contact_name}
             autoComplete="off"
-            className="sm:col-span-2"
+            className="sm:col-span-2 lg:col-span-5"
           />
-          <Field
-            id="emergency_contact_mobile"
-            name="emergency_contact_mobile"
-            label="Emergency contact phone"
-            type="tel"
-            placeholder="+91 98765 43210"
-            value={form.emergency_contact_mobile}
-           onChange={(e) => {
-            const value = e.target.value.replace(/[^0-9\s]/g, "");
-            onChange("emergency_contact_mobile", value);
-          }}
-            icon={PhoneIcon}
-            error={errors.emergency_contact_mobile}
-            autoComplete="off"
-          />
+          <div className="min-w-0 sm:col-span-2 lg:col-span-4">
+            <label
+              htmlFor="emergency_contact_mobile"
+              className="mb-2 block text-sm font-semibold text-foreground"
+            >
+              Emergency contact phone{" "}
+              <span className="text-accent" aria-hidden="true">
+                *
+              </span>
+            </label>
+            <div className="relative">
+              <PhoneIcon
+                size={18}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+              />
+              <div
+                className={cn(
+                  "flex h-12 w-full items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 pl-11 text-sm text-foreground transition focus-within:border-accent",
+                  errors.emergency_contact_mobile && "border-destructive",
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
+                  title={selectedEmergencyCountry?.label || "Country"}
+                >
+                  {EmergencyFlagIcon ? (
+                    <EmergencyFlagIcon
+                      title={selectedEmergencyCountry?.label || "Country"}
+                      className="h-4 w-5 rounded-xs"
+                    />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-ink-soft">
+                      --
+                    </span>
+                  )}
+                </span>
+                <select
+                  aria-label="Select emergency country code"
+                  value={emergencyCountry}
+                  onChange={(event) => setEmergencyCountry(event.target.value)}
+                  className="w-12 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground outline-none"
+                >
+                  {countryOptions.map((country) => (
+                    <option
+                      key={country.code}
+                      value={country.code}
+                      title={`${country.label} (${country.dialCode})`}
+                    >
+                      {country.code} {country.dialCode}
+                    </option>
+                  ))}
+                </select>
+                <PhoneInput
+                  id="emergency_contact_mobile"
+                  name="emergency_contact_mobile"
+                  country={emergencyCountry}
+                  international
+                  withCountryCallingCode
+                  value={getPhoneInputValue(form.emergency_contact_mobile)}
+                  onChange={(value) =>
+                    handlePhoneChange("emergency_contact_mobile", value)
+                  }
+                  placeholder="Enter phone number"
+                  autoComplete="off"
+                  aria-required="true"
+                  aria-invalid={Boolean(errors.emergency_contact_mobile)}
+                  aria-describedby={
+                    errors.emergency_contact_mobile
+                      ? "emergency-contact-mobile-error"
+                      : undefined
+                  }
+                  className="min-w-0 w-full border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
+                />
+              </div>
+            </div>
+            {errors.emergency_contact_mobile && (
+              <p
+                id="emergency-contact-mobile-error"
+                className="mt-1.5 text-xs font-medium text-destructive"
+              >
+                {errors.emergency_contact_mobile}
+              </p>
+            )}
+          </div>
           <Field
             id="emergency_contact_relationship"
             name="emergency_contact_relationship"
@@ -318,6 +434,7 @@ export const EventDetails = ({
             icon={Home01Icon}
             error={errors.emergency_contact_relationship}
             autoComplete="off"
+            className="sm:col-span-2 lg:col-span-3"
           />
         </div>
       </div>

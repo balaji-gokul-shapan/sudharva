@@ -27,16 +27,31 @@ const getDistance = (category) => {
 
   const directMapping = {
     "5k": "5 Kilometers",
+    "5k run": "5 Kilometers",
+    "5k walk": "5 Kilometers",
     "10k": "10 Kilometers",
+    "10k challenge run": "10 Kilometers",
+    "10k chanellge run": "10 Kilometers",
+    "10k challange run": "10 Kilometers",
     "half marathon": "21.097 Kilometers",
-    marathon: "42.195 Kilometers",
+    // marathon: "42.195 Kilometers",
   };
 
   if (directMapping[normalized]) {
     return directMapping[normalized];
   }
 
+  if (/\b5\s*km\s*walk\b|\b5k\s*walk\b|\bwalk\s*5\s*k(m)?\b/.test(normalized)) {
+    return "5 Kilometers";
+  }
+  if (/\b5\s*km\s*run\b|\b5k\s*run\b|\brun\s*5\s*k(m)?\b/.test(normalized)) {
+    return "5 Kilometers";
+  }
   if (/\b5\s*km\b|\b5k\b/.test(normalized)) return "5 Kilometers";
+
+  if (/\b10\s*km\s*cha(l|n)+ge\s*run\b|\b10k\s*cha(l|n)+ge\s*run\b/.test(normalized)) {
+    return "10 Kilometers";
+  }
   if (/\b10\s*km\b|\b10k\b/.test(normalized)) return "10 Kilometers";
   if (/\bhalf\s*marathon\b|\b21(\.0?97)?\s*km\b/.test(normalized)) {
     return "21.097 Kilometers";

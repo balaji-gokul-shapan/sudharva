@@ -148,7 +148,12 @@ function RazorpayPopupContent() {
       result.razorpay_payment_id ||
       result.razorpay_signature,
   );
-  const shouldHideHelper = autoMode && !status.message && !hasResult;
+  const hasRequiredCheckoutData =
+    Boolean(rzpKey.trim()) &&
+    Boolean(orderId.trim()) &&
+    Boolean(amountPaise.trim());
+  const shouldHideHelper =
+    autoMode && hasRequiredCheckoutData && !status.message && !hasResult;
   const receiptAmountRupees = Math.max(
     0,
     Number(amountPaise || 0) / 100,
@@ -195,6 +200,17 @@ function RazorpayPopupContent() {
     matchedCategory?.label ||
     matchedCategory?.name ||
     String(categorySourceValue || "");
+
+  const userRedirectPath = useMemo(() => {
+    const userId =
+      params.get("userId") ||
+      registrationData?.user_id ||
+      registrationData?.userId ||
+      registrationData?.runner?.id ||
+      "";
+
+    return userId ? `/users/${userId}` : "/users";
+  }, [params, registrationData]);
 
   
   const receiptItems = useMemo(
@@ -279,6 +295,17 @@ function RazorpayPopupContent() {
       show("error", "Unable to copy automatically. Please copy manually.");
     }
   };
+
+  const handleCloseWindow = useCallback(() => {
+    window.close();
+
+    // Browsers may block closing if the tab was not script-opened.
+    window.setTimeout(() => {
+      if (!window.closed) {
+        window.location.assign(userRedirectPath);
+      }
+    }, 150);
+  }, [userRedirectPath]);
 
   const openPaymentPopup = useCallback(() => {
     const key = rzpKey.trim();
@@ -399,6 +426,46 @@ function RazorpayPopupContent() {
       />
 
       <main style={containerStyle}>
+        {!hasResult ? (
+          <section
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 16,
+              background: "#ffffff",
+            }}
+          >
+            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+              Razorpay Checkout
+            </h1>
+            <p style={{ ...mutedStyle, marginTop: 8 }}>
+              {hasRequiredCheckoutData
+                ? "Opening checkout automatically. If it does not open, use the button below."
+                : "Unable to auto-open checkout. Required payment details are missing (key/order/amount)."}
+            </p>
+
+            <button
+              type="button"
+              onClick={openPaymentPopup}
+              style={{
+                ...buttonStyle,
+                marginTop: 12,
+                opacity: hasRequiredCheckoutData ? 1 : 0.6,
+                cursor: hasRequiredCheckoutData ? "pointer" : "not-allowed",
+              }}
+              disabled={!hasRequiredCheckoutData}
+            >
+              Open Payment Popup
+            </button>
+
+            {status.message ? (
+              <div style={statusStyles[status.type] || statusStyles.error}>
+                {status.message}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
         {/* <h1 style={{ fontSize: 20 }}>Razorpay Popup Helper</h1>
         <p style={mutedStyle}>
           Key, Order ID and Amount are auto-filled when available. Verify before
@@ -602,7 +669,7 @@ function RazorpayPopupContent() {
               <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={() => window.close()}
+                  onClick={handleCloseWindow}
                   style={{
                     ...buttonStyle,
                     marginTop: 0,

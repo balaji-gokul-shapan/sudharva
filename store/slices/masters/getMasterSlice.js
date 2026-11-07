@@ -8,12 +8,14 @@ const initialState = {
   data: null,
 };
 
-const getMasterValuesUrl = () => "/api/masters/master-values";
+const getMasterValuesUrl = () => "/api/masters/event-master-data";
+const getMasterValuesUrlWithoutSlash = () => "/api/masters/event-master-data";
 
 export const getMasterData = createAsyncThunk(
   "master/getMasterData",
   async (_, thunkAPI) => {
     const { rejectWithValue, signal } = thunkAPI;
+
     try {
       const response = await axios.get(getMasterValuesUrl(), {
         signal,
@@ -21,6 +23,23 @@ export const getMasterData = createAsyncThunk(
       const payload = response?.data;
       return payload?.data ?? payload;
     } catch (error) {
+      if (error?.response?.status === 404) {
+        try {
+          const retryResponse = await axios.get(getMasterValuesUrlWithoutSlash(), {
+            signal,
+          });
+          const retryPayload = retryResponse?.data;
+          return retryPayload?.data ?? retryPayload;
+        } catch (retryError) {
+          return rejectWithValue(
+            retryError?.response?.data?.message ||
+              retryError?.response?.data?.error ||
+              retryError?.message ||
+              "Failed to fetch master data",
+          );
+        }
+      }
+
       return rejectWithValue(
         error?.response?.data?.message ||
           error?.response?.data?.error ||

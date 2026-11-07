@@ -114,7 +114,7 @@ const STEP_FIELDS = {
     [
       "first_name",
       "last_name",
-      "email",
+      // "email", // Temporary: do not block step progression on email
       "mobile_number",
       "date_of_birth",
       "gender",
@@ -187,6 +187,17 @@ const REGISTRATION_TYPE_IDS = {
   sponsored: 3,
 };
 
+function toBooleanOrDefault(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(normalized)) return true;
+    if (["false", "0", "no", "n"].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
 function mapRegistrationToForm(registerData, identifier) {
   if (!registerData || typeof registerData !== "object") {
     return {};
@@ -239,9 +250,9 @@ function mapRegistrationToForm(registerData, identifier) {
   return {
     first_name: runner?.first_name || "",
     last_name: runner?.last_name || "",
-    email: isIdentifierEmail
-      ? normalizedIdentifier
-      : runner?.email || normalizedIdentifier || "",
+    // email: isIdentifierEmail
+    //   ? normalizedIdentifier
+    //   : runner?.email || normalizedIdentifier || "",
     mobile_number: isIdentifierEmail
       ? details?.mobile_number || ""
       : normalizedIdentifier || details?.mobile_number || "",
@@ -257,9 +268,15 @@ function mapRegistrationToForm(registerData, identifier) {
     resident_taulk: details?.resident_taulk || "",
     resident_district: details?.resident_district || "",
     resident_pincode: details?.resident_pincode || "",
-    has_diabetes: Boolean(details?.has_diabetes),
-    cardiac_condition: Boolean(details?.cardiac_condition),
-    hypertension: Boolean(details?.hypertension),
+    has_diabetes: toBooleanOrDefault(
+      details?.has_diabetes ?? registerData?.has_diabetes,
+    ),
+    cardiac_condition: toBooleanOrDefault(
+      details?.cardiac_condition ?? registerData?.cardiac_condition,
+    ),
+    hypertension: toBooleanOrDefault(
+      details?.hypertension ?? registerData?.hypertension,
+    ),
     allergies: details?.allergies || "",
     other_medical_conditions: registerData?.other_medical_conditions || "",
     emergency_contact_name: emergencyName,
@@ -268,20 +285,29 @@ function mapRegistrationToForm(registerData, identifier) {
     emergencyName,
     emergencyPhone,
     emergencyRelation,
-    previous_marathon_participation: Boolean(
-      registerData?.previous_marathon_participation,
+    previous_marathon_participation: toBooleanOrDefault(
+      details?.previous_marathon_participation ??
+        registerData?.previous_marathon_participation,
     ),
-    medical_fitness_declaration: Boolean(
+    participant_reference:
+      registerData?.participant_reference ||
+      registerData?.participantReference ||
+      registerData?.reference ||
+      registerData?.id ||
+      "",
+    medical_fitness_declaration: toBooleanOrDefault(
       registerData?.medical_fitness_declaration,
     ),
-    physical_exertion_acknowledgement: Boolean(
+    physical_exertion_acknowledgement: toBooleanOrDefault(
       registerData?.physical_exertion_acknowledgement,
     ),
-    event_rules_acceptance: Boolean(registerData?.event_rules_acceptance),
-    event_communication_consent: Boolean(
+    event_rules_acceptance: toBooleanOrDefault(
+      registerData?.event_rules_acceptance,
+    ),
+    event_communication_consent: toBooleanOrDefault(
       registerData?.event_communication_consent,
     ),
-    anonymized_impact_reporting_consent: Boolean(
+    anonymized_impact_reporting_consent: toBooleanOrDefault(
       registerData?.anonymized_impact_reporting_consent,
     ),
     runner_category_id:
@@ -306,7 +332,7 @@ function createInitialForm(identifier, getRegistrationType, registerData) {
     registration_type_id: individualTypeId,
 
     first_name: "",
-    email: isEmail ? identifier : "",
+    // email: isEmail ? identifier : "",
     mobile_number: isEmail ? "" : identifier || "",
     alternatePhone: "",
     date_of_birth: "",
@@ -375,11 +401,11 @@ function validateField(name, value) {
       return trimmedValue ? "" : "Please enter your first name.";
     case "last_name":
       return trimmedValue ? "" : "Please enter your last name.";
-    case "email":
-      if (!trimmedValue) return "Please enter your email address.";
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
-        ? ""
-        : "Enter a valid email address.";
+    // case "email":
+    //   if (!trimmedValue) return "Please enter your email address.";
+    //   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
+    //     ? ""
+    //     : "Enter a valid email address.";
     case "mobile_number": {
       if (!trimmedValue) return "Please enter your mobile number.";
       const digits = trimmedValue.replace(/\D/g, "");
@@ -536,6 +562,13 @@ function validateField(name, value) {
   }
 }
 
+function normalizePhoneForApi(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `+${digits}` : "";
+}
+
 function StepProgress({ activeIndex, onSelect }) {
   return (
     <nav aria-label="Registration progress" className="relative">
@@ -678,6 +711,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       : 0;
   const isFixedStepFlow = step !== undefined && step !== null && String(step).trim() !== "";
 
+  // const [stepIndex, setStepIndex] = useState(4);
   const [stepIndex, setStepIndex] = useState(step ? parseInt(step, 10) : safeDraftStep);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -702,6 +736,8 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     getRegistrationType,
     registerData,
   );
+  console.log(registerData,"hasRegisterData");
+  
   const initialForm = draft?.form
     ? hasRegisterData
       ? { ...draft.form, ...seededForm }
@@ -725,9 +761,6 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       document
         .getElementById("registration-step-heading")
         ?.focus({ preventScroll: true });
-      document
-        .getElementById("registration-flow")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [stepIndex]);
 
@@ -984,6 +1017,13 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
             companyPhone,
             teamSize,
           };
+    payload.mobile_number = normalizePhoneForApi(payload.mobile_number);
+    payload.alternatePhone = normalizePhoneForApi(payload.alternatePhone);
+    payload.emergency_contact_mobile = normalizePhoneForApi(
+      payload.emergency_contact_mobile,
+    );
+    payload.beneficiary_mobile = normalizePhoneForApi(payload.beneficiary_mobile);
+    payload.companyPhone = normalizePhoneForApi(payload.companyPhone);
     console.log("payload", payload);
 
     try {
@@ -1138,6 +1178,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
               <PaymentStep
                 form={form}
                 step={step}
+                registerData={registerData}
                 category={CATEGORIES.find(
                   (item) => item.value === form.category,
                 )}

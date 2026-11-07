@@ -26,6 +26,12 @@ import { cn } from "@/lib/utils";
 import MarathonPassTicket from "../animation/MarathonPassTicket";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getMasterData } from "@/store/slices/masters/getMasterSlice";
+import { getMasterEventCategories } from "@/store/slices/masters/getMasterEventCategoriesSlice";
+import {
+  enterBibNumber,
+  resetEnterBibNumberState,
+  selectEnterBibNumberState,
+} from "@/store/slices/bibNumber/enterBibNumberSlice";
 import {
   createPaymentOrder,
   selectPaymentOrder,
@@ -104,6 +110,51 @@ export function getPromoDiscount(promo, fee) {
 const formatINR = (amount) =>
   `₹${Math.max(0, Math.round(amount)).toLocaleString("en-IN")}`;
 
+const normalizeCategoryText = (value) =>
+  String(value ?? "")
+    .toLowerCase()
+    .replace(/\s*\(\s*/g, " ")
+    .replace(/\s*\)\s*/g, " ")
+    .replace(/[^a-z0-9.]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const normalizeCategoryKey = (value) =>
+  normalizeCategoryText(value).replace(/[^a-z0-9]/g, "");
+
+const getBibRangeRuleForCategory = (categoryInfo) => {
+  const candidates = [
+    categoryInfo?.name,
+    categoryInfo?.category_name,
+    categoryInfo?.distance,
+    `${categoryInfo?.distance ?? ""} ${categoryInfo?.name ?? ""}`,
+    `${categoryInfo?.name ?? ""} ${categoryInfo?.distance ?? ""}`,
+  ]
+    .map(normalizeCategoryKey)
+    .filter(Boolean);
+
+  const containsAny = (tokens) =>
+    tokens.some((token) => candidates.some((candidate) => candidate.includes(token)));
+
+  if (containsAny(["5kmwalk", "5kwalk", "walk5k"])) {
+    return { label: "5K Walk", min: 25001, max: 30000 };
+  }
+
+  if (containsAny(["5kmrun", "5krun", "run5k"])) {
+    return { label: "5K Run", min: 10001, max: 20000 };
+  }
+
+  if (containsAny(["10km", "10k"])) {
+    return { label: "10K Run", min: 4001, max: 9000 };
+  }
+
+  if (containsAny(["211km", "21.1km", "halfmarathon"])) {
+    return { label: "21.1K Run", min: 1001, max: 3000 };
+  }
+
+  return null;
+};
+
 function AnimatedAmount({ value, className }) {
   const motionValue = useMotionValue(value);
   const [display, setDisplay] = useState(value);
@@ -125,11 +176,16 @@ function PromoCodeCard({
   code,
   promo,
   bibNumber,
+  bibApplied,
+  onToggleBib,
   onBibChange,
   onCodeChange,
   onApply,
   onClear,
   promoCodes,
+  bibLoading,
+  bibError,
+  bibSuccess,
 }) {
   const [error, setError] = useState("");
 
@@ -158,6 +214,7 @@ function PromoCodeCard({
   };
 
   const isApplied = Boolean(promo);
+  const isBibApplied = Boolean(bibApplied);
   const status = isApplied ? "applied" : error ? "error" : "idle";
   const message = isApplied ? `${promo.label} applied.` : error;
   const bibPreview = String(bibNumber || "").trim() || "ELITE24";
@@ -168,6 +225,16 @@ function PromoCodeCard({
       .replace(/[^A-Z0-9]/g, "")
       .slice(0, 8);
     onBibChange(sanitized);
+  };
+
+  const handleBibToggle = async () => {
+    if (!isBibApplied && !String(bibNumber || "").trim()) {
+      setError("Enter a premium bib number to continue.");
+      return;
+    }
+
+    setError("");
+    await onToggleBib(!isBibApplied);
   };
 
   return (
@@ -194,7 +261,7 @@ function PromoCodeCard({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_180px] sm:items-start">
             <div>
               <label
                 htmlFor="premium-bib-number"
@@ -202,17 +269,59 @@ function PromoCodeCard({
               >
                 Premium Bib Number
               </label>
-              <Input
-                id="premium-bib-number"
-                name="premiumBibNumber"
-                type="text"
-                autoComplete="off"
-                spellCheck={false}
-                value={bibNumber ?? ""}
-                onChange={(event) => handleBibInput(event.target.value)}
-                placeholder="ELITE24"
-                className="h-12 w-full rounded-xl border border-(--premium-card-border) bg-(--premium-panel-bg) px-3 text-sm font-semibold uppercase tracking-[0.22em] text-(--premium-input) outline-none transition placeholder:tracking-normal placeholder:text-(--premium-placeholder) focus-visible:outline-[2px_solid_var(--premium-label)]"
-              />
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                <Input
+                  id="premium-bib-number"
+                  name="premiumBibNumber"
+                  type="text"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={bibNumber ?? ""}
+                  onChange={(event) => handleBibInput(event.target.value)}
+                  placeholder="ELITE24"
+                  className="h-12 w-full rounded-xl border border-(--premium-card-border) bg-(--premium-panel-bg) px-3 text-sm font-semibold uppercase tracking-[0.22em] text-(--premium-input) outline-none transition placeholder:tracking-normal placeholder:text-(--premium-placeholder) focus-visible:outline-[2px_solid_var(--premium-label)] sm:flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleBibToggle}
+                  disabled={bibLoading}
+                  className={cn(
+                    "inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold uppercase tracking-wider transition focus-visible:outline-[2px_solid_var(--premium-label)] sm:w-auto sm:min-w-32",
+                    bibLoading && "cursor-not-allowed opacity-70",
+                    isBibApplied
+                      ? "border border-warning/50 bg-warning/15 text-warning hover:bg-warning/20"
+                      : "bg-(--premium-action-bg) text-(--premium-action-fg) shadow-md hover:brightness-105",
+                  )}
+                >
+                  {bibLoading ? (
+                    <>
+                      <Sparkle size={17} weight="bold" />
+                      Applying...
+                    </>
+                  ) : isBibApplied ? (
+                    <>
+                      <Check size={17} weight="bold" />
+                      Cancel
+                    </>
+                  ) : (
+                    <>
+                      <Percent size={17} weight="bold" />
+                      Apply
+                    </>
+                  )}
+                </button>
+              </div>
+              <div className="min-h-5 pt-2">
+                {bibError ? (
+                  <p className="text-xs font-semibold text-(--premium-error)">
+                    {bibError}
+                  </p>
+                ) : bibSuccess && isBibApplied ? (
+                  <p className="text-xs font-semibold text-success">
+                    Premium bib applied successfully.
+                  </p>
+                ) : null}
+              </div>
             </div>
             <div className="rounded-xl border border-(--premium-card-border) bg-(--premium-soft-bg) px-3 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-(--premium-muted)">
@@ -224,7 +333,7 @@ function PromoCodeCard({
             </div>
           </div>
 
-          <div className="mt-5">
+          {/* <div className="mt-5">
             <label
               htmlFor="premium-promo-code"
               className="mb-2 block text-sm font-semibold text-(--premium-heading)"
@@ -332,9 +441,9 @@ function PromoCodeCard({
                 )}
               </AnimatePresence>
             </div>
-          </div>
+          </div> */}
 
-          <div className="mt-4 border-t border-dashed border-[color-mix(in_srgb,var(--premium-muted)_35%,transparent)] pt-4">
+          {/* <div className="mt-4 border-t border-dashed border-[color-mix(in_srgb,var(--premium-muted)_35%,transparent)] pt-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-(--premium-muted)">
               Try a demo code
             </p>
@@ -363,7 +472,7 @@ function PromoCodeCard({
                 );
               })}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -591,13 +700,22 @@ function StandardPromoCodeCard({
   );
 }
 
-export default function PaymentStep({ form, category, teamSize, onChange, step }) {
-  console.log(form, "form");
+export default function PaymentStep({
+  form,
+  category,
+  teamSize,
+  onChange,
+  step,
+  registerData,
+}) {
+  console.log(registerData, "registerData");
 
   const dispatch = useAppDispatch();
   const paymentOrder = useAppSelector(selectPaymentOrder);
+  const bibNumberState = useAppSelector(selectEnterBibNumberState);
   const [paymentLinkOpened, setPaymentLinkOpened] = useState(false);
   const [, setTicketUsed] = useState(false);
+  const [bibClientError, setBibClientError] = useState("");
   const price = category?.price ?? 0;
   const isCorporate = form.entryType === "corporate";
   const { data: masterData = null } = useQuery({
@@ -605,11 +723,121 @@ export default function PaymentStep({ form, category, teamSize, onChange, step }
     queryFn: async () => await dispatch(getMasterData()).unwrap(),
     staleTime: 5 * 60 * 1000,
   });
+  const { data: masterEventCategoriesData = [] } = useQuery({
+    queryKey: ["master-event-categories"],
+    queryFn: async () => await dispatch(getMasterEventCategories()).unwrap(),
+    staleTime: 5 * 60 * 1000,
+  });
+  console.log(form, "form");
+  console.log(masterEventCategoriesData, "masterEventCategoriesData");
+  console.log(masterData, "masterData");
 
   const participantReference =
     form?.participant_reference ||
     form?.participantReference ||
-    form?.reference;
+    form?.reference ||
+    registerData?.participant_reference ||
+    registerData?.participantReference ||
+    registerData?.reference ||
+    "";
+
+  const bibError = bibClientError || bibNumberState?.error || "";
+
+  const handleTogglePremiumBib = async (isEnabled) => {
+    if (!isEnabled) {
+      onChange("premiumBibApplied", false);
+      setBibClientError("");
+      dispatch(resetEnterBibNumberState());
+      return;
+    }
+
+    const bibValue = String(form?.premiumBibNumber ?? "")
+      .trim()
+      .toUpperCase();
+    const categoryId = Number(
+      selectedCategoryFromMasters?.id ?? getData?.id ?? 0,
+    );
+    console.log(form?.runner_category_id, "categoryId");
+    console.log(
+      selectedCategoryFromMasters?.id,
+      "selectedCategoryFromMasters?.id",
+    );
+    console.log(getData?.id, "getData?.id");
+
+    if (!participantReference) {
+      setBibClientError(
+        "Participant reference missing. Please retry registration.",
+      );
+      onChange("premiumBibApplied", false);
+      return;
+    }
+
+    if (!categoryId) {
+      setBibClientError(
+        "Runner category missing. Please select your event again.",
+      );
+      onChange("premiumBibApplied", false);
+      return;
+    }
+
+    if (!bibValue) {
+      setBibClientError("Enter a premium bib number to continue.");
+      onChange("premiumBibApplied", false);
+      return;
+    }
+
+    const selectedCategoryForRule = selectedCategoryFromMasters || getData;
+    const bibRangeRule = getBibRangeRuleForCategory(selectedCategoryForRule);
+    const isNumericBib = /^\d+$/.test(bibValue);
+
+    if (bibRangeRule && !isNumericBib) {
+      setBibClientError(
+        `${bibRangeRule.label} bib must be numeric (${bibRangeRule.min} to ${bibRangeRule.max}).`,
+      );
+      onChange("premiumBibApplied", false);
+      return;
+    }
+
+    if (bibRangeRule && isNumericBib) {
+      const bibNumber = Number.parseInt(bibValue, 10);
+      if (bibNumber < bibRangeRule.min || bibNumber > bibRangeRule.max) {
+        setBibClientError(
+          `${bibRangeRule.label} bib must be between ${bibRangeRule.min} and ${bibRangeRule.max}.`,
+        );
+        onChange("premiumBibApplied", false);
+        return;
+      }
+    }
+
+    setBibClientError("");
+
+    try {
+      await dispatch(
+        enterBibNumber({
+          participant_reference: participantReference,
+          category_id: categoryId,
+          bib_number: bibValue,
+        }),
+      ).unwrap();
+
+      onChange("premiumBibApplied", true);
+    } catch {
+      onChange("premiumBibApplied", false);
+    }
+  };
+
+  const handleBibNumberChange = (value) => {
+    onChange("premiumBibNumber", value);
+
+    if (form?.premiumBibApplied) {
+      onChange("premiumBibApplied", false);
+      dispatch(resetEnterBibNumberState());
+    }
+
+    if (bibClientError) {
+      setBibClientError("");
+    }
+  };
 
   // const { data: paymentOrder = null } = useQuery({
   //   queryKey: ["payment-order", participantReference || "default"],
@@ -641,19 +869,105 @@ export default function PaymentStep({ form, category, teamSize, onChange, step }
   //   fetchPaymentOrder();
   // }, [participantReference, queryClient]);
 
-  const getRegistrationCategory = masterData?.registration_category ?? [];
+  const registrationCategoriesFromMasterData = Array.isArray(
+    masterData?.registration_category,
+  )
+    ? masterData.registration_category
+    : [];
+  const registrationCategoriesFromEventCategories = Array.isArray(
+    masterEventCategoriesData,
+  )
+    ? masterEventCategoriesData
+    : [];
+
+  const getRegistrationCategory =
+    registrationCategoriesFromMasterData.length > 0
+      ? registrationCategoriesFromMasterData
+      : registrationCategoriesFromEventCategories;
+
+  const selectedCategoryFromMasters = (() => {
+    if (
+      !Array.isArray(getRegistrationCategory) ||
+      !getRegistrationCategory.length
+    ) {
+      return null;
+    }
+
+    const selectedId =
+      form?.runner_category_id ||
+      registerData?.runner_category_id ||
+      registerData?.runnerCategoryId;
+
+    if (selectedId) {
+      const byId = getRegistrationCategory.find(
+        (item) => String(item?.id) === String(selectedId),
+      );
+      if (byId) return byId;
+    }
+
+    const candidateNames = [
+      form?.event,
+      registerData?.category,
+      category?.name,
+      category?.title,
+    ]
+      .map(normalizeCategoryText)
+      .filter(Boolean);
+
+    if (!candidateNames.length) return null;
+
+    return (
+      getRegistrationCategory.find((item) => {
+        const itemValues = [
+          item?.name,
+          item?.category_name,
+          item?.distance,
+          `${item?.distance ?? ""} ${item?.name ?? ""}`,
+          `${item?.name ?? ""} ${item?.distance ?? ""}`,
+        ]
+          .map(normalizeCategoryText)
+          .filter(Boolean);
+
+        const itemKeys = itemValues.map(normalizeCategoryKey);
+
+        return candidateNames.some((candidate) => {
+          const candidateKey = normalizeCategoryKey(candidate);
+
+          return (
+            itemValues.some(
+              (value) =>
+                value === candidate ||
+                value.includes(candidate) ||
+                candidate.includes(value),
+            ) ||
+            itemKeys.some(
+              (key) =>
+                key === candidateKey ||
+                key.includes(candidateKey) ||
+                candidateKey.includes(key),
+            )
+          );
+        });
+      }) || null
+    );
+  })();
 
   const getAmountForRegistrationCategory = (category) => {
     const foundCategory = getRegistrationCategory.find(
       (item) => String(item.id) === String(category),
     );
-    return foundCategory;
+    return foundCategory || selectedCategoryFromMasters;
     // return Number(foundCategory?.fee ?? foundCategory?.price ?? 0);
   };
   const getData = getAmountForRegistrationCategory(form?.runner_category_id);
   console.log(getData, "getData");
+  console.log(masterEventCategoriesData, "masterEventCategoriesData");
+  console.log(selectedCategoryFromMasters, "selectedCategoryFromMasters");
 
-  const effectivePrice = getData?.fee > 0 ? getData?.fee : price;
+  const effectivePrice =
+    registerData?.base_fee || (getData?.fee > 0 ? getData?.fee : price);
+
+  console.log(effectivePrice, "effectivePrice");
 
   const appliedPromo = form.promoApplied ?? null;
   const appliedPremiumPromo = form.premiumPromoApplied ?? null;
@@ -672,7 +986,11 @@ export default function PaymentStep({ form, category, teamSize, onChange, step }
     effectivePrice,
     regularDiscount + premiumDiscount,
   );
-  const payable = Math.max(0, effectivePrice - totalDiscount);
+  const premiumBibCharge = form.premiumBibApplied ? 500 : 0;
+  const payable = Math.max(
+    0,
+    effectivePrice - totalDiscount + premiumBibCharge,
+  );
   const premiumBibNumber = (form.premiumBibNumber || "").trim();
   const bibTicketValue = premiumBibNumber
     ? `CM-${premiumBibNumber}`
@@ -756,7 +1074,9 @@ export default function PaymentStep({ form, category, teamSize, onChange, step }
                 Payment summary
               </h3>
               <p className="text-xs text-ink-soft">
-                {getData?.name ?? "Selected event"} · {getData?.distance ?? "-"}
+                {}
+                {getData?.name ?? "Selected event"} ·{" "}
+                {registerData?.category ?? "-"} {getData?.distance ?? "-"}
               </p>
             </div>
           </div>
@@ -800,16 +1120,21 @@ export default function PaymentStep({ form, category, teamSize, onChange, step }
                 stubRegNo={bibTicketValue}
               />
               {/* </div> */}
-              {/* <PromoCodeCard
+              <PromoCodeCard
                 code={form.premiumPromoCode ?? ""}
                 promo={appliedPremiumPromo}
                 bibNumber={form.premiumBibNumber ?? ""}
-                onBibChange={(value) => onChange("premiumBibNumber", value)}
+                bibApplied={form.premiumBibApplied}
+                onToggleBib={handleTogglePremiumBib}
+                onBibChange={handleBibNumberChange}
                 onCodeChange={handlePremiumCodeChange}
                 onApply={handleApplyPremiumPromo}
                 onClear={handleClearPremiumPromo}
                 promoCodes={PREMIUM_PROMO_CODES}
-              /> */}
+                bibLoading={Boolean(bibNumberState?.loading)}
+                bibError={bibError}
+                bibSuccess={Boolean(bibNumberState?.success)}
+              />
             </div>
 
             <div className="flex items-center justify-between gap-4">
@@ -881,6 +1206,21 @@ export default function PaymentStep({ form, category, teamSize, onChange, step }
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {premiumBibCharge > 0 && (
+              <div className="flex items-center justify-between gap-4">
+                <dt className="flex items-center gap-2 text-ink-soft">
+                  <span className="rounded-md bg-warning/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-warning">
+                    BIB
+                  </span>
+                  Premium bib add-on
+                </dt>
+                <dd className="flex items-center gap-2 font-semibold tabular-nums text-warning">
+                  <span aria-hidden="true">+</span>
+                  <AnimatedAmount value={premiumBibCharge} />
+                </dd>
+              </div>
+            )}
 
             <div className="flex items-center justify-between gap-4 border-t border-border/70 pt-3">
               <dt className="font-bold text-foreground">

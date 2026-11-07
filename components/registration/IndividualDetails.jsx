@@ -1,10 +1,17 @@
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Field } from "./components/Field";
 import { motion } from "framer-motion";
+import PhoneInput from "react-phone-number-input/input";
+import {
+  getCountries,
+  getCountryCallingCode,
+} from "react-phone-number-input";
+import countryFlags from "react-phone-number-input/flags";
+import countryLabels from "react-phone-number-input/locale/en.json";
 import {
   Calendar01Icon,
   Home02Icon,
-  Mail01Icon,
   PencilIcon,
   PhoneIcon,
   Shield01Icon,
@@ -37,6 +44,49 @@ export const IndividualDetails = ({
         : value;
     onChange(field, nextValue);
   };
+
+  const getPhoneInputValue = (value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("+")) return raw;
+    const digits = raw.replace(/\D/g, "");
+    return digits ? `+${digits}` : "";
+  };
+
+  const handlePhoneChange = (field, value) => {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      onChange(field, "");
+      return;
+    }
+
+    const digits = raw.replace(/\D/g, "");
+    onChange(field, digits ? `+${digits}` : "");
+  };
+
+  const [mobileCountry, setMobileCountry] = useState("IN");
+  const [alternateCountry, setAlternateCountry] = useState("IN");
+
+  const countryOptions = useMemo(
+    () =>
+      getCountries().map((code) => ({
+        code,
+        label: countryLabels[code] || code,
+        dialCode: `+${getCountryCallingCode(code)}`,
+      })),
+    [],
+  );
+
+  const selectedMobileCountry =
+    countryOptions.find((item) => item.code === mobileCountry) ?? null;
+  const selectedAlternateCountry =
+    countryOptions.find((item) => item.code === alternateCountry) ?? null;
+  const MobileFlagIcon = selectedMobileCountry
+    ? countryFlags[selectedMobileCountry.code]
+    : null;
+  const AlternateFlagIcon = selectedAlternateCountry
+    ? countryFlags[selectedAlternateCountry.code]
+    : null;
 
   return (
     <motion.div
@@ -88,51 +138,144 @@ export const IndividualDetails = ({
           error={errors.last_name}
           autoComplete="name"
         />
-        <Field
-          id="email"
-          name="email"
-          label="Email address"
-          type="email"
-          placeholder="you@example.com"
-          value={form.email}
-          onChange={onChange}
-          icon={Mail01Icon}
-          error={errors.email}
-          autoComplete="email"
-          readOnly={lockedIdentifierField === "email"}
-        />
-        <Field
-          id="mobile_number"
-          name="mobile_number"
-          label="Mobile number"
-          type="tel"
-          placeholder="+91 98765 43210"
-          value={form.mobile_number}
-          onChange={(e) => {
-            const value = e.target.value.replace(/[^0-9\s]/g, "");
-            onChange("mobile_number", value);
-          }}
-          icon={PhoneIcon}
-          error={errors.mobile_number}
-          autoComplete="tel"
-          readOnly={lockedIdentifierField === "mobile_number"}
-        />
-        <Field
-          id="alternatePhone"
-          name="alternatePhone"
-          label="Alternate mobile number"
-          type="tel"
-          placeholder="+91 98765 43210"
-          value={form.alternatePhone}
-          onChange={(e) => {
-            const value = e.target.value.replace(/[^0-9\s]/g, "");
-            onChange("alternatePhone", value);
-          }}
-          icon={PhoneIcon}
-          error={errors.alternatePhone}
-          autoComplete="tel"
-          required={false}
-        />
+        {/* Temporary: email field hidden in UI */}
+        <div className="min-w-0">
+          <label htmlFor="mobile_number" className="mb-2 block text-sm font-semibold text-foreground">
+            Mobile number <span className="text-accent" aria-hidden="true">*</span>
+          </label>
+          <div className="relative">
+            <PhoneIcon
+              size={18}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+            />
+            <div
+              className={cn(
+                "flex w-full items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 pl-11 text-sm text-foreground transition focus-within:border-accent",
+                errors.mobile_number && "border-destructive",
+                lockedIdentifierField === "mobile_number" &&
+                  "cursor-not-allowed border-dashed bg-muted/50 text-ink-soft",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
+                title={selectedMobileCountry?.label || "Country"}
+              >
+                {MobileFlagIcon ? (
+                  <MobileFlagIcon title={selectedMobileCountry?.label || "Country"} className="h-4 w-5 rounded-xs" />
+                ) : (
+                  <span className="text-[10px] font-semibold text-ink-soft">--</span>
+                )}
+              </span>
+              <select
+                aria-label="Select country code"
+                value={mobileCountry}
+                onChange={(event) => setMobileCountry(event.target.value)}
+                disabled={lockedIdentifierField === "mobile_number"}
+                className="w-28 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none"
+              >
+                {countryOptions.map((country) => (
+                  <option
+                    key={country.code}
+                    value={country.code}
+                    title={`${country.label} (${country.dialCode})`}
+                  >
+                    {country.code} {country.dialCode}
+                  </option>
+                ))}
+              </select>
+              <PhoneInput
+                id="mobile_number"
+                name="mobile_number"
+                country={mobileCountry}
+                international
+                withCountryCallingCode
+                value={getPhoneInputValue(form.mobile_number)}
+                onChange={(value) => handlePhoneChange("mobile_number", value)}
+                placeholder="Enter phone number"
+                autoComplete="tel"
+                readOnly={lockedIdentifierField === "mobile_number"}
+                aria-required="true"
+                aria-invalid={Boolean(errors.mobile_number)}
+                aria-describedby={errors.mobile_number ? "mobile_number-error" : undefined}
+                className="w-full border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
+              />
+            </div>
+          </div>
+          {errors.mobile_number && (
+            <p id="mobile_number-error" className="mt-1.5 text-xs font-medium text-destructive">
+              {errors.mobile_number}
+            </p>
+          )}
+        </div>
+
+        <div className="min-w-0">
+          <label htmlFor="alternatePhone" className="mb-2 block text-sm font-semibold text-foreground">
+            Alternate mobile number
+          </label>
+          <div className="relative">
+            <PhoneIcon
+              size={18}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft"
+            />
+            <div
+              className={cn(
+                "flex w-full items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 pl-11 text-sm text-foreground transition focus-within:border-accent",
+                errors.alternatePhone && "border-destructive",
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
+                title={selectedAlternateCountry?.label || "Country"}
+              >
+                {AlternateFlagIcon ? (
+                  <AlternateFlagIcon title={selectedAlternateCountry?.label || "Country"} className="h-4 w-5 rounded-xs" />
+                ) : (
+                  <span className="text-[10px] font-semibold text-ink-soft">--</span>
+                )}
+              </span>
+              <select
+                aria-label="Select alternate country code"
+                value={alternateCountry}
+                onChange={(event) => setAlternateCountry(event.target.value)}
+                className="w-28 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none"
+              >
+                {countryOptions.map((country) => (
+                  <option
+                    key={country.code}
+                    value={country.code}
+                    title={`${country.label} (${country.dialCode})`}
+                  >
+                    {country.code} {country.dialCode}
+                  </option>
+                ))}
+              </select>
+              <PhoneInput
+                id="alternatePhone"
+                name="alternatePhone"
+                country={alternateCountry}
+                international
+                withCountryCallingCode
+                value={getPhoneInputValue(form.alternatePhone)}
+                onChange={(value) => handlePhoneChange("alternatePhone", value)}
+                placeholder="Enter phone number"
+                autoComplete="tel"
+                aria-required="false"
+                aria-invalid={Boolean(errors.alternatePhone)}
+                aria-describedby={errors.alternatePhone ? "alternatePhone-error" : undefined}
+                className="w-full border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
+              />
+            </div>
+          </div>
+          {errors.alternatePhone && (
+            <p id="alternatePhone-error" className="mt-1.5 text-xs font-medium text-destructive">
+              {errors.alternatePhone}
+            </p>
+          )}
+        </div>
         <div className="grid gap-5 sm:grid-cols-[65%_30%]">
           <Field
             id="date_of_birth"

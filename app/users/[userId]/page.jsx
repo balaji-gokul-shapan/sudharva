@@ -14,12 +14,38 @@ import PendingPaymentPanel from "./PendingPaymentPanel";
 import { isRegistrationRecord } from "@/lib/users/registrationPayload";
 import { getUserData } from "./data/userData";
 
+const hasMeaningfulRegistration = (entry) => {
+  if (!isRegistrationRecord(entry)) return false;
+
+  const hasReference = Boolean(
+    entry?.registration_id ||
+      entry?.id ||
+      entry?.participant_reference ||
+      entry?.participantReference ||
+      entry?.reference,
+  );
+  const hasRunner = Boolean(
+    entry?.runner &&
+      typeof entry.runner === "object" &&
+      Object.keys(entry.runner).length > 0,
+  );
+  const hasEventMeta = Boolean(
+    entry?.event ||
+      entry?.event_name ||
+      entry?.category ||
+      entry?.category_name ||
+      entry?.runner_category_id,
+  );
+
+  return hasReference || hasRunner || hasEventMeta;
+};
+
 const hasRegistrationData = (registration) => {
   if (Array.isArray(registration)) {
-    return registration.some((entry) => isRegistrationRecord(entry));
+    return registration.some((entry) => hasMeaningfulRegistration(entry));
   }
 
-  return isRegistrationRecord(registration);
+  return hasMeaningfulRegistration(registration);
 };
 
 const stats = [
@@ -49,12 +75,14 @@ export default async function UserDashboard({ params }) {
   const registration = await getUserRegistrationServer(userId, {
     redirectPath: `/users/${encodeURIComponent(String(userId || ""))}`,
   });
+  const hasRegistration = hasRegistrationData(registration);
   const isPendingPayment =
-    registration?.status === "PENDING_PAYMENT" ||
-    registration?.status === "pending_payment";
+    hasRegistration &&
+    (registration?.status === "PENDING_PAYMENT" ||
+      registration?.status === "pending_payment");
   const isPaymentCompleted = !isPendingPayment;
 
-  if (!hasRegistrationData(registration)) {
+  if (!hasRegistration) {
     return <RegistrationStepper />;
   }
 

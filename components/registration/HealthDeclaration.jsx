@@ -68,6 +68,17 @@ const CONSENT_DECLARATION_FIELDS = new Set([
   "anonymized_impact_reporting_consent",
 ]);
 
+function normalizeBooleanLike(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(normalized)) return true;
+    if (["false", "0", "no", "n"].includes(normalized)) return false;
+  }
+  return undefined;
+}
+
 function DeclarationRow({
   id,
   label,
@@ -150,6 +161,7 @@ function HealthSnapshot({ form, onChange }) {
         ).map((item) => {
           const Icon = item.icon;
           const value = form[item.id];
+          const normalizedValue = normalizeBooleanLike(value);
           const styles = SNAPSHOT_TINTS[item.tint] ?? SNAPSHOT_TINTS.health;
           const isRequiredSnapshot = REQUIRED_SNAPSHOT_FIELDS.has(item.id);
 
@@ -185,14 +197,14 @@ function HealthSnapshot({ form, onChange }) {
                         const optionId = `${item.id}-${option.value ? "yes" : "no"}`;
                         const optionStyles =
                           SNAPSHOT_TINTS[option.tint] ?? SNAPSHOT_TINTS.neutral;
-                        const isActive = value === option.value;
+                        const isActive = normalizedValue === option.value;
 
                         return (
                           <label
                             key={optionId}
                             htmlFor={optionId}
                             className={cn(
-                              "flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 text-center text-[11px] font-semibold transition",
+                              "relative flex min-h-9 flex-1 cursor-pointer items-center justify-center rounded-lg border px-2 text-center text-[11px] font-semibold transition",
                               "focus-within:ring-accent/30",
                               isActive
                                 ? optionStyles.active
@@ -206,7 +218,7 @@ function HealthSnapshot({ form, onChange }) {
                               value={String(option.value)}
                               checked={isActive}
                               onChange={() => onChange(item.id, option.value)}
-                              className="sr-only"
+                              className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
                             />
                             {option.label}
                           </label>
@@ -220,7 +232,7 @@ function HealthSnapshot({ form, onChange }) {
                     {item.hint}
                   </p>
                 ) : null}
-                {isRequiredSnapshot && form[item.id] === undefined ? (
+                {isRequiredSnapshot && normalizedValue === undefined ? (
                   <p className="mt-1 pl-10.5 text-[11px] font-medium text-destructive">
                     Please choose Yes or No.
                   </p>
@@ -280,11 +292,15 @@ export const HealthDeclaration = ({
 
 }) => {
   const handleFieldChange = (id, value) => {
-    onChange(id, value);
+    const normalizedValue = REQUIRED_SNAPSHOT_FIELDS.has(id)
+      ? normalizeBooleanLike(value)
+      : value;
+
+    onChange(id, normalizedValue);
 
     const legacyField = LEGACY_MIRROR_FIELDS[id];
     if (legacyField) {
-      onChange(legacyField, value);
+      onChange(legacyField, normalizedValue);
     }
   };
 
