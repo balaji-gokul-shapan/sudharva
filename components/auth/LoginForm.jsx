@@ -187,8 +187,16 @@ export default function LoginForm({ setIsAuthenticated }) {
     setError("");
     setNotice("Login successful. Redirecting to your dashboard...");
     setJustLoggedIn(true);
-
+    console.log("loginResponse", loginResponse);
+    const participantReference =
+      loginResponse?.registrations?.[0]?.participant_reference;
+    // const getNormalizedUserId =
+    //   typeof participantReference === "string"
+    //     ? participantReference.split("-")[1]
+    //     : undefined;
+    // console.log("getNormalizedUserId", getNormalizedUserId);
     const userId =
+      loginResponse?.auth_user_id ||
       loginResponse?.user?.id ||
       loginResponse?.user?.user_id ||
       loginResponse?.user_id ||
@@ -205,11 +213,18 @@ export default function LoginForm({ setIsAuthenticated }) {
     loginTimerRef.current = setTimeout(() => {
       setIsAuthenticated(true);
       setJustLoggedIn(false);
-      if (userId) {
-        const searchParams = new URLSearchParams({
-          userId: String(userId),
-        });
-        router.push(`/users?${searchParams.toString()}`);
+      const redirectParam =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect") || ""
+          : "";
+      const safeRedirect = redirectParam.startsWith("/")
+        ? redirectParam
+        : "";
+
+      if (safeRedirect) {
+        router.push(safeRedirect);
+      } else if (userId) {
+        router.push(`/users/${encodeURIComponent(String(userId))}`);
       } else {
         router.push("/users");
       }

@@ -1,7 +1,6 @@
 import { StripedPattern } from "@/components/animation/StripedPattern";
 import { ArrowRight02Icon } from "@animateicons/react/huge";
 import { HandshakeIcon } from "@animateicons/react/huge";
-import Link from "next/link";
 import {
   ScrollVelocityContainer,
   ScrollVelocityRow,
@@ -50,7 +49,7 @@ const CTABanner = () => {
             foreground="var(--primary)"
             borderColor="color-mix(in srgb, var(--primary) 30%, transparent)"
           >
-            <Link href="mailto:sudharvarun@yahoo.com?subject=Sudharva%20Marathon">
+            <a href="mailto:sudharvarun@yahoo.com?subject=Sudharva%20Marathon">
               <HandshakeIcon
                 size={20}
                 duration={1}
@@ -58,7 +57,7 @@ const CTABanner = () => {
                 className="shrink-0"
               />
               Become a Partner
-            </Link>
+            </a>
           </ShimmerButton>
         </div>
 

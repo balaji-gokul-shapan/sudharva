@@ -591,7 +591,7 @@ function StandardPromoCodeCard({
   );
 }
 
-export default function PaymentStep({ form, category, teamSize, onChange }) {
+export default function PaymentStep({ form, category, teamSize, onChange, step }) {
   console.log(form, "form");
 
   const dispatch = useAppDispatch();

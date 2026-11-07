@@ -10,15 +10,15 @@ const Index = () => {
   const [identifier, setIdentifier] = useState("");
   const router = useRouter();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const redirectTimer = setTimeout(() => {
-        router.push("/login");
-      }, 850);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     const redirectTimer = setTimeout(() => {
+  //       router.push("/login");
+  //     }, 850);
 
-      return () => clearTimeout(redirectTimer);
-    }
-  }, [isAuthenticated, router]);
+  //     return () => clearTimeout(redirectTimer);
+  //   }
+  // }, [isAuthenticated, router]);
 
   return (
     <div className="relative">
@@ -39,7 +39,7 @@ const Index = () => {
             />
           </motion.div>
         )}
-        {isAuthenticated && (
+        {/* {isAuthenticated && (
           <motion.div
             key="redirect-overlay"
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
@@ -58,8 +58,8 @@ const Index = () => {
               Redirecting to Login
             </motion.p>
           </motion.div>
-        )}
-        {/* {isAuthenticated && (
+        )} */}
+        {isAuthenticated && (
           <motion.div
             key="register-stepper"
             initial={{ opacity: 0, y: 40, scale: 0.97, filter: "blur(8px)" }}
@@ -80,7 +80,7 @@ const Index = () => {
               setIdentifier={setIdentifier}
             />
           </motion.div>
-        )} */}
+        )}
       </AnimatePresence>
     </div>
   );

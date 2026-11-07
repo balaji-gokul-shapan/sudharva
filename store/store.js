@@ -28,7 +28,7 @@ const storage =
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["registrationDraft", "createRegistration", "master"],
+  whitelist: ["registrationDraft", "createRegistration", "loginUser"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

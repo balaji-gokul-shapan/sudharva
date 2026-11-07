@@ -91,44 +91,68 @@ function validateAccountPayload({ username, password, confirmPassword }) {
   return "";
 }
 
-function toReadableErrorMessage(payload, fallbackMessage) {
-  if (!payload) return fallbackMessage;
+const stripHtml = (html) => {
+  if (typeof window === "undefined") {
+    return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  }
+
+  const doc = new DOMParser().parseFromString(html, "text/html");
+
+  // Remove scripts, styles, and other non-readable elements
+  doc.querySelectorAll("script, style, noscript, svg").forEach((el) =>
+    el.remove()
+  );
+
+  return (doc.body.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+const toReadableErrorMessage = (payload, fallback = "Login failed") => {
+  if (!payload) return fallback;
 
   if (typeof payload === "string") {
     try {
-      return toReadableErrorMessage(JSON.parse(payload), fallbackMessage);
+      return toReadableErrorMessage(JSON.parse(payload), fallback);
     } catch {
-      return payload;
+      const readable = stripHtml(payload);
+      return readable || fallback;
     }
   }
 
   if (Array.isArray(payload)) {
-    return payload[0] || fallbackMessage;
+    return toReadableErrorMessage(payload[0], fallback);
   }
 
   if (typeof payload === "object") {
     if (Array.isArray(payload.non_field_errors) && payload.non_field_errors[0]) {
-      return payload.non_field_errors[0];
+      return toReadableErrorMessage(payload.non_field_errors[0], fallback);
     }
 
-    if (payload.detail) return String(payload.detail);
-    if (payload.message) return String(payload.message);
+    if (payload.detail) {
+      return toReadableErrorMessage(payload.detail, fallback);
+    }
+
+    if (payload.message) {
+      return toReadableErrorMessage(payload.message, fallback);
+    }
 
     const firstKey = Object.keys(payload)[0];
-    if (!firstKey) return fallbackMessage;
+
+    if (!firstKey) return fallback;
 
     const firstValue = payload[firstKey];
+
     if (Array.isArray(firstValue) && firstValue[0]) {
-      return `${firstKey}: ${firstValue[0]}`;
+      return `${firstKey}: ${toReadableErrorMessage(firstValue[0], fallback)}`;
     }
 
     if (typeof firstValue === "string" && firstValue.trim()) {
-      return `${firstKey}: ${firstValue}`;
+      return `${firstKey}: ${toReadableErrorMessage(firstValue, fallback)}`;
     }
   }
 
-  return fallbackMessage;
-}
+  return fallback;
+};
 
 export default function RegisterForm({
   isAuthenticated,
@@ -261,7 +285,22 @@ export default function RegisterForm({
 
     try {
       setIsRequestingOtp(true);
-      await dispatch(requestOtp(payload)).unwrap();
+      const result = await dispatch(requestOtp(payload)).unwrap();
+
+      // The API can return HTTP 200 while refusing to send an OTP
+      // (e.g. the email already has login credentials). In that case
+      // do not advance to the OTP step.
+      if (
+        result?.login_required ||
+        result?.otp_sent === false ||
+        result?.success === false
+      ) {
+        setError(
+          result?.message || "Unable to send OTP right now. Please try again.",
+        );
+        setNotice("");
+        return;
+      }
     } catch (requestError) {
       const message = toReadableErrorMessage(
         requestError,

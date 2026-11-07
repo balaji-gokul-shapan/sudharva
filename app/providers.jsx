@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Provider } from "react-redux";
+import { Provider, useDispatch } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "@/store/store";
+import { hydrateAuthFromStorage } from "@/store/slices/users/userRefreshTokenSlice";
+
+function AuthBootstrap({ children }) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(hydrateAuthFromStorage());
+  }, [dispatch]);
+
+  return children;
+}
 
 export default function Providers({ children }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -13,7 +24,7 @@ export default function Providers({ children }) {
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
         <PersistGate loading={children} persistor={persistor}>
-          {children}
+          <AuthBootstrap>{children}</AuthBootstrap>
         </PersistGate>
       </Provider>
     </QueryClientProvider>

@@ -1,9 +1,9 @@
-import React from 'react'
+import EventRegistrationModule from "./EventRegistrationModule";
 
-const page = () => {
+export default function UserEventsPage() {
   return (
-    <div>page</div>
-  )
+    <div className="space-y-6">
+      <EventRegistrationModule />
+    </div>
+  );
 }
-
-export default page

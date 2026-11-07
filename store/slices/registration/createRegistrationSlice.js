@@ -41,6 +41,7 @@ const createRegistrationSlice = createSlice({
   name: "createRegistration",
   initialState,
   reducers: {
+    resetCreateRegistrationState: () => initialState,
     setCreateRegistrationSnapshot: (state, action) => {
       const requestPayload = action.payload?.requestPayload ?? null;
       const response = action.payload?.response ?? null;
@@ -77,7 +78,8 @@ const createRegistrationSlice = createSlice({
   },
 });
 
-export const { setCreateRegistrationSnapshot } = createRegistrationSlice.actions;
+export const { setCreateRegistrationSnapshot, resetCreateRegistrationState } =
+  createRegistrationSlice.actions;
 
 export const selectCreateRegistrationState = (state) => state.createRegistration;
 export const selectCreateRegistrationData = (state) => state.createRegistration?.data;

@@ -275,48 +275,48 @@ export const EventDetails = ({
         <div className="grid gap-5 sm:grid-cols-4">
           <span className="sr-only">Emergency Contact Details</span>
           <Field
-            id="emergencyName"
-            name="emergencyName"
+            id="emergency_contact_name"
+            name="emergency_contact_name"
             label="Emergency contact name"
             placeholder="e.g. Priya Kumar"
-            value={form.emergencyName}
+            value={form.emergency_contact_name}
            onChange={(e) => {
             const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-            onChange("emergencyName", value);
+            onChange("emergency_contact_name", value);
           }}
             icon={UserIcon}
-            error={errors.emergencyName}
+            error={errors.emergency_contact_name}
             autoComplete="off"
             className="sm:col-span-2"
           />
           <Field
-            id="emergencyPhone"
-            name="emergencyPhone"
+            id="emergency_contact_mobile"
+            name="emergency_contact_mobile"
             label="Emergency contact phone"
             type="tel"
             placeholder="+91 98765 43210"
-            value={form.emergencyPhone}
+            value={form.emergency_contact_mobile}
            onChange={(e) => {
             const value = e.target.value.replace(/[^0-9\s]/g, "");
-            onChange("emergencyPhone", value);
+            onChange("emergency_contact_mobile", value);
           }}
             icon={PhoneIcon}
-            error={errors.emergencyPhone}
+            error={errors.emergency_contact_mobile}
             autoComplete="off"
           />
           <Field
-            id="emergencyRelation"
-            name="emergencyRelation"
+            id="emergency_contact_relationship"
+            name="emergency_contact_relationship"
             label="Emergency contact relation"
             type="text"
             placeholder="e.g. Parent, Sibling"
-            value={form.emergencyRelation}
+            value={form.emergency_contact_relationship}
             onChange={(e) => {
             const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-            onChange("emergencyRelation", value);
+            onChange("emergency_contact_relationship", value);
           }}
             icon={Home01Icon}
-            error={errors.emergencyRelation}
+            error={errors.emergency_contact_relationship}
             autoComplete="off"
           />
         </div>

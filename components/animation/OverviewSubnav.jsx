@@ -67,10 +67,10 @@ export function OverviewSubnav({ link, leaveTimeoutRef, setOpenSubnav }) {
       {/* Header */}
       <div className="border-b border-border/70 px-3 pb-3 pt-2">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent">
-          Event Overview
+          Event Details
         </p>
         <p className="mt-1 text-xs text-ink-soft">
-          Explore the marathon — cause, health add-ons, categories and partners.
+          Explore the marathon - cause, health add-ons, categories and partners.
         </p>
       </div>
 

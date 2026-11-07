@@ -28,6 +28,7 @@ import {
   ArrowRight02Icon,
   Cancel01Icon,
   FilterAddIcon,
+  Login01Icon,
   Menu01Icon,
 } from "@animateicons/react/huge";
 import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "../datas/homepage/data";
@@ -49,7 +50,7 @@ function NavSubnav({ type, link, leaveTimeoutRef, setOpenSubnav }) {
 const NAV_LINKS = [
   { label: "Home", href: "/", decoration: "decoration-primary" },
   {
-    label: "Event Overview",
+    label: "Event Details",
     href: "#overview",
     decoration: "decoration-accent",
     subnavType: "overview",
@@ -173,7 +174,7 @@ export const Navbar = () => {
       <div className="h-19 sm:h-30" aria-hidden="true" />
       <div
         ref={topBarRef}
-        className="fixed top-0 left-0 right-0 z-50 hidden border-b border-accent/35 bg-primary text-primary-foreground sm:block"
+        className="fixed top-0 left-0 right-0 z-50 hidden border-b border-accent/35 bg-gradient-brand text-primary-foreground sm:block"
       >
         <div className="mx-auto flex h-10 w-full max-w-content items-center justify-center gap-4 px-3 sm:px-4 lg:px-6 xl:px-10">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] sm:text-xs">
@@ -329,7 +330,7 @@ export const Navbar = () => {
                 href="/login"
                 className="inline-flex h-full items-center justify-center gap-2 whitespace-nowrap"
               >
-                <FilterAddIcon
+                <Login01Icon
                   size={18}
                   duration={1}
                   color="currentColor"
@@ -373,7 +374,7 @@ export const Navbar = () => {
                 aria-label="Login"
                 className="inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <FilterAddIcon size={16} duration={1} color="currentColor" />
+                <Login01Icon size={16} duration={1} color="currentColor" />
                 <span className="sr-only sm:not-sr-only">Login</span>
               </Link>
             </RainbowButton>

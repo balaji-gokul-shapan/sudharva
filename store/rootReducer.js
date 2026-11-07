@@ -11,6 +11,7 @@ import paymentOrderConfirmationReducer from "./slices/payment/paymentOrderConfir
 import loginUserReducer from "./slices/users/userLoginSlice";
 import userRegisterReducer from "./slices/users/userRegisterSlice";
 import userRefreshTokenReducer from "./slices/users/userRefreshTokenSlice";
+import getUserDetailsReducer from "./slices/users/getuserDetailsSlice";
 
 const rootReducer = combineReducers({
   app: appReducer,
@@ -25,6 +26,7 @@ const rootReducer = combineReducers({
   loginUser: loginUserReducer,
   userRegister: userRegisterReducer,
   userRefreshToken: userRefreshTokenReducer,
+  getUserDetails: getUserDetailsReducer,
 });
 
 export default rootReducer;

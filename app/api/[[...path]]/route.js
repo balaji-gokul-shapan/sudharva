@@ -7,6 +7,32 @@ import {
 
 const FORWARDED_HEADERS = ["accept", "authorization", "content-type"];
 
+const normalizeJwtToken = (value = "") => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const withoutBearer = raw.replace(/^Bearer\s+/i, "").trim();
+  const withoutQuotes = withoutBearer.replace(/^['\"]|['\"]$/g, "").trim();
+
+  let decoded = withoutQuotes;
+  try {
+    decoded = decodeURIComponent(withoutQuotes);
+  } catch {
+    decoded = withoutQuotes;
+  }
+
+  const token = decoded.trim();
+  if (!token) return "";
+  if (["undefined", "null", "[object Object]"].includes(token)) return "";
+  if (token.split(".").length !== 3) return "";
+
+  return token;
+};
+
+const isUsableBearerHeader = (value = "") => {
+  return Boolean(normalizeJwtToken(value));
+};
+
 const getApiBaseUrl = (path = []) => {
   const isPincodeRequest = path[0] === "pincode";
   const envName = isPincodeRequest ? "PINCODE_API_BASE_URL" : "API_BASE_URL";
@@ -36,6 +62,8 @@ const getApiPrefix = (baseUrl) => {
 
 async function proxyRequest(request, { params }) {
   const { path = [] } = await params;
+  const isMasterValuesRequest =
+    path[0] === "masters" && path[1] === "master-values";
 
   if (
     path.length === 0 ||
@@ -80,6 +108,26 @@ async function proxyRequest(request, { params }) {
   for (const name of FORWARDED_HEADERS) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
+  }
+
+  const cookieToken = normalizeJwtToken(
+    request.cookies.get("auth_access_token")?.value,
+  );
+
+  if (isMasterValuesRequest) {
+    // Master endpoint is public in this setup; never forward auth headers.
+    headers.delete("authorization");
+  } else {
+    // Fallback to auth cookie when Authorization is missing or malformed
+    // (e.g. stale localStorage token before auth hydration/login refresh).
+    if (!isUsableBearerHeader(headers.get("authorization"))) {
+      if (cookieToken) {
+        headers.set("authorization", `Bearer ${cookieToken}`);
+      }
+    } else {
+      const normalizedHeaderToken = normalizeJwtToken(headers.get("authorization"));
+      headers.set("authorization", `Bearer ${normalizedHeaderToken}`);
+    }
   }
 
   const method = request.method.toUpperCase();

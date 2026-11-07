@@ -5,7 +5,7 @@ import Link from "next/link";
 
 const QUICK_LINKS = [
   { label: "Home", href: "#home" },
-  { label: "Event Overview", href: "#overview" },
+  { label: "Event Details", href: "#overview" },
   { label: "Join Us", href: "#join" },
 ];
 
@@ -100,7 +100,17 @@ const Footer = () => {
           <p>
             © <CurrentYear /> Sudharva. All rights reserved.
           </p>
-          <Link href="https://appatrust.com" target="_blank" rel="noopener noreferrer">powered by Appa charitable trust.</Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-end">
+            
+            <Link
+              href="https://appatrust.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-link"
+            >
+              Powered by Appa Charitable Trust
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

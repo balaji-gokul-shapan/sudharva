@@ -117,8 +117,8 @@ export const ReviewDetails = ({ form, onEdit }) => {
           "T-shirt",
           tshirt?.value || tshirt?.name || tshirt?.label || form.tshirt_size_id,
         ],
-        ["Emergency contact", form.emergencyName],
-        ["Emergency phone", form.emergencyPhone],
+        ["Emergency contact", form.emergency_contact_name || form.emergencyName],
+        ["Emergency phone", form.emergency_contact_mobile || form.emergencyPhone],
         // [
         //   "Delivery address",
         //   [

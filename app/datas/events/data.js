@@ -174,3 +174,105 @@ export const overviewStats = [
   { value: "21.1K", label: "Longest distance" },
   { value: "100%", label: "Purpose driven" },
 ];
+
+export const termsSections = [
+  {
+    title: "1. Acceptance of Terms",
+    points: [
+      "By registering for or participating in Sudharva Marathon 2025, you agree to these Terms and Conditions.",
+      "If you are registering on behalf of another participant, you confirm that you are authorized to accept these terms for that participant.",
+      "Organizers may update these terms when required. The latest version published on this website will apply.",
+    ],
+  },
+  {
+    title: "2. Eligibility and Registration",
+    points: [
+      "Participants must provide accurate and complete details during registration.",
+      "Participants below 18 years of age must have consent from a parent or legal guardian.",
+      "Registrations are confirmed only after successful payment and issuance of a confirmation message or receipt.",
+      "Organizers reserve the right to verify identity and age at any stage.",
+    ],
+  },
+  {
+    title: "3. Health and Fitness Declaration",
+    points: [
+      "You confirm that you are medically fit to participate in the selected category.",
+      "You are responsible for consulting a qualified medical professional before participating if needed.",
+      "Participants with known medical conditions must carry required medication and emergency information.",
+      "Organizers may deny participation to anyone who appears medically unfit or unsafe to continue.",
+    ],
+  },
+  {
+    title: "4. Race Rules and Conduct",
+    points: [
+      "Participants must follow instructions from race officials, volunteers, route marshals, and medical teams.",
+      "Use of unauthorized vehicles, dangerous behavior, and route shortcuts are prohibited.",
+      "Any participant engaging in abusive, discriminatory, or unsafe conduct may be disqualified and removed.",
+      "Bibs and event IDs are personal and non-transferable unless explicitly permitted by organizers.",
+    ],
+  },
+  {
+    title: "5. Event Changes, Delays, and Cancellations",
+    points: [
+      "Organizers may modify route, schedule, start time, race format, or event arrangements for safety, legal, logistical, or weather-related reasons.",
+      "In case of force majeure events, including natural disasters, public health emergencies, civil unrest, or government restrictions, the event may be postponed, modified, or canceled.",
+      "Any rescheduling, transfer policy, or refund handling will be communicated through official channels.",
+    ],
+  },
+  {
+    title: "6. Fees, Refunds, and Transfers",
+    points: [
+      "Registration fees are generally non-refundable unless a specific refund policy is announced for a category or situation.",
+      "Convenience fees, payment gateway charges, and taxes may be non-refundable.",
+      "Category change, transfer, or deferral requests are subject to organizer approval and applicable deadlines.",
+    ],
+  },
+  {
+    title: "7. Timing, Results, and Awards",
+    points: [
+      "Official results are based on organizer-approved timing systems and rules.",
+      "Organizers reserve the right to review, correct, or revise results in case of technical or rule-related issues.",
+      "Awards and prize eligibility are subject to category rules, verification checks, and anti-fraud review.",
+    ],
+  },
+  {
+    title: "8. Media Consent",
+    points: [
+      "Participants may be photographed, filmed, or recorded during the event.",
+      "By participating, you grant organizers and authorized partners the right to use such media for event communication, promotion, and archival purposes without additional compensation.",
+      "If legally required in specific contexts, withdrawal or restricted-use requests may be handled as per applicable law.",
+    ],
+  },
+  {
+    title: "9. Personal Data",
+    points: [
+      "Personal information collected during registration is used for event operations, communication, support, compliance, and participant services.",
+      "Data may be shared with trusted operational partners such as timing, medical, logistics, and payment providers only as required for event delivery and compliance.",
+      "Participants are responsible for providing current contact details for critical updates.",
+    ],
+  },
+  {
+    title: "10. Liability and Indemnity",
+    points: [
+      "Participation is voluntary and at your own risk.",
+      "To the maximum extent permitted by law, organizers are not liable for personal injury, loss, damage, or theft arising from participation except where liability cannot legally be excluded.",
+      "You agree to indemnify organizers against claims arising from your negligent, unlawful, or willfully harmful actions during the event.",
+    ],
+  },
+  {
+    title: "11. Prohibited Items and Safety",
+    points: [
+      "Participants must not carry prohibited or dangerous items, including weapons, explosives, illegal substances, or any item deemed unsafe by security personnel.",
+      "Security checks may be conducted at expo and race venues.",
+      "Refusal to comply with safety checks can result in denied entry without refund.",
+    ],
+  },
+  {
+    title: "12. Governing Law and Dispute Resolution",
+    points: [
+      "These terms are governed by applicable laws of India.",
+      "Courts with competent jurisdiction at the organizer's principal place of operations will have jurisdiction, unless otherwise required by law.",
+      "Before formal legal action, participants agree to attempt good-faith resolution through written communication with the organizers.",
+    ],
+  },
+];

@@ -18,7 +18,8 @@ export const getMasterData = createAsyncThunk(
       const response = await axios.get(getMasterValuesUrl(), {
         signal,
       });
-      return response.data;
+      const payload = response?.data;
+      return payload?.data ?? payload;
     } catch (error) {
       return rejectWithValue(
         error?.response?.data?.message ||
@@ -30,8 +31,13 @@ export const getMasterData = createAsyncThunk(
   },
   {
     condition: (_, { getState }) => {
-      const isLoading = getState()?.master?.loading;
-      return !isLoading;
+      const masterState = getState()?.master;
+      const isLoading = Boolean(masterState?.loading);
+      const hasData = Boolean(masterState?.data);
+
+      // Prevent duplicate in-flight calls, but never block when data is empty.
+      if (isLoading && hasData) return false;
+      return true;
     },
   },
 );

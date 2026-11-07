@@ -9,6 +9,7 @@ import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
 
 import {
+  ArrowRightDoubleIcon,
   FilterAddIcon,
   HandshakeIcon,
 } from "@animateicons/react/huge";
@@ -667,7 +668,7 @@ export function HeroCtas() {
             href="/register"
             className="inline-flex w-full items-center justify-center sm:w-auto"
           >
-            <FilterAddIcon
+            <ArrowRightDoubleIcon
               size={24}
               duration={1}
               color="currentColor"

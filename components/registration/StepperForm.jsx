@@ -132,9 +132,9 @@ const STEP_FIELDS = {
     [
       "category",
       "tshirt_size_id",
-      "emergencyName",
-      "emergencyPhone",
-      "emergencyRelation",
+      "emergency_contact_name",
+      "emergency_contact_mobile",
+      "emergency_contact_relationship",
       // "delivery_address_line1",
       // "delivery_address_line2",
       // "delivery_city",
@@ -158,9 +158,9 @@ const STEP_FIELDS = {
     [
       "category",
       "tshirt_size_id",
-      "emergencyName",
-      "emergencyPhone",
-      "emergencyRelation",
+      "emergency_contact_name",
+      "emergency_contact_mobile",
+      "emergency_contact_relationship",
       // "delivery_address_line1",
       // "delivery_address_line2",
       // "delivery_city",
@@ -187,9 +187,111 @@ const REGISTRATION_TYPE_IDS = {
   sponsored: 3,
 };
 
-function createInitialForm(identifier, getRegistrationType) {
-  console.log(identifier,"identifier");
+function mapRegistrationToForm(registerData, identifier) {
+  if (!registerData || typeof registerData !== "object") {
+    return {};
+  }
+
+  const runner = registerData?.runner || {};
+  const details = runner?.details || {};
+  const normalizedIdentifier = String(identifier || "").trim();
+  const isIdentifierEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    normalizedIdentifier,
+  );
   
+  const emergency = details?.emergency_contact || registerData?.emergency_contact || {};
+  const emergencyName =
+  details?.emergency_contact_name ||
+  details?.emergencyName ||
+    runner?.emergencyName ||
+    runner?.emergency_contact_name ||
+    emergency?.name ||
+    registerData?.emergencyName ||
+    registerData?.emergency_contact_name ||
+    "";
+  const emergencyPhone =
+  details?.emergency_contact_mobile ||
+  details?.emergencyPhone ||
+    details?.emergency_contact_phone ||
+    runner?.emergencyPhone ||
+    runner?.emergency_contact_mobile ||
+    runner?.emergency_contact_phone ||
+    emergency?.mobile ||
+    emergency?.phone ||
+    registerData?.emergencyPhone ||
+    registerData?.emergency_contact_mobile ||
+    registerData?.emergency_contact_phone ||
+    "";
+  const emergencyRelation =
+  details?.emergency_contact_relationship ||
+  details?.emergencyRelation ||
+    details?.emergency_contact_relation ||
+    runner?.emergencyRelation ||
+    runner?.emergency_contact_relationship ||
+    runner?.emergency_contact_relation ||
+    emergency?.relationship ||
+    emergency?.relation ||
+    registerData?.emergencyRelation ||
+    registerData?.emergency_contact_relationship ||
+    registerData?.emergency_contact_relation ||
+    "";
+
+  return {
+    first_name: runner?.first_name || "",
+    last_name: runner?.last_name || "",
+    email: isIdentifierEmail
+      ? normalizedIdentifier
+      : runner?.email || normalizedIdentifier || "",
+    mobile_number: isIdentifierEmail
+      ? details?.mobile_number || ""
+      : normalizedIdentifier || details?.mobile_number || "",
+    date_of_birth: details?.date_of_birth || "",
+    gender: details?.gender || "",
+    height: details?.height || "",
+    weight: details?.weight || "",
+    bloodGroup: details?.blood_group || "",
+    resident_address_line1: details?.resident_address_line1 || "",
+    resident_address_line2: details?.resident_address_line2 || "",
+    resident_city: details?.resident_city || "",
+    resident_state: details?.resident_state || "",
+    resident_taulk: details?.resident_taulk || "",
+    resident_district: details?.resident_district || "",
+    resident_pincode: details?.resident_pincode || "",
+    has_diabetes: Boolean(details?.has_diabetes),
+    cardiac_condition: Boolean(details?.cardiac_condition),
+    hypertension: Boolean(details?.hypertension),
+    allergies: details?.allergies || "",
+    other_medical_conditions: registerData?.other_medical_conditions || "",
+    emergency_contact_name: emergencyName,
+    emergency_contact_mobile: emergencyPhone,
+    emergency_contact_relationship: emergencyRelation,
+    emergencyName,
+    emergencyPhone,
+    emergencyRelation,
+    previous_marathon_participation: Boolean(
+      registerData?.previous_marathon_participation,
+    ),
+    medical_fitness_declaration: Boolean(
+      registerData?.medical_fitness_declaration,
+    ),
+    physical_exertion_acknowledgement: Boolean(
+      registerData?.physical_exertion_acknowledgement,
+    ),
+    event_rules_acceptance: Boolean(registerData?.event_rules_acceptance),
+    event_communication_consent: Boolean(
+      registerData?.event_communication_consent,
+    ),
+    anonymized_impact_reporting_consent: Boolean(
+      registerData?.anonymized_impact_reporting_consent,
+    ),
+    runner_category_id:
+      registerData?.runner_category_id || registerData?.category_id || "",
+    tshirt_size_id: registerData?.tshirt_size || "",
+  };
+}
+
+function createInitialForm(identifier, getRegistrationType, registerData) {
+  const mappedRegistrationData = mapRegistrationToForm(registerData, identifier);
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier || "");
   const registrationTypes = Array.isArray(getRegistrationType)
     ? getRegistrationType
@@ -220,9 +322,9 @@ function createInitialForm(identifier, getRegistrationType) {
     companyPhone: "",
     teamSize: "",
     tshirt_size_id: "",
-    emergencyName: "",
-    emergencyPhone: "",
-    emergencyRelation: "",
+    emergency_contact_name: "",
+    emergency_contact_mobile: "",
+    emergency_contact_relationship: "",
     // useNominee: false,
     // useResidentAddress: false,
     has_diabetes: false,
@@ -261,6 +363,7 @@ function createInitialForm(identifier, getRegistrationType) {
     // promoCode: "",
     // promoApplied: null,
     // paymentReported: false,
+    ...mappedRegistrationData,
   };
 }
 
@@ -381,16 +484,16 @@ function validateField(name, value) {
       return trimmedValue ? "" : "Choose an event to continue.";
     case "tshirt_size_id":
       return trimmedValue ? "" : "Choose a T-shirt size.";
-    case "emergencyName":
+    case "emergency_contact_name":
       return trimmedValue ? "" : "Enter your emergency contact's name.";
-    case "emergencyPhone": {
+    case "emergency_contact_mobile": {
       if (!trimmedValue) return "Enter your contact's phone.";
       const digits = trimmedValue.replace(/\D/g, "");
       return digits.length >= 7 && digits.length <= 15
         ? ""
         : "Enter a phone number with 7-15 digits.";
     }
-    case "emergencyRelation":
+    case "emergency_contact_relationship":
       return trimmedValue ? "" : "Enter your contact's relation.";
     case "beneficiary_name":
       return trimmedValue ? "" : "Enter your nominee's name.";
@@ -530,7 +633,7 @@ function StepIntro({ stepIndex }) {
   );
 }
 
-function StepperFormContent({ identifier, setIdentifier }) {
+function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const draft = useAppSelector((state) => state.registrationDraft);
@@ -573,8 +676,9 @@ function StepperFormContent({ identifier, setIdentifier }) {
     typeof draft?.stepIndex === "number"
       ? Math.min(Math.max(draft.stepIndex, 0), STEPS.length - 1)
       : 0;
+  const isFixedStepFlow = step !== undefined && step !== null && String(step).trim() !== "";
 
-  const [stepIndex, setStepIndex] = useState(safeDraftStep);
+  const [stepIndex, setStepIndex] = useState(step ? parseInt(step, 10) : safeDraftStep);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const { data: masterData = null, refetch: refetchMasterData } = useQuery({
@@ -589,10 +693,21 @@ function StepperFormContent({ identifier, setIdentifier }) {
   const [registrationSuccessConfettiKey, setRegistrationSuccessConfettiKey] =
     useState(0);
   const getRegistrationType = masterData?.registration_type ?? [];
-  console.log(getRegistrationType, "getRegistrationType");
+  const hasRegisterData =
+    !!registerData &&
+    typeof registerData === "object" &&
+    Object.keys(registerData).length > 0;
+  const seededForm = createInitialForm(
+    identifier,
+    getRegistrationType,
+    registerData,
+  );
   const initialForm = draft?.form
-    ? { ...createInitialForm(identifier, getRegistrationType), ...draft.form }
-    : createInitialForm(identifier, getRegistrationType);
+    ? hasRegisterData
+      ? { ...draft.form, ...seededForm }
+      : { ...seededForm, ...draft.form }
+    : seededForm;
+
   const [form, setForm] = useState(initialForm);
   const normalizedIdentifier = String(identifier || "").trim();
   const lockedIdentifierField = normalizedIdentifier
@@ -1022,6 +1137,7 @@ function StepperFormContent({ identifier, setIdentifier }) {
             {stepIndex === 4 && (
               <PaymentStep
                 form={form}
+                step={step}
                 category={CATEGORIES.find(
                   (item) => item.value === form.category,
                 )}
@@ -1033,7 +1149,7 @@ function StepperFormContent({ identifier, setIdentifier }) {
             )}
 
             <div className="mt-8 flex flex-col-reverse gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              {stepIndex > 0 ? (
+              {!isFixedStepFlow && stepIndex > 0 ? (
                 <button
                   type="button"
                   onClick={() => setStepIndex((current) => current - 1)}
@@ -1189,8 +1305,8 @@ function StepperFormContent({ identifier, setIdentifier }) {
   );
 }
 
-export default function StepperForm({ identifier, setIdentifier }) {
+export default function StepperForm({ identifier, setIdentifier, step, registerData }) {
   return (
-    <StepperFormContent identifier={identifier} setIdentifier={setIdentifier} />
+    <StepperFormContent identifier={identifier} setIdentifier={setIdentifier} step={step} registerData={registerData} />
   );
 }

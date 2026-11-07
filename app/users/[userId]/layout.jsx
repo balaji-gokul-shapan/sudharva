@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, use, useState } from "react";
 import {
   LayoutDashboardIcon,
@@ -13,6 +13,13 @@ import {
   Cancel01Icon,
 } from "@animateicons/react/huge";
 import Image from "next/image";
+import { RunnerRegistrationProvider } from "./data/registerInfo";
+import { useAppDispatch } from "@/store/hooks";
+import { clearAuthSession } from "@/store/slices/users/userRefreshTokenSlice";
+import { logout } from "@/store/slices/users/userLoginSlice";
+import { clearRegistrationDraft } from "@/store/slices/registration/registrationDraftSlice";
+import { resetCreateRegistrationState } from "@/store/slices/registration/createRegistrationSlice";
+import { persistor } from "@/store/store";
 const getUserId = (params) => params?.userId ?? "";
 const navigation = [
   { label: "Dashboard", href: "", icon: LayoutDashboardIcon },
@@ -24,10 +31,12 @@ const navigation = [
 
 function UserLayoutInner({ children, params }) {
   const pathname = usePathname();
-   const resolvedParams = use(params);  // 
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const resolvedParams = use(params);
   const userId = getUserId(resolvedParams);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-    console.log(userId,"userId");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
     
   const url = (href) =>
     href
@@ -39,9 +48,30 @@ function UserLayoutInner({ children, params }) {
     return href === "" ? pathname === target : pathname?.startsWith(target);
   };
 
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+
+    try {
+      dispatch(logout());
+      dispatch(clearAuthSession());
+      dispatch(clearRegistrationDraft());
+      dispatch(resetCreateRegistrationState());
+      await persistor.purge();
+      await persistor.flush();
+       router.replace("/login");
+    } finally {
+      setSidebarOpen(false);
+      router.replace("/login");
+      router.refresh();
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="flex w-full">
+    <div className="h-screen overflow-hidden bg-background text-foreground">
+      <div className="flex h-full w-full">
         {/* Mobile hamburger button */}
         <button
           className="fixed top-2 left-2 z-40 flex h-10 w-10 items-center justify-center rounded-lg bg-background/80 p-2 backdrop-blur transition-colors hover:bg-background lg:hidden"
@@ -62,7 +92,7 @@ function UserLayoutInner({ children, params }) {
 
         {/* Sidebar - shown on desktop, slides in on mobile */}
         <aside
-          className={`fixed top-0 z-40 flex h-screen w-72 flex-col border-r border-border bg-card/80 backdrop-blur transition-transform duration-300 ease-out lg:static lg:z-auto lg:flex lg:translate-x-0 ${
+          className={`fixed top-0 z-40 flex h-screen w-72 flex-col border-r border-border bg-card/80 backdrop-blur transition-transform duration-300 ease-out lg:static lg:z-auto lg:h-full lg:flex lg:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           aria-hidden={!sidebarOpen}
@@ -71,7 +101,7 @@ function UserLayoutInner({ children, params }) {
             <Link
               href="/"
               aria-label="Sudharva Marathon home"
-              className="inline-flex w-fit flex-col items-center rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-white"
+              className="inline-flex w-fit flex-col items-center rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-white"
               onClick={() => setSidebarOpen(false)}
             >
               <Image
@@ -106,12 +136,10 @@ function UserLayoutInner({ children, params }) {
             </p>
           </div>
 
-          <nav className="space-y-1 p-4">
+          <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             {navigation.map(({ label, href, icon: Icon }) => {
               const targetUrl = url(href);
               const active = isActive(href);
-              console.log(targetUrl,"targetUrl");
-              
 
               return (
                 <Link
@@ -133,11 +161,24 @@ function UserLayoutInner({ children, params }) {
               );
             })}
           </nav>
+
+          <div className="mt-auto border-t border-border p-4">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </button>
+          </div>
         </aside>
 
-        <main className="min-w-0 flex-1">
-          <div className="max-w-5xl lg:max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            {children}
+        <main id="users-main-scroll" className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:max-w-7xl lg:p-8">
+            <RunnerRegistrationProvider userId={userId}>
+              {children}
+            </RunnerRegistrationProvider>
           </div>
         </main>
       </div>
@@ -148,7 +189,7 @@ function UserLayoutInner({ children, params }) {
 export default function UserLayout({ children, params }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-background" />}>
-      <UserLayoutInner children={children} params={params} />
+      <UserLayoutInner params={params}>{children}</UserLayoutInner>
     </Suspense>
   );
 }

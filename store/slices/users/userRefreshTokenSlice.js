@@ -3,6 +3,9 @@ import axios from "axios";
 
 const ACCESS_TOKEN_KEY = "auth.accessToken";
 const REFRESH_TOKEN_KEY = "auth.refreshToken";
+const ACCESS_TOKEN_COOKIE = "auth_access_token";
+const REFRESH_TOKEN_COOKIE = "auth_refresh_token";
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
 const initialState = {
   accessToken: null,
@@ -36,10 +39,16 @@ export const persistAuthTokens = ({ accessToken, refreshToken }) => {
 
   if (accessToken) {
     window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    document.cookie = `${ACCESS_TOKEN_COOKIE}=${encodeURIComponent(
+      accessToken,
+    )}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
   }
 
   if (refreshToken) {
     window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    document.cookie = `${REFRESH_TOKEN_COOKIE}=${encodeURIComponent(
+      refreshToken,
+    )}; Path=/; Max-Age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
   }
 };
 
@@ -60,6 +69,8 @@ export const clearStoredAuthTokens = () => {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  document.cookie = `${ACCESS_TOKEN_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = `${REFRESH_TOKEN_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 };
 
 export const refreshUserToken = createAsyncThunk(

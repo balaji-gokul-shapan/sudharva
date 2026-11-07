@@ -328,6 +328,14 @@ export const OVERVIEW_SUBNAV = [
     icon: ActivityIcon,
   },
   {
+    id: "terms-conditions",
+    href: "/event/terms-and-conditions",
+    label: "Terms & Conditions",
+    description:
+      "Read the rules and regulations governing the Sudharva Marathon event.",
+    icon: ActivityIcon,
+  },
+  {
     id: "partners",
     href: "/",
     label: "Our Partners",

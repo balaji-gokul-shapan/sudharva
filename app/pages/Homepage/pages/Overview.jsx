@@ -155,7 +155,7 @@ const Overview = () => {
               transition={{ duration: 0.6, delay: 0.08 }}
               className="mt-5 max-w-2xl text-3xl font-bold leading-tight text-accent sm:text-4xl lg:text-5xl"
             >
-              Our Cause - <AuroraText colors={["#E85D75", "#F4A261", "#3B82F6", "#FFF1E8"]}>A Future Free from Diabetes</AuroraText>
+              Our Cause - <AuroraText colors={["#0a2400", "#7000ff", "#ff007a", "#ff3d00"]}>A Future Free from Diabetes</AuroraText>
             </motion.h2>
 
             <motion.p
