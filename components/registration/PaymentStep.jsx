@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import gsap from "gsap";
 import {
   AnimatePresence,
   animate,
@@ -32,6 +33,7 @@ import {
   resetEnterBibNumberState,
   selectEnterBibNumberState,
 } from "@/store/slices/bibNumber/enterBibNumberSlice";
+import { cancelBibNumber } from "@/store/slices/bibNumber/cancelBibNumberSlice";
 import {
   createPaymentOrder,
   selectPaymentOrder,
@@ -154,6 +156,56 @@ const getBibRangeRuleForCategory = (categoryInfo) => {
   }
 
   return null;
+};
+
+const toNumberOrNull = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const extractBibRangeFromCategory = (categoryInfo) => {
+  if (!categoryInfo || typeof categoryInfo !== "object") {
+    return null;
+  }
+
+  const min =
+    toNumberOrNull(categoryInfo?.bib_start) ??
+    toNumberOrNull(categoryInfo?.bib_from) ??
+    toNumberOrNull(categoryInfo?.bib_min) ??
+    toNumberOrNull(categoryInfo?.min_bib_number) ??
+    toNumberOrNull(categoryInfo?.bib_number_start) ??
+    toNumberOrNull(categoryInfo?.bib_number_min);
+
+  const max =
+    toNumberOrNull(categoryInfo?.bib_end) ??
+    toNumberOrNull(categoryInfo?.bib_to) ??
+    toNumberOrNull(categoryInfo?.bib_max) ??
+    toNumberOrNull(categoryInfo?.max_bib_number) ??
+    toNumberOrNull(categoryInfo?.bib_number_end) ??
+    toNumberOrNull(categoryInfo?.bib_number_max);
+
+  if (!Number.isFinite(min) || !Number.isFinite(max) || min > max) {
+    return null;
+  }
+
+  return {
+    label: categoryInfo?.name || categoryInfo?.category_name || "Selected category",
+    min,
+    max,
+  };
+};
+
+const getBibRangeRuleByCategoryId = (categoryId, categories = []) => {
+  if (!categoryId || !Array.isArray(categories) || !categories.length) {
+    return null;
+  }
+
+  const matched = categories.find(
+    (item) => String(item?.id) === String(categoryId),
+  );
+
+  return extractBibRangeFromCategory(matched);
 };
 
 function AnimatedAmount({ value, className }) {
@@ -717,8 +769,11 @@ export default function PaymentStep({
   const savedRegistrationData = useAppSelector(selectCreateRegistrationData);
   const bibNumberState = useAppSelector(selectEnterBibNumberState);
   const [paymentLinkOpened, setPaymentLinkOpened] = useState(false);
+  const [paymentLinkError, setPaymentLinkError] = useState("");
   const paymentOrderRequestRef = useRef("");
-  const [, setTicketUsed] = useState(false);
+  const bibTicketWrapRef = useRef(null);
+  const [isTicketTorn, setIsTicketTorn] = useState(false);
+  const [isCancellingBib, setIsCancellingBib] = useState(false);
   const [bibClientError, setBibClientError] = useState("");
   const price = category?.price ?? 0;
   const isCorporate = form.entryType === "corporate";
@@ -757,9 +812,36 @@ console.log(participantReferenceNo,"participantReferenceNo");
 
   const handleTogglePremiumBib = async (isEnabled) => {
     if (!isEnabled) {
-      onChange("premiumBibApplied", false);
+      if (!participantReference) {
+        setBibClientError(
+          "Participant reference missing. Please retry registration.",
+        );
+        return;
+      }
+
       setBibClientError("");
-      dispatch(resetEnterBibNumberState());
+      setIsCancellingBib(true);
+
+      try {
+        await dispatch(
+          cancelBibNumber({ participant_reference: participantReference }),
+        ).unwrap();
+
+        onChange("premiumBibApplied", false);
+        onChange("premiumBibNumber", "");
+        setIsTicketTorn(false);
+        dispatch(resetEnterBibNumberState());
+      } catch (error) {
+        onChange("premiumBibApplied", true);
+        setBibClientError(
+          typeof error === "string"
+            ? error
+            : error?.message || "Failed to cancel premium bib number.",
+        );
+      } finally {
+        setIsCancellingBib(false);
+      }
+
       return;
     }
 
@@ -798,10 +880,12 @@ console.log(participantReferenceNo,"participantReferenceNo");
       return;
     }
 
-    const selectedCategoryForRule =   getData || selectedCategoryFromMasters;
-    console.log(selectedCategoryForRule,"selectedCategoryForRule");
-    
-    const bibRangeRule = getBibRangeRuleForCategory(selectedCategoryForRule);
+    const selectedCategoryForRule = getData || selectedCategoryFromMasters;
+    const bibRangeRule =
+      getBibRangeRuleByCategoryId(categoryId, masterEventCategoriesData) ||
+      extractBibRangeFromCategory(selectedCategoryForRule) ||
+      getBibRangeRuleForCategory(selectedCategoryForRule);
+
     const isNumericBib = /^\d+$/.test(bibValue);
 
     if (bibRangeRule && !isNumericBib) {
@@ -842,6 +926,7 @@ console.log(participantReferenceNo,"participantReferenceNo");
 
   const handleBibNumberChange = (value) => {
     onChange("premiumBibNumber", value);
+    setIsTicketTorn(false);
 
     if (form?.premiumBibApplied) {
       onChange("premiumBibApplied", false);
@@ -996,11 +1081,11 @@ console.log(participantReferenceNo,"participantReferenceNo");
     0,
     effectivePrice - totalDiscount + premiumBibCharge,
   );
+  const expectedAmountPaise = Math.max(0, Math.round(payable * 100));
 
   useEffect(() => {
     if (!participantReference) return;
 
-    const expectedAmountPaise = Math.max(0, Math.round(payable * 100));
     const currentOrderAmountPaise = Number(
       paymentOrder?.amount || paymentOrder?.amount_paise || 0,
     );
@@ -1023,12 +1108,54 @@ console.log(participantReferenceNo,"participantReferenceNo");
         payable_amount: payable,
       }),
     );
-  }, [dispatch, participantReference, paymentOrder, payable]);
+  }, [dispatch, expectedAmountPaise, participantReference, paymentOrder, payable]);
 
   const premiumBibNumber = (form.premiumBibNumber || "").trim();
+  const shouldShowBibTicket = Boolean(premiumBibNumber);
   const bibTicketValue = premiumBibNumber
     ? `CM-${premiumBibNumber}`
     : "CM-00123";
+
+  useEffect(() => {
+    const el = bibTicketWrapRef.current;
+    if (!el) return;
+
+    gsap.killTweensOf(el);
+
+    if (shouldShowBibTicket) {
+      gsap.set(el, { display: "block", overflow: "hidden" });
+      gsap.fromTo(
+        el,
+        { height: 0, opacity: 0, y: -12 },
+        {
+          height: "auto",
+          opacity: 1,
+          y: 0,
+          duration: 0.42,
+          ease: "power2.out",
+          onComplete: () => {
+            gsap.set(el, { clearProps: "height,overflow" });
+          },
+        },
+      );
+      return;
+    }
+
+    gsap.set(el, { overflow: "hidden", display: "block" });
+    gsap.to(el, {
+      height: 0,
+      opacity: 0,
+      y: -12,
+      duration: 0.3,
+      ease: "power2.in",
+      onComplete: () => {
+        gsap.set(el, {
+          display: "none",
+          clearProps: "height,overflow",
+        });
+      },
+    });
+  }, [shouldShowBibTicket]);
 
   const razorpayKey =
     paymentOrder?.rzpKey ||
@@ -1038,9 +1165,7 @@ console.log(participantReferenceNo,"participantReferenceNo");
     "";
   const razorpayOrderId =
     paymentOrder?.order_id || paymentOrder?.orderId || paymentOrder?.id || "";
-  const razorpayAmountPaise =
-    Number(paymentOrder?.amount || paymentOrder?.amount_paise) ||
-    Math.max(0, Math.round(payable * 100));
+  const razorpayAmountPaise = expectedAmountPaise;
 
   const razorpayPopupUrl = useMemo(() => {
     const params = new URLSearchParams();
@@ -1052,6 +1177,90 @@ console.log(participantReferenceNo,"participantReferenceNo");
     const query = params.toString();
     return query ? `/razorpay-popup?${query}` : "/razorpay-popup";
   }, [razorpayAmountPaise, razorpayKey, razorpayOrderId]);
+
+  const handleOpenPaymentPopup = async () => {
+    if (!participantReference) {
+      setPaymentLinkError("Participant reference missing. Please retry registration.");
+      return;
+    }
+
+    setPaymentLinkError("");
+
+    const popupTab = window.open("", "_blank");
+
+    if (!popupTab) {
+      setPaymentLinkError("Popup was blocked. Please allow popups and try again.");
+      return;
+    }
+
+    popupTab.document.title = "Preparing Payment";
+    popupTab.document.body.style.margin = "0";
+    popupTab.document.body.style.minHeight = "100vh";
+    popupTab.document.body.style.display = "grid";
+    popupTab.document.body.style.placeItems = "center";
+    popupTab.document.body.style.fontFamily = "Segoe UI, sans-serif";
+    popupTab.document.body.innerHTML =
+      "<p style='font-size:14px;color:#444'>Preparing your secure payment...</p>";
+
+    try {
+      const response = await dispatch(
+        createPaymentOrder({
+          participant_reference: participantReference,
+          payable_amount: payable,
+        }),
+      ).unwrap();
+
+      const latestOrder =
+        response?.order || response?.data || response?.result || response || {};
+
+      const latestKey =
+        latestOrder?.rzpKey ||
+        latestOrder?.key ||
+        latestOrder?.key_id ||
+        latestOrder?.razorpay_key ||
+        razorpayKey;
+
+      const latestOrderId =
+        latestOrder?.order_id || latestOrder?.orderId || latestOrder?.id || "";
+
+      const serverAmountPaise = Number(
+        latestOrder?.amount || latestOrder?.amount_paise || 0,
+      );
+      const latestAmountPaise = expectedAmountPaise;
+
+      if (serverAmountPaise > 0 && serverAmountPaise !== expectedAmountPaise) {
+        setPaymentLinkError(
+          "Payment amount is still syncing on server. Please click once again to continue with updated amount.",
+        );
+      }
+
+      if (!latestKey || !latestOrderId || !latestAmountPaise) {
+        popupTab.location.href = `${razorpayPopupUrl}${
+          razorpayPopupUrl.includes("?") ? "&" : "?"
+        }ts=${Date.now()}`;
+        setPaymentLinkOpened(true);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set("key", String(latestKey));
+      params.set("orderId", String(latestOrderId));
+      params.set("amount", String(latestAmountPaise));
+      params.set("ts", String(Date.now()));
+
+      popupTab.location.href = `/razorpay-popup?${params.toString()}`;
+      setPaymentLinkOpened(true);
+    } catch (error) {
+      setPaymentLinkError(
+        typeof error === "string"
+          ? error
+          : error?.message || "Unable to open payment right now. Please try again.",
+      );
+      popupTab.document.title = "Payment Error";
+      popupTab.document.body.innerHTML =
+        "<div style='font-family:Segoe UI,sans-serif;max-width:460px;margin:40px auto;padding:16px;color:#333'><h2 style='margin:0 0 8px;font-size:18px'>Unable to prepare payment</h2><p style='margin:0 0 10px;font-size:14px'>Please close this tab and try again from the registration page.</p></div>";
+    }
+  };
 
   const handleApplyPromo = (promo) => {
     onChange("promoCode", promo.code);
@@ -1109,8 +1318,8 @@ console.log(participantReferenceNo,"participantReferenceNo");
               </h3>
               <p className="text-xs text-ink-soft">
                 {}
-                {getData?.name ?? "Selected event"} ·{" "}
-                {registerData?.category ?? "-"} {getData?.distance ?? "-"}
+                { "Selected event"} ·{" "}
+                {registerData?.category ?? "-"} {"Distance"} - {getData?.distance ?? "-"}
               </p>
             </div>
           </div>
@@ -1118,41 +1327,48 @@ console.log(participantReferenceNo,"participantReferenceNo");
           <dl className="mt-5 space-y-3 border-t border-border/70 pt-4 text-sm">
             <div className="">
               {/* <div className=""> */}
-              <MarathonPassTicket
-                fluid
-                onTear={() => setTicketUsed(true)}
-                tearTicketContentClassName="bg-transparent"
-                tearTicketStubClassName="bg-gradient-mesh"
-                width={820}
-                height={320}
-                imageFit="fill"
-                bodyWidth={520}
-                bodyHeight={320}
-                artSpan={1}
-                imageRadius={16}
-                radius={24}
-                stubSize={300}
-                holes={8}
-                holeSize={4}
-                notch={4}
-                tearAngle={0}
-                stretch={0}
-                rotate={0}
-                tiltMax={0}
-                parallax={0}
-                tilt={false}
-                background="var(--card-background)"
-                color="#c679c4"
-                stubEvent={form?.event ?? "City Marathon 2027"}
-                participantName={
-                  form?.first_name && form?.last_name
-                    ? `${form?.first_name} ${form?.last_name}`
-                    : "John Doe"
-                }
-                stubDistance={getData?.name}
-                stubLocation="Avadi"
-                stubRegNo={bibTicketValue}
-              />
+              <div
+                ref={bibTicketWrapRef}
+                style={shouldShowBibTicket ? undefined : { display: "none" }}
+              >
+                <MarathonPassTicket
+                  fluid
+                  disabled={true}
+                  torn={isTicketTorn}
+                  onTear={() => setIsTicketTorn(false)}
+                  tearTicketContentClassName="bg-transparent"
+                  tearTicketStubClassName="bg-gradient-mesh"
+                  width={820}
+                  height={320}
+                  imageFit="fill"
+                  bodyWidth={520}
+                  bodyHeight={320}
+                  artSpan={1}
+                  imageRadius={16}
+                  radius={24}
+                  stubSize={300}
+                  holes={8}
+                  holeSize={4}
+                  notch={4}
+                  tearAngle={0}
+                  stretch={0}
+                  rotate={0}
+                  tiltMax={0}
+                  parallax={0}
+                  tilt={false}
+                  background="var(--card-background)"
+                  color="#c679c4"
+                  stubEvent={form?.event ?? "City Marathon 2027"}
+                  participantName={
+                    form?.first_name && form?.last_name
+                      ? `${form?.first_name} ${form?.last_name}`
+                      : "John Doe"
+                  }
+                  stubDistance={getData?.name}
+                  stubLocation="Avadi"
+                  stubRegNo={bibTicketValue}
+                />
+              </div>
               {/* </div> */}
               <PromoCodeCard
                 code={form.premiumPromoCode ?? ""}
@@ -1165,7 +1381,7 @@ console.log(participantReferenceNo,"participantReferenceNo");
                 onApply={handleApplyPremiumPromo}
                 onClear={handleClearPremiumPromo}
                 promoCodes={PREMIUM_PROMO_CODES}
-                bibLoading={Boolean(bibNumberState?.loading)}
+                bibLoading={Boolean(bibNumberState?.loading) || isCancellingBib}
                 bibError={bibError}
                 bibSuccess={Boolean(bibNumberState?.success)}
               />
@@ -1322,12 +1538,9 @@ console.log(participantReferenceNo,"participantReferenceNo");
                     for this entry. Razorpay opens in a new tab; check the
                     amount there before completing payment.
                   </p>
-                  <a
-                    href={razorpayPopupUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    referrerPolicy="no-referrer"
-                    onClick={() => setPaymentLinkOpened(true)}
+                  <button
+                    type="button"
+                    onClick={handleOpenPaymentPopup}
                     className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/15 transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:w-auto"
                   >
                     Continue to Secure Payment
@@ -1336,13 +1549,15 @@ console.log(participantReferenceNo,"participantReferenceNo");
                       weight="bold"
                       aria-hidden="true"
                     />
-                  </a>
+                  </button>
                   <p
                     role="status"
                     aria-live="polite"
                     className="mt-2 min-h-4 text-xs leading-relaxed text-ink-soft"
                   >
-                    {paymentLinkOpened
+                    {paymentLinkError
+                      ? paymentLinkError
+                      : paymentLinkOpened
                       ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
                       : "Opening Razorpay does not submit this registration or confirm payment."}
                   </p>

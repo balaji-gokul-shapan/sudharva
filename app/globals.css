@@ -3777,7 +3777,7 @@
 }
 
 .tear-ticket[data-disabled] {
-  opacity: 0.6;
+  opacity: 0.9;
 }
 
 .tear-ticket__stage {

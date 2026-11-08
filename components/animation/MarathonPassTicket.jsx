@@ -56,7 +56,7 @@ export function MarathonPassStub({
       <span className="text-sm text-ink-soft">{distance}</span>
       <p className="text-xs text-ink-soft">{location}</p>
       <span className="text-2xl text-primary">{participantName}</span>
-      <span className="py-2 text-xs text-ink-soft">REG. NO. {regNo}</span>
+      <span className="py-2 text-xs text-ink-soft">{regNo}</span>
       {showQRCode && (
         <Image
           src="/image/cta/events/QR.svg"
