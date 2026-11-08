@@ -183,6 +183,15 @@ function RazorpayPopupContent() {
     registrationData?.phone ||
     registrationData?.contact ||
     "";
+  const participantEmail =
+    registrationData?.email ||
+    registrationRequestPayloadFromStore?.email ||
+    registrationData?.contact_email ||
+    registrationRequestPayloadFromStore?.contact_email ||
+    "";
+  const participantContactForPrefill = String(participantPhone || "")
+    .replace(/\D/g, "")
+    .slice(0, 15);
   const categorySourceValue =
     registrationData?.runner_category_id ||
     registrationRequestPayloadFromStore?.runner_category_id ||
@@ -363,7 +372,11 @@ function RazorpayPopupContent() {
           show("dismiss", "Popup closed without completing payment.");
         },
       },
-      prefill: { name: "", email: "", contact: "" },
+      prefill: {
+        name: String(participantName || "").trim(),
+        email: String(participantEmail || "").trim(),
+        contact: participantContactForPrefill,
+      },
       theme: { color: "#3399cc" },
     };
 
@@ -383,7 +396,16 @@ function RazorpayPopupContent() {
     });
 
     rzp.open();
-  }, [amountPaise, dispatch, orderId, rzpKey, sdkLoaded]);
+  }, [
+    amountPaise,
+    dispatch,
+    orderId,
+    participantContactForPrefill,
+    participantEmail,
+    participantName,
+    rzpKey,
+    sdkLoaded,
+  ]);
 
   useEffect(() => {
     const key = rzpKey.trim();
