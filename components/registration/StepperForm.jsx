@@ -322,6 +322,10 @@ function createInitialForm(identifier, getRegistrationType, registerData) {
     registerData,
     identifier,
   );
+  const mirroredTermsConsent = toBooleanOrDefault(
+    registerData?.terms ?? mappedRegistrationData?.event_rules_acceptance,
+    true,
+  );
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier || "");
   const registrationTypes = Array.isArray(getRegistrationType)
     ? getRegistrationType
@@ -389,7 +393,7 @@ function createInitialForm(identifier, getRegistrationType, registerData) {
     anonymized_impact_reporting_consent: false, // new
     eventUpdates: false,
     dataPrivacy: false,
-    terms: false,
+    terms: mirroredTermsConsent,
     // promoCode: "",
     // promoApplied: null,
     // paymentReported: false,
@@ -1093,6 +1097,10 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
             companyPhone,
             teamSize,
           };
+    payload.terms = toBooleanOrDefault(
+      payload.event_rules_acceptance ?? payload.terms,
+      false,
+    );
     payload.mobile_number = normalizePhoneForApi(payload.mobile_number);
     payload.alternatePhone = normalizePhoneForApi(payload.alternatePhone);
     payload.emergency_contact_mobile = normalizePhoneForApi(

@@ -65,6 +65,18 @@ const statusStyles = {
   },
 };
 
+const normalizeRazorpayContact = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+
+  // Razorpay checkout works best with a 10-digit local mobile number.
+  if (digits.length === 10) return digits;
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(-10);
+  if (digits.length > 10) return digits.slice(-10);
+
+  return "";
+};
+
 function RazorpayPopupContent() {
   const params = useSearchParams();
   const router = useRouter();
@@ -190,9 +202,9 @@ function RazorpayPopupContent() {
     registrationData?.contact_email ||
     registrationRequestPayloadFromStore?.contact_email ||
     "";
-  const participantContactForPrefill = String(participantPhone || "")
-    .replace(/\D/g, "")
-    .slice(0, 15);
+  const participantContactForPrefill = normalizeRazorpayContact(
+    participantPhone,
+  );
   const categorySourceValue =
     registrationData?.runner_category_id ||
     registrationRequestPayloadFromStore?.runner_category_id ||
@@ -376,6 +388,10 @@ function RazorpayPopupContent() {
         name: String(participantName || "").trim(),
         email: String(participantEmail || "").trim(),
         contact: participantContactForPrefill,
+      },
+      readonly: {
+        contact: Boolean(participantContactForPrefill),
+        email: Boolean(String(participantEmail || "").trim()),
       },
       theme: { color: "#3399cc" },
     };
