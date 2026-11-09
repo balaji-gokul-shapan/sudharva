@@ -56,15 +56,95 @@ const readCookieAccessToken = () => {
   return normalizeAccessToken(raw);
 };
 
+const isHtmlString = (value) => {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  // HTML documents start with <!DOCTYPE or <html
+  return /^<(!DOCTYPE|html|head|body|br\s*\/?|img\s*\/?)/i.test(trimmed);
+};
+
+const flattenValidationErrors = (payload, prefix = "") => {
+  if (!payload) return [];
+
+  if (typeof payload === "string") {
+    // Server returned raw HTML (e.g. a 500/404 page). Do not surface
+    // raw markup as an error — show a generic message instead.
+    if (isHtmlString(payload)) return [];
+    const value = payload.trim();
+    if (!value) return [];
+    return prefix ? [`${prefix?.replaceAll("_", " ")} - ${value}`] : [value];
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.flatMap((item) => flattenValidationErrors(item, prefix));
+  }
+
+  if (typeof payload !== "object") {
+    const value = String(payload).trim();
+    if (!value) return [];
+    return prefix ? [` ${prefix?.replaceAll("_", " ")} -  ${value}`] : [value];
+  }
+
+  const messages = [];
+  for (const [key, value] of Object.entries(payload)) {
+    if (["message", "detail", "error"].includes(key)) {
+      continue;
+    }
+    messages.push(...flattenValidationErrors(value, key));
+  }
+
+  return messages;
+};
+
+const dedupeMessages = (messages = []) => {
+  const seen = new Set();
+  return messages.filter((message) => {
+    const normalized = String(message || "").trim();
+    if (!normalized) return false;
+    if (seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+};
+
 const getCreateRegistrationErrorMessage = (error) => {
   const responseData = error?.response?.data;
+  const status = error?.response?.status;
+
+  // Detect raw HTML (server error page like 404/500)
+  const htmlError =
+    isHtmlString(responseData) ||
+    (status === 404 &&
+      typeof responseData === "string" &&
+      /<!DOCTYPE|<html|<body/i.test(responseData));
+
+  if (htmlError) {
+    if (status === 404) {
+      return "Page not found. The registration service may be unavailable. Please refresh and try again.";
+    }
+    return "Something went wrong. Please refresh the page and try saving your registration again.";
+  }
+
+  const fieldMessages = dedupeMessages(flattenValidationErrors(responseData));
+  if (fieldMessages.length > 0) {
+    return fieldMessages.map((message, index) => `${index + 1}. ${message}`).join("\n");
+  }
+
+  if (status === 401) {
+    return "Your session has expired. Please log in again and try saving your registration.";
+  }
+
+  if (status === 404) {
+    return "The registration service is not available right now. Please try again later.";
+  }
 
   return (
     responseData?.message ||
     responseData?.detail ||
     responseData?.error ||
     error?.message ||
-    "Registration failed"
+    "Something went wrong. Please try again."
   );
 };
 
@@ -93,14 +173,37 @@ export const createRegistration = createAsyncThunk(
     const accessToken =
       stateAccessToken || readStoredAccessToken() || readCookieAccessToken();
 
+    const resolveRequestToken = (token) => {
+      if (token) return token;
+      // Fall back to the axios default Authorization header (set by applyAuthHeaders
+      // on login/refresh/hydrate) so a transient localStorage read never sends a
+      // request without credentials.
+      const defaultAuth = axios.defaults.headers.common?.Authorization;
+      if (defaultAuth && typeof defaultAuth === "string") {
+        return defaultAuth.replace(/^Bearer\s+/i, "").trim();
+      }
+      return "";
+    };
+
     const createRequest = async (token) => {
+      const resolvedToken = resolveRequestToken(token);
       return axios.post("/api/registrations/create", registrationData, {
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(resolvedToken
+            ? { Authorization: `Bearer ${resolvedToken}` }
+            : {}),
         },
       });
     };
+
+    // DEBUG: log token source for troubleshooting auth issues
+    // if (process.env.NODE_ENV === "development") {
+    //   console.log("[createRegistration] accessToken from Redux:", !!accessToken);
+    //   console.log("[createRegistration] token length:", accessToken?.length || 0);
+    //   console.log("[createRegistration] readStoredAccessToken():", readStoredAccessToken());
+    //   console.log("[createRegistration] readCookieAccessToken():", readCookieAccessToken().slice(0, 20) + "...");
+    // }
 
     try {
       const response = await createRequest(accessToken);
@@ -131,8 +234,11 @@ export const createRegistration = createAsyncThunk(
             return retryResponse.data;
           }
         } catch {
-          // Fall through to return the original auth error.
+          // Fall through to return a session-expired message.
         }
+        return thunkAPI.rejectWithValue(
+          "Session expired. Please log in again and try saving your registration."
+        );
       }
 
       return thunkAPI.rejectWithValue(getCreateRegistrationErrorMessage(error));

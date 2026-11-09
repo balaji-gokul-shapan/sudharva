@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const initialState = {
   loading: false,
@@ -32,19 +33,17 @@ export const getMasterData = createAsyncThunk(
           return retryPayload?.data ?? retryPayload;
         } catch (retryError) {
           return rejectWithValue(
-            retryError?.response?.data?.message ||
-              retryError?.response?.data?.error ||
-              retryError?.message ||
-              "Failed to fetch master data",
+            extractApiErrorMessage(retryError, {
+              fallback: "Failed to fetch master data",
+            }),
           );
         }
       }
 
       return rejectWithValue(
-        error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          error?.message ||
-          "Failed to fetch master data",
+        extractApiErrorMessage(error, {
+          fallback: "Failed to fetch master data",
+        }),
       );
     }
   },

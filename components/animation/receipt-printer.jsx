@@ -77,7 +77,7 @@ function Receipt({
   const money = (n) => n.toFixed(2);
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
   const taxAmount = subtotal * tax;
-  console.log(items,"items");
+  // console.log(items,"items");
   
   return (
     <div className="px-5 pt-6 pb-8 font-mono text-[11px] text-zinc-800 leading-[15px]">

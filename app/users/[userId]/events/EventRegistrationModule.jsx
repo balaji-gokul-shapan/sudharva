@@ -39,7 +39,7 @@ const formatStatus = (status) => {
 export default function EventRegistrationModule() {
   const registration = useRunnerRegistrationData();
   const details = registration?.runner?.details || {};
-  console.log(registration,"registration");
+  // console.log(registration,"registration");
   
 
   const eventName = pick(

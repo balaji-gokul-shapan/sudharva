@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 const SidebarContext = createContext(null);
 
@@ -17,19 +17,24 @@ export function SidebarProvider({
   side = "left",
   children,
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [openState, setOpenState] = useState(defaultOpen);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : openState;
 
-  useEffect(() => {
-    if (openProp !== undefined) {
-      setOpen(openProp);
+  const setOpen = (nextValue) => {
+    const next = typeof nextValue === "function" ? nextValue(open) : nextValue;
+
+    if (!isControlled) {
+      setOpenState(next);
     }
-  }, [openProp]);
+
+    if (onOpenChange) {
+      onOpenChange(next);
+    }
+  };
 
   const toggleSidebar = () => {
     setOpen((prev) => !prev);
-    if (onOpenChange) {
-      onOpenChange(!open);
-    }
   };
 
   return (

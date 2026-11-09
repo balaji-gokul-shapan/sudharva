@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const initialState = {
   loading: false,
@@ -16,10 +17,7 @@ const getRequestOtpUrl = () => {
 };
 
 const getErrorMessage = (error) =>
-  error?.response?.data?.message ||
-  error?.response?.data?.error ||
-  error?.message ||
-  DEFAULT_ERROR_MESSAGE;
+  extractApiErrorMessage(error, { fallback: DEFAULT_ERROR_MESSAGE });
 
 const normalizeRequestPayload = (payload = {}) => {
   const purpose = String(payload?.purpose ?? "email").trim() || "email";

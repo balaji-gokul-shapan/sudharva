@@ -7,6 +7,7 @@ import createRegistrationReducer from "./slices/registration/createRegistrationS
 import registrationDraftReducer from "./slices/registration/registrationDraftSlice";
 import getMasterReducer from "./slices/masters/getMasterSlice";
 import getMasterEventCategoriesReducer from "./slices/masters/getMasterEventCategoriesSlice";
+import getBloodGroupMasterReducer from "./slices/masters/getBloodGroupmasterSlice";
 import createPaymentOrderReducer from "./slices/payment/createPaymentOrderSlice";
 import paymentOrderConfirmationReducer from "./slices/payment/paymentOrderConfirmationSlice";
 import enterBibNumberReducer from "./slices/bibNumber/enterBibNumberSlice";
@@ -27,6 +28,7 @@ const combinedReducer = combineReducers({
   registrationDraft: registrationDraftReducer,
   master: getMasterReducer,
   masterEventCategories: getMasterEventCategoriesReducer,
+  bloodGroupMaster: getBloodGroupMasterReducer,
   loginUser: loginUserReducer,
   userRegister: userRegisterReducer,
   userRefreshToken: userRefreshTokenReducer,

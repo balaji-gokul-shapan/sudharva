@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const ACCESS_TOKEN_KEY = "auth.accessToken";
 const REFRESH_TOKEN_KEY = "auth.refreshToken";
@@ -127,10 +128,9 @@ export const refreshUserToken = createAsyncThunk(
       };
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          error?.message ||
-          "Could not refresh session.",
+        extractApiErrorMessage(error, {
+          fallback: "Could not refresh session.",
+        }),
       );
     }
   },

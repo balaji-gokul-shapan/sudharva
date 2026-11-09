@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const initialState = {
   loading: false,
@@ -44,7 +45,9 @@ export const confirmPaymentOrder = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.message || error.message || "Payment confirmation failed",
+        extractApiErrorMessage(error, {
+          fallback: "Payment confirmation failed",
+        }),
       );
     }
   },

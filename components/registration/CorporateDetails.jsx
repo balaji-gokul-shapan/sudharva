@@ -94,7 +94,7 @@ export const CorporateDetails = ({ form, errors, onChange, hasCities, hasStates,
                 form.teamSize === option.value
                   ? "border-accent bg-accent/10 text-foreground"
                   : "border-border bg-background text-ink-soft hover:border-accent/50",
-                "has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-accent/15",
+                "has-focus-visible:outline has-focus-visible:outline-2",
               )}
             >
               <input
@@ -109,7 +109,7 @@ export const CorporateDetails = ({ form, errors, onChange, hasCities, hasStates,
                 aria-describedby={
                   errors.teamSize ? "teamsize-error" : undefined
                 }
-                className="h-4 w-4 accent-[var(--accent)]"
+                className="h-4 w-4 accent-(--accent)"
               />
               {option.label}
             </label>

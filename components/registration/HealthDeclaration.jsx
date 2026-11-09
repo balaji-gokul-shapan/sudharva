@@ -93,13 +93,13 @@ function DeclarationRow({
   return (
     <Label
       className={cn(
-        "group flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-all duration-200",
+        "group flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-colors duration-200",
         "has-focus-visible:ring-accent/20",
         checked
-          ? cn(styles.selected, "shadow-sm")
+          ? styles.selected
           : error
             ? "border-destructive/50 bg-destructive/5"
-            : "border-border bg-background hover:border-accent/40 hover:shadow-sm",
+            : "border-border bg-background hover:border-accent/40",
       )}
     >
       <Checkbox

@@ -1,6 +1,7 @@
 import axios from "axios";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { refreshUserToken } from "../users/userRefreshTokenSlice";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const ACCESS_TOKEN_KEY = "auth.accessToken";
 
@@ -10,13 +11,9 @@ const readStoredAccessToken = () => {
 };
 
 const getPaymentOrderErrorMessage = (error) => {
-  return (
-    error?.response?.data?.message ||
-    error?.response?.data?.detail ||
-    error?.response?.data?.error ||
-    error?.message ||
-    "Unable to create payment order"
-  );
+  return extractApiErrorMessage(error, {
+    fallback: "Unable to create payment order",
+  });
 };
 
 const extractOrder = (payload) => {

@@ -121,6 +121,10 @@ export const loginUser = createAsyncThunk(
             refreshUserToken({ refresh: tokens.refreshToken }),
           ).unwrap();
         }
+      } else {
+        return thunkAPI.rejectWithValue(
+          "Login succeeded, but no auth token was returned. Please login again.",
+        );
       }
 
       return data;

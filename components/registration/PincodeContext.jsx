@@ -12,6 +12,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 const DEBOUNCE_MS = 400;
+const EMPTY_OPTIONS = [];
 
 // Compatibility wrapper: keeps existing imports/components working
 // while the backing implementation is Redux-based.
@@ -42,7 +43,10 @@ export function usePincodeLookup(pincode, { debounce = DEBOUNCE_MS } = {}) {
     loading: entry.status === "loading",
     error: entry.status === "error" ? entry.error : "",
     details: entry.status === "success" ? entry.data : null,
-    options: entry.status === "success" ? entry.data?.options ?? [] : [],
+    options:
+      entry.status === "success"
+        ? entry.data?.options ?? EMPTY_OPTIONS
+        : EMPTY_OPTIONS,
     status: entry.status,
     isValid,
     normalized,

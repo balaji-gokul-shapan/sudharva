@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const initialState = {
   loading: false,
@@ -13,10 +14,7 @@ const DEFAULT_ERROR_MESSAGE = "OTP verification failed";
 const getVerifyUrl = () => "/api/auth/otp/verify";
 
 const getErrorMessage = (error) =>
-  error?.response?.data?.message ||
-  error?.response?.data?.error ||
-  error?.message ||
-  DEFAULT_ERROR_MESSAGE;
+  extractApiErrorMessage(error, { fallback: DEFAULT_ERROR_MESSAGE });
 
 const normalizeVerifyPayload = (payload = {}) => {
   const otp = String(payload?.otp ?? "").replace(/\D/g, "").slice(0, 6);

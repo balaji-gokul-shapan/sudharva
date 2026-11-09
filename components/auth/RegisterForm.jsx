@@ -15,6 +15,8 @@ import {
   Phone,
   ShieldCheck,
   Sparkle,
+  X,
+  InformationCircle,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -24,7 +26,15 @@ import { requestOtp } from "@/store/slices/otp/otpRequestSlice";
 import { registerUser } from "@/store/slices/users/userRegisterSlice";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { verifyOtp } from "@/store/slices/otp/otpVerifySlice";
-import { EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
+import { EyeIcon, EyeOffIcon, HelpCircleIcon, Mail01Icon, PhoneIcon } from "@animateicons/react/huge";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 const panelVariants = {
   enter: (direction) => ({
@@ -729,54 +739,71 @@ export default function RegisterForm({
                     </button>
                   </div> */}
 
-                  <label
-                    htmlFor="register-identifier"
-                    className="mb-2 block text-sm font-semibold text-foreground"
-                  >
-                    {isEmail ? "Your email address" : "Your phone number"}
-                  </label>
-
-                  <div className="relative">
+                  <div>
+                    <Label
+                      htmlFor="register-identifier"
+                      className="mb-2 block text-sm font-semibold text-foreground"
+                    >
+                      {isEmail ? "Email" : "Phone number"}
+                    </Label>
+                    <div className="relative">
                     {isEmail ? (
                       <Envelope
                         size={19}
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
+                        className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
                       />
                     ) : (
                       <Phone
                         size={19}
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
+                        className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
                       />
                     )}
-
-                    <input
-                      id="register-identifier"
-                      name="identifier"
-                      type={isEmail ? "email" : "tel"}
-                      inputMode={isEmail ? "email" : "tel"}
-                      autoComplete={isEmail ? "email" : "tel"}
-                      autoFocus
-                      required
-                      value={identifier}
-                      onChange={(event) => {
-                        setIdentifier(event.target.value);
-                        setError("");
-                        setNotice("");
-                      }}
-                      placeholder={
-                        isEmail ? "you@example.com" : "+91 98765 43210"
-                      }
-                      aria-invalid={Boolean(error)}
-                      aria-describedby={
-                        error ? "register-error" : "register-hint"
-                      }
-                      className={cn(
-                        "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
-                        error && "border-destructive focus:border-destructive",
+                      <Input
+                        id="register-identifier"
+                        name="identifier"
+                        type={isEmail ? "email" : "tel"}
+                        inputMode={isEmail ? "email" : "tel"}
+                        autoComplete={isEmail ? "email" : "tel"}
+                        autoFocus
+                        required
+                        value={identifier}
+                        onChange={(event) => {
+                          setIdentifier(event.target.value);
+                          setError("");
+                          setNotice("");
+                        }}
+                        placeholder={
+                          isEmail ? "you@example.com" : "+91 98765 43210"
+                        }
+                        aria-invalid={Boolean(error)}
+                        aria-describedby={
+                          error ? "register-error" : "register-hint"
+                        }
+                        className={cn(
+                          "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
+                          error && "border-destructive focus:border-destructive",
+                          identifier.length > 0 && "pr-10",
+                        )}
+                      />
+                      {identifier.length > 0 && (
+                        <Button
+                          type="button"
+                          size="icon-sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setIdentifier("");
+                            setError("");
+                            setNotice("");
+                          }}
+                          aria-label="Clear identifier"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                        >
+                          <X size={14} aria-hidden="true" />
+                        </Button>
                       )}
-                    />
+                    </div>
                   </div>
 
                   <p
@@ -933,37 +960,107 @@ export default function RegisterForm({
                       error && "border-destructive focus:border-destructive",
                     )}
                   /> */}
-                  <label
-                    htmlFor="register-username"
-                    className="mb-2 mt-4 block text-sm font-semibold text-foreground"
-                  >
-                    Username
-                  </label>
-                  <input
-                    id="register-username"
-                    name="username"
-                    type="text"
-                    autoComplete="username"
-                    autoFocus
-                    required
-                    value={userCreds.username}
-                    onChange={handleCredsChange}
-                    placeholder="Choose a username"
-                    aria-invalid={Boolean(error)}
-                    className={cn(
-                      "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
-                      error && "border-destructive focus:border-destructive",
-                    )}
-                  />
-
-                  <label
-                    htmlFor="register-password"
-                    className="mb-2 mt-4 block text-sm font-semibold text-foreground"
-                  >
-                    Password
-                  </label>
+                  <div className="mb-2 mt-4 flex items-center gap-1">
+                    <Label
+                      htmlFor="register-username"
+                      className="text-sm font-semibold text-foreground"
+                    >
+                      Username
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <span
+                          className="help-trigger"
+                          aria-label="Username requirements"
+                        >
+                          <HelpCircleIcon size={14} />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="help-popover"
+                      >
+                        <ul className="list-disc list-inside space-y-1 text-xs text-foreground">
+                          <li>Minimum 4 characters</li>
+                          <li>Maximum 150 characters</li>
+                          <li>Only letters, numbers, _ and .</li>
+                          <li>Must start with a letter or number</li>
+                          <li>Case-insensitive uniqueness</li>
+                        </ul>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <div className="relative">
-                    <input
+                    <Input
+                      id="register-username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
+                      autoFocus
+                      required
+                      value={userCreds.username}
+                      onChange={handleCredsChange}
+                      placeholder="Choose a username"
+                      aria-invalid={Boolean(error)}
+                      className={cn(
+                        "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
+                        error && "border-destructive focus:border-destructive",
+                        userCreds.username.length > 0 && "pr-10",
+                      )}
+                    />
+                    {userCreds.username.length > 0 && (
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setUserCreds((prev) => ({ ...prev, username: "" }));
+                          setError("");
+                          setNotice("");
+                        }}
+                        aria-label="Clear username"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="mb-2 mt-4 flex items-center gap-1">
+                    <Label
+                      htmlFor="register-password"
+                      className="text-sm font-semibold text-foreground"
+                    >
+                      Password
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <span
+                          className="help-trigger"
+                          aria-label="Password requirements"
+                        >
+                          <HelpCircleIcon size={14} />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="help-popover"
+                      >
+                        <ul className="list-disc list-inside space-y-1 text-xs text-foreground">
+                          <li>Minimum 8 characters</li>
+                          <li>Maximum 128 characters</li>
+                          <li>At least 1 uppercase letter</li>
+                          <li>At least 1 lowercase letter</li>
+                          <li>At least 1 number</li>
+                          <li>At least 1 special character</li>
+                          <li>Username/email similarity allowed</li>
+                          <li>Space allowed</li>
+                        </ul>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="relative">
+                    <Input
                       id="register-password"
                       name="password"
                       type={isPasswordVisible ? "text" : "password"}
@@ -974,10 +1071,27 @@ export default function RegisterForm({
                       placeholder="Minimum 8 characters"
                       aria-invalid={Boolean(error)}
                       className={cn(
-                        "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
+                        "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
                         error && "border-destructive focus:border-destructive",
+                        userCreds.password.length > 0 && "pr-10",
                       )}
                     />
+                    {userCreds.password.length > 0 && (
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setUserCreds((prev) => ({ ...prev, password: "" }));
+                          setError("");
+                          setNotice("");
+                        }}
+                        aria-label="Clear password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </Button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setIsPasswordVisible((visible) => !visible)}
@@ -985,7 +1099,10 @@ export default function RegisterForm({
                         isPasswordVisible ? "Hide password" : "Show password"
                       }
                       aria-pressed={isPasswordVisible}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className={cn(
+                        "absolute top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                        userCreds.password.length > 0 ? "right-10" : "right-3",
+                      )}
                     >
                       {isPasswordVisible ? (
                         <EyeIcon size={20} aria-hidden="true" />
@@ -995,14 +1112,14 @@ export default function RegisterForm({
                     </button>
                   </div>
 
-                  <label
+                  <Label
                     htmlFor="register-confirm-password"
                     className="mb-2 mt-4 block text-sm font-semibold text-foreground"
                   >
                     Confirm password
-                  </label>
+                  </Label>
                   <div className="relative">
-                    <input
+                    <Input
                       id="register-confirm-password"
                       name="confirmPassword"
                       type={isConfirmPasswordVisible ? "text" : "password"}
@@ -1016,10 +1133,30 @@ export default function RegisterForm({
                         error ? "account-error" : "account-hint"
                       }
                       className={cn(
-                        "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
+                        "min-h-12 w-full rounded-xl border border-border bg-background px-4 py-3 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
                         error && "border-destructive focus:border-destructive",
+                        userCreds.confirmPassword.length > 0 && "pr-10",
                       )}
                     />
+                    {userCreds.confirmPassword.length > 0 && (
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setUserCreds((prev) => ({
+                            ...prev,
+                            confirmPassword: "",
+                          }));
+                          setError("");
+                          setNotice("");
+                        }}
+                        aria-label="Clear confirm password"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                      >
+                        <X size={14} aria-hidden="true" />
+                      </Button>
+                    )}
                     <button
                       type="button"
                       onClick={() =>
@@ -1031,12 +1168,17 @@ export default function RegisterForm({
                           : "Show confirm password"
                       }
                       aria-pressed={isConfirmPasswordVisible}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className={cn(
+                        "absolute top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                        userCreds.confirmPassword.length > 0
+                          ? "right-10"
+                          : "right-3",
+                      )}
                     >
                       {isConfirmPasswordVisible ? (
                         <EyeIcon size={20} aria-hidden="true" />
                       ) : (
-                        <EyeIcon size={20} aria-hidden="true" />
+                        <EyeOffIcon size={20} aria-hidden="true" />
                       )}
                     </button>
                   </div>

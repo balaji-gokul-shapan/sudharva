@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { pickUserRegistration } from "@/lib/users/registrationPayload";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const ACCESS_TOKEN_KEY = "auth.accessToken";
 
@@ -48,10 +49,9 @@ export const getUserDetails = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          error?.message ||
-          "Unable to fetch user details.",
+        extractApiErrorMessage(error, {
+          fallback: "Unable to fetch user details.",
+        }),
       );
     }
   },

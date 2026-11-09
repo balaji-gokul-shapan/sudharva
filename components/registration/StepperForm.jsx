@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -130,7 +130,7 @@ const STEP_FIELDS = {
       // "bloodGroup",
     ],
     [
-      "category",
+      "runner_category_id",
       "tshirt_size_id",
       "emergency_contact_name",
       "emergency_contact_mobile",
@@ -156,7 +156,7 @@ const STEP_FIELDS = {
   corporate: [
     ["companyName", "contactName", "workEmail", "companyPhone", "teamSize"],
     [
-      "category",
+      "runner_category_id",
       "tshirt_size_id",
       "emergency_contact_name",
       "emergency_contact_mobile",
@@ -708,10 +708,26 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     if (!errorLike) return null;
     if (typeof errorLike === "string") return errorLike;
 
+    const data = errorLike?.response?.data;
+    const status = errorLike?.response?.status;
+
+    // Detect raw HTML responses (server error pages)
+    const htmlError =
+      typeof data === "string" &&
+      (/^<(!DOCTYPE|html|head|body|br\s*\/?|img\s*\/?)/i.test(data.trim()) ||
+        (status === 404 && /<!DOCTYPE|<html|<body/i.test(data.trim())));
+
+    if (htmlError) {
+      if (status === 404) {
+        return "The registration page is not available. Please try again later.";
+      }
+      return "Something went wrong. Please try saving your registration again.";
+    }
+
     return (
-      errorLike?.response?.data?.message ||
-      errorLike?.response?.data?.error ||
-      errorLike?.data?.message ||
+      data?.message ||
+      data?.error ||
+      data?.detail ||
       errorLike?.message ||
       "Unable to save registration. Please try again."
     );
@@ -737,13 +753,28 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     queryFn: async () => await dispatch(getMasterData()).unwrap(),
     staleTime: 5 * 60 * 1000,
   });
+  // console.log(masterData,"masterData");
+  
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
+
+  // Check whether auth credentials are actually available. On app load,
+  // hydration from localStorage takes a few ms; the save button must not
+  // fire before that completes, otherwise the API receives no token.
+  const authAccessToken = useAppSelector(
+    (state) => state.userRefreshToken?.accessToken || null
+  );
+  const authReady =
+    !!authAccessToken || window.localStorage.getItem("auth.accessToken");
   const [isRegistrationSuccessModalOpen, setIsRegistrationSuccessModalOpen] =
     useState(false);
   const [isRegistrationErrorModalOpen, setIsRegistrationErrorModalOpen] =
     useState(false);
   const [registrationErrorMessage, setRegistrationErrorMessage] = useState("");
+  const registrationErrorLines = String(registrationErrorMessage || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   const [registrationSuccessConfettiKey, setRegistrationSuccessConfettiKey] =
     useState(0);
   const getRegistrationType = masterData?.registration_type ?? [];
@@ -756,7 +787,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     getRegistrationType,
     registerData,
   );
-  console.log(registerData, "hasRegisterData");
+  // console.log(registerData, "hasRegisterData");
 
   const initialForm = draft?.form
     ? hasRegisterData
@@ -847,21 +878,28 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
 
   const isGettingDetails = Array.isArray(options) && options.length > 0;
 
-  const getOptions = (key) => {
-    if (!isGettingDetails) return [];
+  // Memoized so the location option lists below are referentially stable
+  // across renders (they only recompute when the underlying master data
+  // changes). This keeps `SelectField`'s auto-select effect from running on
+  // every render.
+  const getOptions = useCallback(
+    (key) => {
+      if (!isGettingDetails) return [];
 
-    return [
-      ...new Set(options.map((option) => option[key]).filter(Boolean)),
-    ].map((value) => ({
-      value,
-      label: value,
-    }));
-  };
+      return [
+        ...new Set(options.map((option) => option[key]).filter(Boolean)),
+      ].map((value) => ({
+        value,
+        label: value,
+      }));
+    },
+    [options, isGettingDetails],
+  );
 
-  const cities = getOptions("city");
-  const states = getOptions("state");
-  const districts = getOptions("district");
-  const taluks = getOptions("taluk");
+  const cities = useMemo(() => getOptions("city"), [getOptions]);
+  const states = useMemo(() => getOptions("state"), [getOptions]);
+  const districts = useMemo(() => getOptions("district"), [getOptions]);
+  const taluks = useMemo(() => getOptions("taluk"), [getOptions]);
 
   const hasCities = cities.length > 0;
   const hasStates = states.length > 0;
@@ -888,6 +926,10 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     }
 
     setForm((current) => {
+      if (current[name] === value) {
+        return current;
+      }
+
       const next = { ...current, [name]: value };
       return withResidentAddress(next);
     });
@@ -901,7 +943,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       });
     }
 
-    if (touched[name]) {
+    if (touched[name] || errors[name]) {
       const message = validateField(name, value);
       setErrors((current) => {
         const next = { ...current };
@@ -976,8 +1018,10 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     if (firstInvalid) {
       window.requestAnimationFrame(() => {
         const targetId =
-          firstInvalid === "category"
-            ? "category-5k"
+          firstInvalid === "runner_category_id"
+            ? document
+                .querySelector('input[name="runner_category_id"]')
+                ?.getAttribute("id")
             : firstInvalid === "tshirt_size_id"
               ? "shirt-xs"
               : firstInvalid === "teamSize"
@@ -985,7 +1029,9 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                 : firstInvalid === "gender"
                   ? "gender-male"
                   : firstInvalid;
-        document.getElementById(targetId)?.focus();
+        if (targetId) {
+          document.getElementById(targetId)?.focus();
+        }
       });
       return false;
     }
@@ -1007,7 +1053,6 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   };
 
   const handleSubmitRegistration = async (event) => {
-    console.log("ewewew");
 
     event.preventDefault();
     if (isRegisterSubmitting) return;
@@ -1016,7 +1061,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     queryClient.setQueryData(["payment-order"], null);
     setIsRegistrationErrorModalOpen(false);
     setRegistrationErrorMessage("");
-    setIsRegisterSubmitting(true);
+    // setIsRegisterSubmitting(true);
 
     const {
       companyName,
@@ -1057,7 +1102,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       payload.beneficiary_mobile,
     );
     payload.companyPhone = normalizePhoneForApi(payload.companyPhone);
-    console.log("payload", payload);
+    // console.log("payload", payload);
 
     try {
       const registrationResponse =
@@ -1304,7 +1349,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                     {error ? (
                       <p
                         role="alert"
-                        className="max-w-sm text-right text-sm font-medium text-destructive"
+                        className="max-w-2/3 text-right text-xs font-medium text-destructive"
                       >
                         {error}
                       </p>
@@ -1426,10 +1471,23 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Unable to Save Registration</DialogTitle>
-              <DialogDescription>
-                {registrationErrorMessage ||
-                  "Something went wrong while saving your registration. Please try again."}
-              </DialogDescription>
+              {registrationErrorLines.length > 1 ? (
+                <div className="space-y-2 text-sm text-foreground">
+                  <p>
+                    Please fix the following issues and try again:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {registrationErrorLines.map((line, index) => (
+                      <li key={`registration-error-${index}`}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <DialogDescription>
+                  {registrationErrorMessage ||
+                    "Something went wrong while saving your registration. Please try again."}
+                </DialogDescription>
+              )}
             </DialogHeader>
             <DialogFooter>
               <RainbowButton

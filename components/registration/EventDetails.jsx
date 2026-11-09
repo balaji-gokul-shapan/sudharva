@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { TshirtSizeGuideModal } from "./TshirtSizeGuideModal";
 import {
   Check,
   Home01Icon,
@@ -38,6 +39,14 @@ const resolveCategoryMeta = (name = "") => {
   return matchedRule || DEFAULT_CATEGORY_META;
 };
 
+const getPhoneInputValue = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) return raw;
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `+${digits}` : "";
+};
+
 export const EventDetails = ({
   form,
   errors,
@@ -46,6 +55,25 @@ export const EventDetails = ({
   fetchMasterData,
 }) => {
   const [emergencyCountry, setEmergencyCountry] = useState("IN");
+  const [emergencyRelationCustom, setEmergencyRelationCustom] = useState("");
+  const [showCustomRelation, setShowCustomRelation] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+
+  // Refs keep the latest handler/form stable so callbacks passed to
+  // PhoneInput do not change identity on every render. Passing inline
+  // arrow functions or closure-dependent callbacks to PhoneInput makes
+  // its internal useEffect re-fire on every render, which calls onChange,
+  // updates the parent form, re-renders EventDetails, and repeats —
+  // producing the "maximum update depth exceeded" loop.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  const formRef = useRef(form);
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   const countryOptions = useMemo(
     () =>
@@ -63,24 +91,44 @@ export const EventDetails = ({
     ? countryFlags[selectedEmergencyCountry.code]
     : null;
 
-  const getPhoneInputValue = (value) => {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
-    if (raw.startsWith("+")) return raw;
-    const digits = raw.replace(/\D/g, "");
-    return digits ? `+${digits}` : "";
-  };
+  // Memoized so the controlled `value` prop is referentially stable unless
+  // the underlying phone number actually changes.
+  const emergencyPhoneValue = useMemo(
+    () => getPhoneInputValue(form.emergency_contact_mobile),
+    [form.emergency_contact_mobile],
+  );
 
-  const handlePhoneChange = (field, value) => {
-    const raw = String(value || "").trim();
-    if (!raw) {
-      onChange(field, "");
-      return;
-    }
+  // Stable callback — reads latest form/onChange via refs so its identity
+  // never changes across renders.
+  const handlePhoneChange = useCallback(
+    (field, value) => {
+      const raw = String(value || "").trim();
+      const digits = raw.replace(/\D/g, "");
+      const nextValue = digits ? `+${digits}` : "";
+      if (getPhoneInputValue(formRef.current[field]) !== nextValue) {
+        onChangeRef.current(field, nextValue);
+      }
+    },
+    [],
+  );
 
-    const digits = raw.replace(/\D/g, "");
-    onChange(field, digits ? `+${digits}` : "");
-  };
+  // Stable onChange prop for PhoneInput (fixed field name).
+  const handleEmergencyPhoneChange = useCallback(
+    (value) => handlePhoneChange("emergency_contact_mobile", value),
+    [handlePhoneChange],
+  );
+  //   (field, value) => {
+  //     const raw = String(value || "").trim();
+  //     if (!raw) {
+  //       onChangeRef.current(field, "");
+  //       return;
+  //     }
+
+  //     const digits = raw.replace(/\D/g, "");
+  //     onChangeRef.current(field, digits ? `+${digits}` : "");
+  //   },
+  //   [],
+  // );
 
   const useResident = Boolean(form.useResidentAddress);
   const hasResidentAddress = form.entryType !== "corporate";
@@ -96,7 +144,7 @@ export const EventDetails = ({
   const getCategories = (masterData) => {
     const categories =
       masterData?.registration_category?.filter((item) => item.is_active) || [];
-
+    // console.log(categories,"categories3333");
     return categories.map((item) => ({
       id: String(item.id),
       value: String(item.id),
@@ -113,6 +161,8 @@ export const EventDetails = ({
   };
 
   const mappedMasterCategories = getCategories(masterData);
+  // console.log(masterData,"masterData3333333333");
+  
   const fallbackCategories = CATEGORIES.map((item) => ({
     ...item,
     id: String(item.id ?? item.value),
@@ -120,7 +170,8 @@ export const EventDetails = ({
   }));
   const categoriesToRender =
     mappedMasterCategories.length > 0 ? mappedMasterCategories : fallbackCategories;
-    console.log(categoriesToRender,"categoriesToRender");
+    // console.log(categoriesToRender,"categoriesToRender");
+    // console.log(mappedMasterCategories,"mappedMasterCategories");
     
   const shirtSizesFromMaster =
     masterData?.tshirt_size
@@ -258,11 +309,20 @@ export const EventDetails = ({
       </fieldset>
 
       <fieldset>
-        <legend className="text-sm font-semibold text-foreground">
-          Event T-shirt size{" "}
-          <span className="text-accent" aria-hidden="true">
-            *
-          </span>
+        <legend className="flex items-center justify-between text-sm font-semibold text-foreground w-full">
+          <div className="flex items-center gap-1">
+            Event T-shirt size{" "}
+            <span className="text-accent" aria-hidden="true">
+              *
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSizeGuideOpen(true)}
+            className="text-xs font-medium text-accent underline hover:text-accent/80"
+          >
+            View guide
+          </button>
         </legend>
         <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
           Run in a size that fits you comfortably — we order in small batches,
@@ -395,9 +455,7 @@ export const EventDetails = ({
                   international
                   withCountryCallingCode
                   value={getPhoneInputValue(form.emergency_contact_mobile)}
-                  onChange={(value) =>
-                    handlePhoneChange("emergency_contact_mobile", value)
-                  }
+                  onChange={handleEmergencyPhoneChange}
                   placeholder="Enter phone number"
                   autoComplete="off"
                   aria-required="true"
@@ -420,22 +478,73 @@ export const EventDetails = ({
               </p>
             )}
           </div>
-          <Field
-            id="emergency_contact_relationship"
-            name="emergency_contact_relationship"
-            label="Emergency contact relation"
-            type="text"
-            placeholder="e.g. Parent, Sibling"
-            value={form.emergency_contact_relationship}
-            onChange={(e) => {
-            const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-            onChange("emergency_contact_relationship", value);
-          }}
-            icon={Home01Icon}
-            error={errors.emergency_contact_relationship}
-            autoComplete="off"
-            className="sm:col-span-2 lg:col-span-3"
-          />
+          <div className="sm:col-span-2 lg:col-span-3">
+            <SelectField
+              id="emergency_contact_relationship"
+              name="emergency_contact_relationship"
+              label="Emergency contact relation"
+              value={
+                form.emergency_contact_relationship === "others"
+                  ? "others"
+                  : form.emergency_contact_relationship
+              }
+              onChange={(name, value) => {
+                onChange(name, value);
+                if (value === "others") {
+                  setShowCustomRelation(true);
+                } else {
+                  setShowCustomRelation(false);
+                  setEmergencyRelationCustom("");
+                }
+              }}
+              options={[
+                { value: "father", label: "Father" },
+                { value: "mother", label: "Mother" },
+                { value: "brother", label: "Brother" },
+                { value: "sister", label: "Sister" },
+                { value: "spouse", label: "Spouse" },
+                { value: "friend", label: "Friend" },
+                { value: "others", label: "Others" },
+              ]}
+              placeholder="Select relation"
+              required
+              error={errors.emergency_contact_relationship}
+            />
+            {showCustomRelation && (
+              <div className="mt-2">
+                <label
+                  htmlFor="emergency_contact_relationship_custom"
+                  className="mb-1 block text-xs font-semibold text-foreground"
+                >
+                  Please specify relation
+                </label>
+                <input
+                  id="emergency_contact_relationship_custom"
+                  name="emergency_contact_relationship_custom"
+                  type="text"
+                  placeholder="e.g. Cousin, Guardian"
+                  value={emergencyRelationCustom}
+                  onChange={(e) => {
+                    setEmergencyRelationCustom(e.target.value);
+                    onChange(
+                      "emergency_contact_relationship",
+                      e.target.value,
+                    );
+                  }}
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-accent/10"
+                />
+              </div>
+            )}
+            {/* {errors.emergency_contact_relationship && (
+              <p
+                id="emergency-contact-relation-error"
+                className="mt-1.5 text-xs font-medium text-destructive"
+              >
+                {errors.emergency_contact_relationship}
+              </p>
+            )} */}
+          </div>
         </div>
       </div>
 
@@ -572,6 +681,11 @@ export const EventDetails = ({
           />
         </div>
       </fieldset> */}
+      <TshirtSizeGuideModal
+        open={sizeGuideOpen}
+        onOpenChange={setSizeGuideOpen}
+      />
+
     </div>
   );
 };

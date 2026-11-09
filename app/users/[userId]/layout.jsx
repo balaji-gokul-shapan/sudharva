@@ -11,21 +11,18 @@ import {
   Clock01Icon,
   Menu01Icon,
   Cancel01Icon,
+  Logout01Icon,
 } from "@animateicons/react/huge";
 import Image from "next/image";
 import { RunnerRegistrationProvider } from "./data/registerInfo";
 import { useAppDispatch } from "@/store/hooks";
-import { clearAuthSession } from "@/store/slices/users/userRefreshTokenSlice";
-import { logout } from "@/store/slices/users/userLoginSlice";
-import { clearRegistrationDraft } from "@/store/slices/registration/registrationDraftSlice";
-import { resetCreateRegistrationState } from "@/store/slices/registration/createRegistrationSlice";
-import { persistor } from "@/store/store";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 const getUserId = (params) => params?.userId ?? "";
 const navigation = [
   { label: "Dashboard", href: "", icon: LayoutDashboardIcon },
   { label: "My Profile", href: "/profile", icon: UserIcon },
   { label: "My Events", href: "/events", icon: Calendar01Icon },
-//   { label: "My Orders", href: "/orders", icon: ShoppingBag01Icon },
+  //   { label: "My Orders", href: "/orders", icon: ShoppingBag01Icon },
   { label: "Timeline", href: "/timeline", icon: Clock01Icon },
 ];
 
@@ -37,7 +34,7 @@ function UserLayoutInner({ children, params }) {
   const userId = getUserId(resolvedParams);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-    
+
   const url = (href) =>
     href
       ? `/users/${encodeURIComponent(userId)}${href}`
@@ -54,17 +51,18 @@ function UserLayoutInner({ children, params }) {
     setIsLoggingOut(true);
 
     try {
-      dispatch(logout());
-      dispatch(clearAuthSession());
-      dispatch(clearRegistrationDraft());
-      dispatch(resetCreateRegistrationState());
-      await persistor.purge();
-      await persistor.flush();
-       router.replace("/login");
-    } finally {
       setSidebarOpen(false);
-      router.replace("/login");
-      router.refresh();
+
+      // Clears redux state, persisted store, local/session storage, and cookies.
+      await resetClientSessionData(dispatch);
+
+      // Hard navigation ensures a fresh tab context after session cleanup.
+      window.location.replace("/login");
+      return;
+    } catch (error) {
+      console.error("Logout error:", error);
+      window.location.replace("/login");
+    } finally {
       setIsLoggingOut(false);
     }
   };
@@ -169,6 +167,7 @@ function UserLayoutInner({ children, params }) {
               disabled={isLoggingOut}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
             >
+              <Logout01Icon size={20} className="text-foreground" />
               {isLoggingOut ? "Logging out..." : "Logout"}
             </button>
           </div>

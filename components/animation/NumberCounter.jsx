@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useInView, useMotionValue, useSpring } from "motion/react"
 
 import { cn } from "@/lib/utils"
@@ -22,6 +22,14 @@ export function NumberTicker({
     stiffness: 100,
   })
   const isInView = useInView(ref, { once: true, margin: "0px" })
+  const formatter = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces,
+      }),
+    [decimalPlaces]
+  )
 
   useEffect(() => {
     let timer = null
@@ -43,13 +51,12 @@ export function NumberTicker({
     () =>
       springValue.on("change", (latest) => {
         if (ref.current) {
-          ref.current.textContent = Intl.NumberFormat("en-US", {
-            minimumFractionDigits: decimalPlaces,
-            maximumFractionDigits: decimalPlaces,
-          }).format(Number(latest.toFixed(decimalPlaces)))
+          ref.current.textContent = formatter.format(
+            Number(latest.toFixed(decimalPlaces))
+          )
         }
       }),
-    [springValue, decimalPlaces]
+    [springValue, decimalPlaces, formatter, ref]
   )
 
   return (

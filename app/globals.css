@@ -3409,6 +3409,23 @@
   }
 }
 
+/* =========================================
+   HELP TOOLTIP / POPOVER
+   ========================================= */
+.help-popover {
+  @apply bg-popover border border-border p-3 rounded-xl shadow-lg;
+  min-width: 200px;
+  max-width: 260px;
+}
+
+.help-popover ul {
+  @apply list-disc list-inside space-y-1 text-xs text-foreground;
+}
+
+.help-trigger {
+  @apply cursor-help text-ink-soft opacity-70 hover:opacity-100 transition-opacity;
+}
+
 /* ============================================================
    Magic UI — Ripple background (components/magicui/Ripple.jsx)
    ============================================================ */

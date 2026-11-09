@@ -30,7 +30,7 @@ export const PersonalDetails = ({
 
   return (
     <div className="space-y-6">
-      <div
+      {/* <div
         role="tablist"
         aria-label="Registration type"
         className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-muted/60 p-1.5"
@@ -92,7 +92,7 @@ export const PersonalDetails = ({
             </button>
           );
         })}
-      </div>
+      </div> */}
       {isCorporate ? (
         <CorporateDetails
           form={form}

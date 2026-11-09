@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/refs */
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { animate, motion, motionValue, useReducedMotion } from 'motion/react';
@@ -521,7 +522,7 @@ export default function Stack({
             onPointerDown={event => onDown(event, index)}
           >
             <motion.div
-              className={`absolute inset-0 overflow-hidden will-change-transform ${isTop ? 'group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-current' : ''}`}
+              className={`absolute inset-0 overflow-hidden will-change-transform ${isTop ? 'group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4' : ''}`}
               style={{
                 rotateX: values.tiltX,
                 rotateY: values.tiltY,

@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Sparkle,
   User,
+  X,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -22,6 +23,9 @@ import { RainbowButton } from "@/components/animation/rainbowButton";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
 import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const panelVariants = {
   enter: (dir) => ({
@@ -407,19 +411,19 @@ export default function LoginForm({ setIsAuthenticated }) {
                 exit="exit"
                 transition={{ type: "spring", stiffness: 300, damping: 32 }}
               >
-                <label
+                <Label
                   htmlFor="login-username"
                   className="mb-2 block text-sm font-semibold text-foreground"
                 >
                   Username
-                </label>
+                </Label>
                 <div className="relative">
                   <User
                     size={19}
                     aria-hidden="true"
                     className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
                   />
-                  <input
+                  <Input
                     id="login-username"
                     name="username"
                     type="text"
@@ -437,23 +441,40 @@ export default function LoginForm({ setIsAuthenticated }) {
                     className={cn(
                       "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
                       error && "border-destructive focus:border-destructive",
+                      username.length > 0 && "pr-10",
                     )}
                   />
+                  {username.length > 0 && (
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setUsername("");
+                        setError("");
+                        setNotice("");
+                      }}
+                      aria-label="Clear username"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </Button>
+                  )}
                 </div>
 
-                <label
+                <Label
                   htmlFor="login-password"
                   className="mb-2 mt-4 block text-sm font-semibold text-foreground"
                 >
                   Password
-                </label>
+                </Label>
                 <div className="relative">
                   <LockKey
                     size={19}
                     aria-hidden="true"
                     className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-soft"
                   />
-                  <input
+                  <Input
                     id="login-password"
                     name="password"
                     type={isPasswordVisible ? "text" : "password"}
@@ -469,10 +490,27 @@ export default function LoginForm({ setIsAuthenticated }) {
                     aria-invalid={Boolean(error)}
                     aria-describedby={error ? "login-error" : "login-hint"}
                     className={cn(
-                      "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-12 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
+                      "min-h-12 w-full rounded-xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-foreground outline-none transition placeholder:text-ink-soft/60 focus:border-accent focus:ring-accent/10",
                       error && "border-destructive focus:border-destructive",
+                      password.length > 0 && "pr-10",
                     )}
                   />
+                  {password.length > 0 && (
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setPassword("");
+                        setError("");
+                        setNotice("");
+                      }}
+                      aria-label="Clear password"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                    >
+                      <X size={14} aria-hidden="true" />
+                    </Button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setIsPasswordVisible((visible) => !visible)}
@@ -480,7 +518,10 @@ export default function LoginForm({ setIsAuthenticated }) {
                       isPasswordVisible ? "Hide password" : "Show password"
                     }
                     aria-pressed={isPasswordVisible}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    className={cn(
+                      "absolute top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-soft transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                      password.length > 0 ? "right-10" : "right-3",
+                    )}
                   >
                     {isPasswordVisible ? (
                       <EyeIcon size={20} aria-hidden="true" />

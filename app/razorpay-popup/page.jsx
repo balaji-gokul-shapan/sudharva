@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import Script from "next/script";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { confirmPaymentOrder } from "@/store/slices/payment/paymentOrderConfirmationSlice";
@@ -67,6 +67,7 @@ const statusStyles = {
 
 function RazorpayPopupContent() {
   const params = useSearchParams();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const registrationDataFromStore = useAppSelector(selectCreateRegistrationData);
@@ -218,7 +219,7 @@ function RazorpayPopupContent() {
       registrationData?.runner?.id ||
       "";
 
-    return userId ? `/users/${userId}` : "/users";
+    return userId ? `/users/${userId}` : "/";
   }, [params, registrationData]);
 
   
@@ -306,8 +307,7 @@ function RazorpayPopupContent() {
   };
 
   const handleCloseWindow = useCallback(() => {
-    window.close();
-
+    // window.close();
     // Browsers may block closing if the tab was not script-opened.
     window.setTimeout(() => {
       if (!window.closed) {

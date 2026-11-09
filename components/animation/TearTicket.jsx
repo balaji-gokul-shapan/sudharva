@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/refs */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion, useMotionTemplate, useReducedMotion, useSpring, useTransform } from 'motion/react';
@@ -405,8 +406,9 @@ export default function TearTicket({
       if (s.phase === 'idle' && stubRef.current) stubRef.current.style.visibility = 'hidden';
       return;
     }
-    setInstant(false);
+    const instantReset = requestAnimationFrame(() => setInstant(false));
     reset();
+    return () => cancelAnimationFrame(instantReset);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [used]);
   useEffect(() => {

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const initialState = {
   loading: false,
@@ -36,19 +37,17 @@ export const getMasterEventCategories = createAsyncThunk(
           return extractCategories(retryResponse?.data);
         } catch (retryError) {
           return rejectWithValue(
-            retryError?.response?.data?.message ||
-              retryError?.response?.data?.error ||
-              retryError?.message ||
-              "Failed to fetch event categories",
+            extractApiErrorMessage(retryError, {
+              fallback: "Failed to fetch event categories",
+            }),
           );
         }
       }
 
       return rejectWithValue(
-        error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          error?.message ||
-          "Failed to fetch event categories",
+        extractApiErrorMessage(error, {
+          fallback: "Failed to fetch event categories",
+        }),
       );
     }
   },

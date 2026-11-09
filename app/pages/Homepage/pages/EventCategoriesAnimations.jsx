@@ -230,8 +230,10 @@ export function EventCategoryFeature({ item, index, reveal = true }) {
           </span>
         </div>
 
-        {/* Category label — reserved height keeps every card's rows aligned */}
-        <h3 className="min-h-[3rem] text-base font-bold leading-tight text-foreground sm:min-h-[3.25rem] sm:text-xl">
+        {/* Category label — reserved height keeps every card's rows aligned.
+             Reserved for up to 3 lines so wrapped titles (e.g. "21.1K Run (Half Marathon)")
+             do not push the price/pill out of alignment across cards. */}
+        <h3 className="min-h-[4rem] text-base font-bold leading-tight text-foreground sm:min-h-[5rem] sm:text-xl">
           <DiaTextReveal
             text={label}
             colors={["#c679c4", "#fa3d1d", "#ffb005", "#0358f7"]}
@@ -242,8 +244,8 @@ export function EventCategoryFeature({ item, index, reveal = true }) {
           />
         </h3>
 
-        {/* Description — clamped to two lines with a reserved height */}
-        <p className="mt-2  min-h-[3rem] text-sm leading-6 text-[var(--color-ink-soft)] sm:text-xs">
+        {/* Description — reserved height keeps every card's rows aligned */}
+        <p className="mt-2 min-h-[4rem] text-sm leading-6 text-[var(--color-ink-soft)] sm:text-xs">
           {description}
         </p>
 

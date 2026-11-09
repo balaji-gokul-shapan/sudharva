@@ -787,10 +787,10 @@ export default function PaymentStep({
     queryFn: async () => await dispatch(getMasterEventCategories()).unwrap(),
     staleTime: 5 * 60 * 1000,
   });
-  console.log(form, "form");
-  console.log(masterEventCategoriesData, "masterEventCategoriesData");
-  console.log(masterData, "masterData");
-  console.log(registerData, "registerData");
+  // console.log(form, "form");
+  // console.log(masterEventCategoriesData, "masterEventCategoriesData");
+  // console.log(masterData, "masterData");
+  // console.log(registerData, "registerData");
   
 
   const participantReference =
@@ -806,7 +806,7 @@ export default function PaymentStep({
     registerData?.participantReference ||
     registerData?.reference ||
     "";
-console.log(participantReferenceNo,"participantReferenceNo");
+// console.log(participantReferenceNo,"participantReferenceNo");
 
   const bibError = bibClientError || bibNumberState?.error || "";
 
@@ -1050,14 +1050,14 @@ console.log(participantReferenceNo,"participantReferenceNo");
     // return Number(foundCategory?.fee ?? foundCategory?.price ?? 0);
   };
   const getData = getAmountForRegistrationCategory(form?.runner_category_id);
-  console.log(getData, "getData");
-  console.log(masterEventCategoriesData, "masterEventCategoriesData");
-  console.log(selectedCategoryFromMasters, "selectedCategoryFromMasters");
+  // console.log(getData, "getData");
+  // console.log(masterEventCategoriesData, "masterEventCategoriesData");
+  // console.log(selectedCategoryFromMasters, "selectedCategoryFromMasters");
 
   const effectivePrice =
     registerData?.base_fee || (getData?.fee > 0 ? getData?.fee : price);
 
-  console.log(effectivePrice, "effectivePrice");
+  // console.log(effectivePrice, "effectivePrice");
 
   const appliedPromo = form.promoApplied ?? null;
   const appliedPremiumPromo = form.premiumPromoApplied ?? null;

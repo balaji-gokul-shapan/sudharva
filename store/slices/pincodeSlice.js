@@ -4,6 +4,7 @@ import {
   getPincodeDetails,
   normalizePincode,
 } from "@/components/api/getPincode";
+import { extractApiErrorMessage } from "../utils/apiError";
 
 const EMPTY_ENTRY = Object.freeze({
   status: "idle",
@@ -34,7 +35,9 @@ export const fetchPincodeByCode = createAsyncThunk(
       }
 
       return rejectWithValue(
-        error?.message || "Unable to look up this pincode.",
+        extractApiErrorMessage(error, {
+          fallback: "Unable to look up this pincode.",
+        }),
       );
     }
   },

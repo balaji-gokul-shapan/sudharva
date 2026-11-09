@@ -1,6 +1,7 @@
 import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { refreshUserToken } from "../users/userRefreshTokenSlice";
+import { extractApiErrorMessage } from "../../utils/apiError";
 
 const ACCESS_TOKEN_KEY = "auth.accessToken";
 
@@ -18,15 +19,9 @@ const initialState = {
 };
 
 const getCancelBibErrorMessage = (error) => {
-  const responseData = error?.response?.data;
-
-  return (
-    responseData?.message ||
-    responseData?.detail ||
-    responseData?.error ||
-    error?.message ||
-    "Failed to cancel bib number"
-  );
+  return extractApiErrorMessage(error, {
+    fallback: "Failed to cancel bib number",
+  });
 };
 
 const getCancelBibOptions = (participantReference, token = "") => ({

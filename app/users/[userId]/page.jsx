@@ -14,6 +14,8 @@ import PendingPaymentPanel from "./PendingPaymentPanel";
 import { isRegistrationRecord } from "@/lib/users/registrationPayload";
 import { getUserData } from "./data/userData";
 
+export const instant = false;
+
 const hasMeaningfulRegistration = (entry) => {
   if (!isRegistrationRecord(entry)) return false;
 

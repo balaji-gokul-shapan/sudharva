@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "cn";
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 
 const LABEL_CLASSES = "mb-2 block text-sm font-semibold text-foreground";
+const EMPTY_OPTIONS = [];
 
 export const SelectField = ({
   id,
@@ -18,7 +19,7 @@ export const SelectField = ({
   label,
   value,
   onChange,
-  options = [],
+  options = EMPTY_OPTIONS,
   placeholder = "Select an option",
   icon: Icon,
   error,
@@ -26,16 +27,27 @@ export const SelectField = ({
   disabled = false,
   className,
 }) => {
-  const items = options.map((option) => ({
-    value: String(option.value),
-    label: option.label,
-  }));
+  const items = useMemo(
+    () =>
+      options.map((option) => ({
+        value: String(option.value),
+        label: option.label,
+      })),
+    [options],
+  );
 
-   useEffect(() => {
+
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+
+  useEffect(() => {
     if (items.length === 1 && !value) {
-      onChange?.(name, items[0].value);
+      onChangeRef.current?.(name, items[0].value);
     }
-  }, [items, name, value, onChange]);
+  }, [items, name, value]);
 
 
 

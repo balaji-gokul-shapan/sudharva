@@ -6,6 +6,7 @@ import { Provider, useDispatch } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from "@/store/store";
 import { hydrateAuthFromStorage } from "@/store/slices/users/userRefreshTokenSlice";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function AuthBootstrap({ children }) {
   const dispatch = useDispatch();
@@ -24,7 +25,9 @@ export default function Providers({ children }) {
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
         <PersistGate loading={children} persistor={persistor}>
-          <AuthBootstrap>{children}</AuthBootstrap>
+          <TooltipProvider>
+            <AuthBootstrap>{children}</AuthBootstrap>
+          </TooltipProvider>
         </PersistGate>
       </Provider>
     </QueryClientProvider>

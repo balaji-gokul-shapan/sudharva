@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Field } from "./components/Field";
 import { motion } from "framer-motion";
@@ -21,6 +21,21 @@ import { GENDERS } from "./datas/data";
 import { Separator } from "../ui/separator";
 import { PincodeField } from "./components/PincodeField";
 import { SelectField } from "./components/SelectField";
+import { SearchSelect } from "./components/SearchSelect";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  getBloodGroupMaster,
+  selectBloodGroupMasterData,
+  selectBloodGroupMasterState,
+} from "@/store/slices/masters/getBloodGroupmasterSlice";
+
+const getPhoneInputValue = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.startsWith("+")) return raw;
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `+${digits}` : "";
+};
 
 export const IndividualDetails = ({
   form,
@@ -37,6 +52,74 @@ export const IndividualDetails = ({
   districts,
   taluks,
 }) => {
+  const dispatch = useAppDispatch();
+  const bloodGroupMasterData = useAppSelector(selectBloodGroupMasterData);
+  const bloodGroupMasterState = useAppSelector(selectBloodGroupMasterState);
+
+  useEffect(() => {
+    if (bloodGroupMasterState?.loading) return;
+    if (Array.isArray(bloodGroupMasterData) && bloodGroupMasterData.length > 0) {
+      return;
+    }
+
+    dispatch(getBloodGroupMaster());
+  }, [dispatch, bloodGroupMasterData, bloodGroupMasterState?.loading]);
+
+  const currentBloodGroupValue = String(form?.bloodGroup || "").trim();
+
+  const bloodGroupOptions = useMemo(() => {
+    const normalized = (Array.isArray(bloodGroupMasterData)
+      ? bloodGroupMasterData
+      : []
+    )
+      .map((item) => {
+        if (typeof item === "string") {
+          const value = item.trim();
+          return value ? { value, label: value } : null;
+        }
+
+        if (!item || typeof item !== "object") return null;
+
+        const rawValue =
+          item.value ??
+          item.id ??
+          item.code ??
+          item.name ??
+          item.label ??
+          item.blood_group_name ??
+          item.group;
+        const rawLabel =
+          item.label ??
+          item.name ??
+          item.value ??
+          item.blood_group_name ??
+          item.group ??
+          item.code ??
+          item.id;
+
+        const value = String(rawValue ?? "").trim();
+        const label = String(rawLabel ?? value).trim();
+
+        if (!value) return null;
+        return { value, label: label || value };
+      })
+      .filter(Boolean)
+      .filter(
+        (option, index, array) =>
+          array.findIndex((candidate) => candidate.value === option.value) ===
+          index,
+      );
+
+    if (
+      currentBloodGroupValue &&
+      !normalized.some((option) => option.value === currentBloodGroupValue)
+    ) {
+      normalized.push({ value: currentBloodGroupValue, label: currentBloodGroupValue });
+    }
+
+    return normalized;
+  }, [bloodGroupMasterData, currentBloodGroupValue]);
+
   const handleResidentPincodeChange = (field, value) => {
     const nextValue =
       field === "resident_pincode"
@@ -45,24 +128,33 @@ export const IndividualDetails = ({
     onChange(field, nextValue);
   };
 
-  const getPhoneInputValue = (value) => {
-    const raw = String(value || "").trim();
-    if (!raw) return "";
-    if (raw.startsWith("+")) return raw;
-    const digits = raw.replace(/\D/g, "");
-    return digits ? `+${digits}` : "";
-  };
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
-  const handlePhoneChange = (field, value) => {
+  const formRef = useRef(form);
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
+  const handlePhoneChange = useCallback((field, value) => {
     const raw = String(value || "").trim();
-    if (!raw) {
-      onChange(field, "");
-      return;
+    const digits = raw.replace(/\D/g, "");
+    const nextValue = digits ? `+${digits}` : "";
+    if (getPhoneInputValue(formRef.current[field]) !== nextValue) {
+      onChangeRef.current(field, nextValue);
     }
+  }, []);
 
-    const digits = raw.replace(/\D/g, "");
-    onChange(field, digits ? `+${digits}` : "");
-  };
+  const handleMobilePhoneChange = useCallback(
+    (value) => handlePhoneChange("mobile_number", value),
+    [handlePhoneChange],
+  );
+  const handleAlternatePhoneChange = useCallback(
+    (value) => handlePhoneChange("alternatePhone", value),
+    [handlePhoneChange],
+  );
 
   const [mobileCountry, setMobileCountry] = useState("IN");
   const [alternateCountry, setAlternateCountry] = useState("IN");
@@ -192,7 +284,7 @@ export const IndividualDetails = ({
                 international
                 withCountryCallingCode
                 value={getPhoneInputValue(form.mobile_number)}
-                onChange={(value) => handlePhoneChange("mobile_number", value)}
+                onChange={handleMobilePhoneChange}
                 placeholder="Enter phone number"
                 autoComplete="tel"
                 readOnly={lockedIdentifierField === "mobile_number"}
@@ -260,7 +352,7 @@ export const IndividualDetails = ({
                 international
                 withCountryCallingCode
                 value={getPhoneInputValue(form.alternatePhone)}
-                onChange={(value) => handlePhoneChange("alternatePhone", value)}
+                onChange={handleAlternatePhoneChange}
                 placeholder="Enter phone number"
                 autoComplete="tel"
                 aria-required="false"
@@ -417,18 +509,19 @@ export const IndividualDetails = ({
               autoComplete="weight"
               required={false}
             />
-            <Field
+            <SearchSelect
               id="bloodGroup"
               name="bloodGroup"
               label="Blood Group"
-              type="text"
-              placeholder="e.g., A+"
+              placeholder="Select blood group"
+              searchPlaceholder="Search blood group"
               value={form.bloodGroup}
               onChange={onChange}
+              options={bloodGroupOptions}
               icon={Shield01Icon}
               error={errors.bloodGroup}
-              autoComplete="blood-group"
               required={false}
+              disabled={bloodGroupMasterState?.loading}
             />
           </div>
         </div>
