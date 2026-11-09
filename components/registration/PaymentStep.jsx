@@ -300,7 +300,7 @@ function PromoCodeCard({
         />
 
         <div className="relative px-5 py-5 sm:px-6">
-          <div className="flex items-start gap-3">
+          <div className="flex flex-col lg:flex-row items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-(--premium-card-border) bg-(--premium-strong-bg) text-(--premium-icon)">
               <Ticket size={22} weight="duotone" />
             </span>

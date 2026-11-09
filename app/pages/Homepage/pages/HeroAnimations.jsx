@@ -12,6 +12,7 @@ import {
   ArrowRightDoubleIcon,
   FilterAddIcon,
   HandshakeIcon,
+  UserAdd01Icon,
 } from "@animateicons/react/huge";
 
 import { AuroraText } from "@/components/animation/AuroraText";
@@ -667,7 +668,7 @@ export function HeroCtas() {
             href="/register"
             className="inline-flex w-full items-center justify-center sm:w-auto"
           >
-            <ArrowRightDoubleIcon
+            <UserAdd01Icon
               size={24}
               duration={1}
               color="currentColor"

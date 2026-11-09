@@ -30,6 +30,7 @@ import {
   FilterAddIcon,
   Login01Icon,
   Menu01Icon,
+  UserAdd01Icon,
 } from "@animateicons/react/huge";
 import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "../datas/homepage/data";
 
@@ -316,7 +317,11 @@ export const Navbar = () => {
                 Register
                 {/* </span> */}
                 {/* <span className="text-base leading-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5 group-hover:scale-[1.06]" aria-hidden="true"> */}
-                <ArrowRight02Icon />
+                 <UserAdd01Icon
+                  size={18}
+                  duration={1}
+                  color="currentColor"
+                />
                 {/* </span> */}
               </Link>
             </RainbowButton>
@@ -358,7 +363,7 @@ export const Navbar = () => {
                 aria-label="Register"
                 className="inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <ArrowRight02Icon className="h-4 w-4" />
+                <UserAdd01Icon className="h-4 w-4" />
                 <span className="sr-only sm:not-sr-only">Register</span>
               </Link>
             </RainbowButton>

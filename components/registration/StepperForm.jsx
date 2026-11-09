@@ -1335,8 +1335,13 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                 isSaveRegistrationCta ? (
                   <div className="flex flex-col items-end gap-2">
                     <ConfettiSideCannons
-                      type="submit"
-                      disabled={isRegisterSubmitting || isSavingRegistration}
+                      type={isSavingRegistration ? "button" : "submit"}
+                      onClick={
+                        isSavingRegistration
+                          ? () => setStepIndex(STEPS.length - 1)
+                          : undefined
+                      }
+                      disabled={isRegisterSubmitting}
                       fireOnClick={false}
                       triggerKey={registrationSuccessConfettiKey}
                       className="min-h-12 w-full rounded-xl border-0 bg-accent px-6 text-sm font-bold text-accent-foreground shadow-md hover:brightness-105 sm:w-auto"
