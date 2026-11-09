@@ -21,22 +21,39 @@ const options = {
   }
 }
 
+const getFirstFieldError = (payload) => {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return "";
+  }
+
+  for (const [key, value] of Object.entries(payload)) {
+    if (["message", "error", "detail"].includes(key)) {
+      continue;
+    }
+
+    if (Array.isArray(value) && value[0]) {
+      return `${String(value[0]).trim()}`;
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      return `${value.trim()}`;
+    }
+  }
+
+  return "";
+};
+
 const getRegisterErrorMessage = (error) => {
   const status = error?.response?.status;
   const data = error?.response?.data;
 
-  const fieldErrorCandidates = [
-    Array.isArray(data?.username) ? data.username[0] : "",
-    Array.isArray(data?.email) ? data.email[0] : "",
-    Array.isArray(data?.non_field_errors) ? data.non_field_errors[0] : "",
-    typeof data?.username === "string" ? data.username : "",
-    typeof data?.email === "string" ? data.email : "",
-  ].filter(Boolean);
+  const firstFieldError = getFirstFieldError(data);
 
   const candidates = [
     data?.message,
     data?.error,
-    ...fieldErrorCandidates,
+    data?.detail,
+    firstFieldError,
     typeof data === "string" ? data : "",
     error?.message,
   ].filter(Boolean);
@@ -80,10 +97,13 @@ const getRegisterErrorMessageFromPayload = (payload) => {
     return "Something went wrong. Please try again.";
   }
 
+  const firstFieldError = getFirstFieldError(payload);
+
   const candidates = [
     payload?.message,
     payload?.error,
     payload?.detail,
+    firstFieldError,
     typeof payload === "string" ? payload : "",
   ].filter(Boolean);
 
