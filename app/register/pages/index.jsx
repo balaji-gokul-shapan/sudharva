@@ -3,17 +3,22 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import StepperForm from "@/components/registration/StepperForm";
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useAppDispatch } from "@/store/hooks";
-import { resetClientSessionData } from "@/lib/resetClientSession";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [identifier, setIdentifier] = useState("");
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    resetClientSessionData(dispatch);
-  }, [dispatch]);
+    // Keep the registration stepper active on page refresh when auth exists.
+    // This prevents dropping back to the register form during payment step.
+    const hasAccessToken =
+      typeof window !== "undefined" &&
+      Boolean(window.localStorage.getItem("auth.accessToken"));
+
+    if (hasAccessToken) {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   return (
     <div className="relative">

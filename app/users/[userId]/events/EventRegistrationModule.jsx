@@ -1,12 +1,10 @@
-"use client";
-
+import Link from "next/link";
 import {
   Calendar01Icon,
   CheckListIcon,
   Flag01Icon,
   Rocket01Icon,
 } from "@animateicons/react/huge";
-import { useRunnerRegistrationData } from "../data/registerInfo";
 
 const MISSING = "Not available";
 
@@ -36,12 +34,40 @@ const formatStatus = (status) => {
   return raw.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-export default function EventRegistrationModule() {
-  const registration = useRunnerRegistrationData();
-  const details = registration?.runner?.details || {};
-  // console.log(registration,"registration");
-  
+export default function EventRegistrationModule({ userId = "", registration = null }) {
+  const encodedUserId = encodeURIComponent(userId);
 
+  if (!registration) {
+    return (
+      <section className="relative overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/12 blur-3xl" />
+        <div className="relative max-w-2xl">
+          <h1 className="text-2xl font-bold text-foreground">My Events</h1>
+          <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+            We could not find a completed event registration in this session.
+            You can continue registration from your dashboard or refresh after
+            signing in again.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={userId ? `/users/${encodedUserId}` : "/users"}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-4 text-sm font-semibold text-accent-foreground transition hover:brightness-105"
+            >
+              Go to dashboard
+            </Link>
+            <Link
+              href={userId ? `/users/${encodedUserId}/profile` : "/users"}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-semibold text-foreground transition hover:border-accent/50 hover:bg-accent/5"
+            >
+              Review profile
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const details = registration?.runner?.details || {};
   const eventName = pick(
     registration?.event_name,
     registration?.event,

@@ -26,11 +26,21 @@ const WOMEN_SIZES = [
 
 export function TshirtSizeGuideModal({ open, onOpenChange }) {
   const [tab, setTab] = useState("men");
+  const closeModal = () => onOpenChange?.(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-3xl overflow-hidden border-border/80 p-0 shadow-lg">
-        <div className="relative overflow-hidden border-b border-border/70 bg-gradient-to-br from-[var(--color-primary-tint)] via-background to-[var(--color-health-tint)] px-6 pb-5 pt-6">
+      <DialogContent className="w-[96vw] max-w-3xl overflow-hidden border-border/80 p-0 shadow-lg sm:w-full">
+        <div className="flex max-h-[90vh] flex-col">
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close size guide"
+            className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-background/90 text-base font-semibold text-foreground shadow-sm backdrop-blur transition hover:bg-background sm:h-10 sm:w-10"
+          >
+            X
+          </button>
+        <div className="relative overflow-hidden border-b border-border/70 bg-gradient-to-br from-[var(--color-primary-tint)] via-background to-[var(--color-health-tint)] px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
           <div className="pointer-events-none absolute -left-14 -top-16 h-44 w-44 rounded-full bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] blur-3xl" />
           <div className="pointer-events-none absolute -right-20 top-2 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--color-primary)_18%,transparent)] blur-3xl" />
 
@@ -41,11 +51,11 @@ export function TshirtSizeGuideModal({ open, onOpenChange }) {
               </div>
               <div className="flex items-center gap-2">
                 <BadgeInfoIcon size={20} className="text-accent" />
-                <DialogTitle className="font-serif text-2xl text-foreground sm:text-3xl">
+                <DialogTitle className="pr-10 font-serif text-xl text-foreground sm:text-3xl">
                   T-Shirt Size Guide
                 </DialogTitle>
               </div>
-              <p className="max-w-xl text-sm text-ink-soft sm:text-base">
+              <p className="max-w-xl text-xs text-ink-soft sm:text-base">
                 Pick your fit lane and match your body measurements for a
                 race-day ready tee.
               </p>
@@ -60,12 +70,12 @@ export function TshirtSizeGuideModal({ open, onOpenChange }) {
           </div>
         </div>
 
-        <div className="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_94%,transparent)_0%,color-mix(in_srgb,var(--color-bg-warm)_30%,var(--background))_100%)] p-6">
-          <div className="mb-6 inline-flex rounded-full border border-border/70 bg-background/80 p-1 shadow-sm backdrop-blur">
+        <div className="overflow-y-auto bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_94%,transparent)_0%,color-mix(in_srgb,var(--color-bg-warm)_30%,var(--background))_100%)] p-4 sm:p-6">
+          <div className="mb-4 inline-flex rounded-full border border-border/70 bg-background/80 p-1 shadow-sm backdrop-blur sm:mb-6">
             <button
               onClick={() => setTab("men")}
               className={cnTabs(
-                "rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200",
+                "rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 sm:px-5",
                 tab === "men"
                   ? "bg-accent text-accent-foreground shadow-[0_6px_16px_-8px_color-mix(in_srgb,var(--accent)_70%,transparent)]"
                   : "text-ink-soft hover:text-foreground",
@@ -76,7 +86,7 @@ export function TshirtSizeGuideModal({ open, onOpenChange }) {
             <button
               onClick={() => setTab("women")}
               className={cnTabs(
-                "rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200",
+                "rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 sm:px-5",
                 tab === "women"
                   ? "bg-accent text-accent-foreground shadow-[0_6px_16px_-8px_color-mix(in_srgb,var(--accent)_70%,transparent)]"
                   : "text-ink-soft hover:text-foreground",
@@ -94,11 +104,21 @@ export function TshirtSizeGuideModal({ open, onOpenChange }) {
           />
         </div>
 
-        <div className="border-t border-border/70 bg-background/70 px-6 py-4">
+        <div className="border-t border-border/70 bg-background/70 px-4 py-3 sm:px-6 sm:py-4">
           <p className="text-xs text-ink-soft">
             Measurements are body measurements in inches. If you are between
             sizes, we recommend sizing up for a comfortable race-day fit.
           </p>
+          <div className="mt-3 flex justify-end sm:hidden">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground"
+            >
+              Close
+            </button>
+          </div>
+        </div>
         </div>
       </DialogContent>
     </Dialog>

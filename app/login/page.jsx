@@ -8,7 +8,7 @@ import { LightRays } from "@/components/animation/light-rays";
 import { GridPattern } from "@/components/animation/GridPattern";
 
 export const metadata = {
-  title: "Login — Sudharva Marathon",
+  title: "Login - Sudharva Marathon",
   description:
     "Sign-in preview for the Sudharva Marathon. Email and phone authentication will be available when the sign-in service is connected.",
 };
@@ -66,7 +66,7 @@ export default function LoginPage() {
             flickerChance={0.1}
           />
         </div> */}
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
           <Suspense fallback={null}>
             <LightRays
               color="color-mix(in srgb, var(--accent) 36%, transparent)"

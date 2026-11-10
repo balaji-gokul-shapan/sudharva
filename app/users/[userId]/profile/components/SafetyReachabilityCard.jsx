@@ -2,7 +2,7 @@ import { CalendarDots, FlagBanner, Heartbeat, MapPin, Phone, Ruler } from "@phos
 
 function ContactNode({ icon: Icon, title, value, note }) {
   return (
-    <div className="relative rounded-2xl border border-border/70 bg-background/75 p-3.5 pl-10">
+    <div className="relative rounded-2xl border border-border/70 bg-background/95 p-3.5 pl-10">
       <span className="absolute left-3 top-3 grid h-6 w-6 place-items-center rounded-full bg-accent/12 text-accent">
         <Icon size={14} weight="duotone" />
       </span>

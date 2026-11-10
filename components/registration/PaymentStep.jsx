@@ -40,6 +40,7 @@ import {
 } from "@/store/slices/payment/createPaymentOrderSlice";
 import { selectCreateRegistrationData } from "@/store/slices/registration/createRegistrationSlice";
 import { Input } from "../ui/input";
+import { GoogleGeminiIcon } from "@animateicons/react/huge";
 
 const PROMO_CODES = [
   {
@@ -113,6 +114,12 @@ export function getPromoDiscount(promo, fee) {
 const formatINR = (amount) =>
   `₹${Math.max(0, Math.round(amount)).toLocaleString("en-IN")}`;
 
+const isPaidStatusValue = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return false;
+  return ["paid", "payment_done", "completed", "success", "captured", "verified"].includes(normalized);
+};
+
 const normalizeCategoryText = (value) =>
   String(value ?? "")
     .toLowerCase()
@@ -137,7 +144,9 @@ const getBibRangeRuleForCategory = (categoryInfo) => {
     .filter(Boolean);
 
   const containsAny = (tokens) =>
-    tokens.some((token) => candidates.some((candidate) => candidate.includes(token)));
+    tokens.some((token) =>
+      candidates.some((candidate) => candidate.includes(token)),
+    );
 
   if (containsAny(["5kmwalk", "5kwalk", "walk5k"])) {
     return { label: "5K Walk", min: 25001, max: 30000 };
@@ -190,7 +199,8 @@ const extractBibRangeFromCategory = (categoryInfo) => {
   }
 
   return {
-    label: categoryInfo?.name || categoryInfo?.category_name || "Selected category",
+    label:
+      categoryInfo?.name || categoryInfo?.category_name || "Selected category",
     min,
     max,
   };
@@ -204,10 +214,10 @@ const getBibRangeRuleByCategoryId = (categoryId, categories = []) => {
   const matched = categories.find(
     (item) => String(item?.id) === String(categoryId),
   );
+ 
 
   return extractBibRangeFromCategory(matched);
 };
-
 function AnimatedAmount({ value, className }) {
   const motionValue = useMotionValue(value);
   const [display, setDisplay] = useState(value);
@@ -229,6 +239,8 @@ function PromoCodeCard({
   code,
   promo,
   bibNumber,
+  bibHint,
+  bibHintMaxLength,
   bibApplied,
   onToggleBib,
   onBibChange,
@@ -271,6 +283,10 @@ function PromoCodeCard({
   const status = isApplied ? "applied" : error ? "error" : "idle";
   const message = isApplied ? `${promo.label} applied.` : error;
   const bibPreview = String(bibNumber || "").trim() || "ELITE24";
+  const normalizedBibNumber = String(bibNumber || "").trim();
+  const hintCutoffLength = Math.max(1, Number(bibHintMaxLength || 5));
+  const shouldShowBibHint =
+    Boolean(bibHint) && normalizedBibNumber.length < hintCutoffLength;
 
   const handleBibInput = (value) => {
     const sanitized = String(value || "")
@@ -322,18 +338,27 @@ function PromoCodeCard({
               >
                 Premium Bib Number
               </label>
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-                <Input
-                  id="premium-bib-number"
-                  name="premiumBibNumber"
-                  type="text"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={bibNumber ?? ""}
-                  onChange={(event) => handleBibInput(event.target.value)}
-                  placeholder="ELITE24"
-                  className="h-12 w-full rounded-xl border border-(--premium-card-border) bg-(--premium-panel-bg) px-3 text-sm font-semibold uppercase tracking-[0.22em] text-(--premium-input) outline-none transition placeholder:tracking-normal placeholder:text-(--premium-placeholder) focus-visible:outline-[2px_solid_var(--premium-label)] sm:flex-1"
-                />
+              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start">
+                <div className="w-full">
+                  <Input
+                    id="premium-bib-number"
+                    name="premiumBibNumber"
+                    type="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={bibNumber ?? ""}
+                    onChange={(event) =>
+                      handleBibInput(event.target.value.replace(/\D/g, ""))
+                    }
+                    placeholder="ELITE24"
+                    className="h-12 w-full rounded-xl border border-(--premium-card-border) bg-(--premium-panel-bg) px-3 text-sm font-semibold uppercase tracking-[0.22em] text-(--premium-input) outline-none transition placeholder:tracking-normal placeholder:text-(--premium-placeholder) focus-visible:outline-[2px_solid_var(--premium-label)] sm:flex-1"
+                  />
+                  {shouldShowBibHint && (
+                    <p className="text-xs font-semibold text-(--premium-card-fg) mt-2">
+                      {bibHint}
+                    </p>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleBibToggle}
@@ -358,7 +383,7 @@ function PromoCodeCard({
                     </>
                   ) : (
                     <>
-                      <Percent size={17} weight="bold" />
+                      <GoogleGeminiIcon size={17} weight="bold" />
                       Apply
                     </>
                   )}
@@ -760,7 +785,7 @@ export default function PaymentStep({
   onChange,
   step,
   registerData,
-  participantReferenceNo
+  participantReferenceNo,
 }) {
   console.log(registerData, "registerData");
 
@@ -791,7 +816,6 @@ export default function PaymentStep({
   // console.log(masterEventCategoriesData, "masterEventCategoriesData");
   // console.log(masterData, "masterData");
   // console.log(registerData, "registerData");
-  
 
   const participantReference =
     participantReferenceNo ||
@@ -806,9 +830,58 @@ export default function PaymentStep({
     registerData?.participantReference ||
     registerData?.reference ||
     "";
-// console.log(participantReferenceNo,"participantReferenceNo");
+  const paymentCompletionKey = participantReference
+    ? `payment.completed.${participantReference}`
+    : "";
+  // console.log(participantReferenceNo,"participantReferenceNo");
 
   const bibError = bibClientError || bibNumberState?.error || "";
+
+  const paidStatusFromData = useMemo(() => {
+    const statusValues = [
+      paymentOrder?.status,
+      paymentOrder?.payment_status,
+      paymentOrder?.registration_status,
+      savedRegistrationData?.status,
+      savedRegistrationData?.payment_status,
+      registerData?.status,
+      registerData?.payment_status,
+      registerData?.registration_status,
+      form?.payment_status,
+    ];
+
+    return statusValues.some(isPaidStatusValue);
+  }, [
+    form?.payment_status,
+    paymentOrder?.payment_status,
+    paymentOrder?.registration_status,
+    paymentOrder?.status,
+    registerData?.payment_status,
+    registerData?.registration_status,
+    registerData?.status,
+    savedRegistrationData?.payment_status,
+    savedRegistrationData?.status,
+  ]);
+
+  const isPaymentCompleted = useMemo(() => {
+    if (!participantReference || typeof window === "undefined") {
+      return paidStatusFromData;
+    }
+
+    const localPaid = Boolean(window.localStorage.getItem(paymentCompletionKey));
+    return localPaid || paidStatusFromData;
+  }, [participantReference, paidStatusFromData, paymentCompletionKey]);
+
+  useEffect(() => {
+    if (!participantReference || !paymentCompletionKey) return;
+    if (typeof window === "undefined") return;
+    if (!isPaymentCompleted) return;
+
+    window.localStorage.setItem(
+      paymentCompletionKey,
+      JSON.stringify({ paid: true, at: Date.now() }),
+    );
+  }, [isPaymentCompleted, participantReference, paymentCompletionKey]);
 
   const handleTogglePremiumBib = async (isEnabled) => {
     if (!isEnabled) {
@@ -851,13 +924,6 @@ export default function PaymentStep({
     const categoryId = Number(
       selectedCategoryFromMasters?.id ?? getData?.id ?? 0,
     );
-    console.log(form?.runner_category_id, "categoryId");
-    console.log(
-      selectedCategoryFromMasters?.id,
-      "selectedCategoryFromMasters?.id",
-    );
-    console.log(getData?.id, "getData?.id");
-
     if (!participantReference) {
       setBibClientError(
         "Participant reference missing. Please retry registration.",
@@ -880,11 +946,7 @@ export default function PaymentStep({
       return;
     }
 
-    const selectedCategoryForRule = getData || selectedCategoryFromMasters;
-    const bibRangeRule =
-      getBibRangeRuleByCategoryId(categoryId, masterEventCategoriesData) ||
-      extractBibRangeFromCategory(selectedCategoryForRule) ||
-      getBibRangeRuleForCategory(selectedCategoryForRule);
+    const bibRangeRule = premiumBibRangeRule;
 
     const isNumericBib = /^\d+$/.test(bibValue);
 
@@ -1054,6 +1116,26 @@ export default function PaymentStep({
   // console.log(masterEventCategoriesData, "masterEventCategoriesData");
   // console.log(selectedCategoryFromMasters, "selectedCategoryFromMasters");
 
+  const selectedCategoryForRule = selectedCategoryFromMasters || getData;
+  const premiumBibRangeRule =
+    getBibRangeRuleByCategoryId(
+      selectedCategoryForRule?.id,
+      masterEventCategoriesData,
+    ) ||
+    extractBibRangeFromCategory(selectedCategoryForRule) ||
+    getBibRangeRuleForCategory(selectedCategoryForRule);
+
+  const premiumBibHintMaxLength = premiumBibRangeRule
+    ? Math.max(
+        String(premiumBibRangeRule.min).length,
+        String(premiumBibRangeRule.max).length,
+      )
+    : 5;
+
+  const premiumBibRangeHint = premiumBibRangeRule
+    ? `${premiumBibRangeRule.label} bib must be between ${premiumBibRangeRule.min} and ${premiumBibRangeRule.max}.`
+    : "";
+
   const effectivePrice =
     registerData?.base_fee || (getData?.fee > 0 ? getData?.fee : price);
 
@@ -1108,13 +1190,19 @@ export default function PaymentStep({
         payable_amount: payable,
       }),
     );
-  }, [dispatch, expectedAmountPaise, participantReference, paymentOrder, payable]);
+  }, [
+    dispatch,
+    expectedAmountPaise,
+    participantReference,
+    paymentOrder,
+    payable,
+  ]);
 
   const premiumBibNumber = (form.premiumBibNumber || "").trim();
   const shouldShowBibTicket = Boolean(premiumBibNumber);
   const bibTicketValue = premiumBibNumber
-    ? `CM-${premiumBibNumber}`
-    : "CM-00123";
+    ? `${premiumBibNumber}`
+    : "00123";
 
   useEffect(() => {
     const el = bibTicketWrapRef.current;
@@ -1173,14 +1261,26 @@ export default function PaymentStep({
     if (razorpayKey) params.set("key", razorpayKey);
     if (razorpayOrderId) params.set("orderId", razorpayOrderId);
     if (razorpayAmountPaise) params.set("amount", String(razorpayAmountPaise));
+    if (participantReference) params.set("reference", String(participantReference));
+    if (payable > 0) params.set("payable", String(payable));
 
     const query = params.toString();
     return query ? `/razorpay-popup?${query}` : "/razorpay-popup";
-  }, [razorpayAmountPaise, razorpayKey, razorpayOrderId]);
+  }, [participantReference, payable, razorpayAmountPaise, razorpayKey, razorpayOrderId]);
 
   const handleOpenPaymentPopup = async () => {
+    if (isPaymentCompleted) {
+      setPaymentLinkOpened(false);
+      setPaymentLinkError(
+        "Payment is already completed for this registration. No further payment popup is needed.",
+      );
+      return;
+    }
+
     if (!participantReference) {
-      setPaymentLinkError("Participant reference missing. Please retry registration.");
+      setPaymentLinkError(
+        "Participant reference missing. Please retry registration.",
+      );
       return;
     }
 
@@ -1189,7 +1289,9 @@ export default function PaymentStep({
     const popupTab = window.open("", "_blank");
 
     if (!popupTab) {
-      setPaymentLinkError("Popup was blocked. Please allow popups and try again.");
+      setPaymentLinkError(
+        "Popup was blocked. Please allow popups and try again.",
+      );
       return;
     }
 
@@ -1246,6 +1348,10 @@ export default function PaymentStep({
       params.set("key", String(latestKey));
       params.set("orderId", String(latestOrderId));
       params.set("amount", String(latestAmountPaise));
+      params.set("reference", String(participantReference));
+      if (payable > 0) {
+        params.set("payable", String(payable));
+      }
       params.set("ts", String(Date.now()));
 
       popupTab.location.href = `/razorpay-popup?${params.toString()}`;
@@ -1254,7 +1360,8 @@ export default function PaymentStep({
       setPaymentLinkError(
         typeof error === "string"
           ? error
-          : error?.message || "Unable to open payment right now. Please try again.",
+          : error?.message ||
+              "Unable to open payment right now. Please try again.",
       );
       popupTab.document.title = "Payment Error";
       popupTab.document.body.innerHTML =
@@ -1318,8 +1425,8 @@ export default function PaymentStep({
               </h3>
               <p className="text-xs text-ink-soft">
                 {}
-                { "Selected event"} ·{" "}
-                {registerData?.category ?? "-"} {"Distance"} - {getData?.distance ?? "-"}
+                {"Selected event"} · {registerData?.category ?? "-"}{" "}
+                {"Distance"} - {getData?.distance ?? "-"}
               </p>
             </div>
           </div>
@@ -1381,6 +1488,8 @@ export default function PaymentStep({
                 onApply={handleApplyPremiumPromo}
                 onClear={handleClearPremiumPromo}
                 promoCodes={PREMIUM_PROMO_CODES}
+                bibHint={premiumBibRangeHint}
+                bibHintMaxLength={premiumBibHintMaxLength}
                 bibLoading={Boolean(bibNumberState?.loading) || isCancellingBib}
                 bibError={bibError}
                 bibSuccess={Boolean(bibNumberState?.success)}
@@ -1541,9 +1650,17 @@ export default function PaymentStep({
                   <button
                     type="button"
                     onClick={handleOpenPaymentPopup}
-                    className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/15 transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25 sm:w-auto"
+                    disabled={isPaymentCompleted}
+                    className={cn(
+                      "mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold shadow-md transition focus-visible:outline-none focus-visible:ring-4 sm:w-auto",
+                      isPaymentCompleted
+                        ? "cursor-not-allowed bg-success/80 text-success-foreground shadow-success/20 focus-visible:ring-success/30"
+                        : "bg-primary text-primary-foreground shadow-primary/15 hover:brightness-105 focus-visible:ring-primary/25",
+                    )}
                   >
-                    Continue to Secure Payment
+                    {isPaymentCompleted
+                      ? "Payment Completed"
+                      : "Continue to Secure Payment"}
                     <ArrowSquareOut
                       size={17}
                       weight="bold"
@@ -1557,9 +1674,11 @@ export default function PaymentStep({
                   >
                     {paymentLinkError
                       ? paymentLinkError
+                      : isPaymentCompleted
+                        ? "Payment already verified. You can continue from this page without reopening Razorpay."
                       : paymentLinkOpened
-                      ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
-                      : "Opening Razorpay does not submit this registration or confirm payment."}
+                        ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
+                        : "Opening Razorpay does not submit this registration or confirm payment."}
                   </p>
                   {/* {form.paymentReported ? (
                     <div

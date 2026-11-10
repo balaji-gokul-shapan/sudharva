@@ -21,6 +21,21 @@ const extractOrder = (payload) => {
   return payload.order || payload.data || payload.result || payload;
 };
 
+const hasUsableOrder = (payload) => {
+  const order = extractOrder(payload);
+  if (!order || typeof order !== "object") return false;
+
+  return Boolean(
+    order.order_id ||
+      order.orderId ||
+      order.id ||
+      order.rzpKey ||
+      order.key ||
+      order.key_id ||
+      order.razorpay_key,
+  );
+};
+
 const initialState = {
   loading: false,
   error: null,
@@ -62,9 +77,27 @@ export const createPaymentOrder = createAsyncThunk(
       return data;
     } catch (error) {
       const status = error?.response?.status;
+      const responsePayload = error?.response?.data;
+
+      // Some backends return 409 when an order already exists for the same
+      // participant. If the response includes usable order data, treat it as
+      // success so the UI can continue with that order.
+      if (status === 409 && hasUsableOrder(responsePayload)) {
+        return responsePayload;
+      }
+
+      // If this is a duplicate create-order call and we already have an order
+      // in Redux state, reuse it to keep the flow idempotent.
+      if (status === 409) {
+        const existingOrder = getState()?.createPaymentOrder?.order || null;
+        if (existingOrder && typeof existingOrder === "object") {
+          return { order: existingOrder, reused: true };
+        }
+      }
+
       const authMessage = String(
-        error?.response?.data?.detail ||
-          error?.response?.data?.message ||
+        responsePayload?.detail ||
+          responsePayload?.message ||
           "",
       ).toLowerCase();
       const isAuthFailure =

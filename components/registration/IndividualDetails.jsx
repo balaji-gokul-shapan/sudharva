@@ -29,12 +29,32 @@ import {
   selectBloodGroupMasterState,
 } from "@/store/slices/masters/getBloodGroupmasterSlice";
 
-const getPhoneInputValue = (value) => {
+const toE164PhoneValue = (value, country = "IN") => {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.startsWith("+")) return raw;
   const digits = raw.replace(/\D/g, "");
-  return digits ? `+${digits}` : "";
+  if (!digits) return "";
+
+  if (raw.startsWith("+")) {
+    return `+${digits}`;
+  }
+
+  const dialCode = String(getCountryCallingCode(country || "IN") || "");
+  return dialCode ? `+${dialCode}${digits}` : `+${digits}`;
+};
+
+const getLocalPhoneDigits = (value, country = "IN") => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+
+  const dialCode = String(getCountryCallingCode(country || "IN") || "");
+  if (raw.startsWith("+") && dialCode && digits.startsWith(dialCode)) {
+    return digits.slice(dialCode.length);
+  }
+
+  return digits;
 };
 
 export const IndividualDetails = ({
@@ -134,30 +154,34 @@ export const IndividualDetails = ({
   }, [onChange]);
 
   const formRef = useRef(form);
+  const mobileCountrySelectRef = useRef(null);
+  const alternateCountrySelectRef = useRef(null);
   useEffect(() => {
     formRef.current = form;
   }, [form]);
 
-  const handlePhoneChange = useCallback((field, value) => {
-    const raw = String(value || "").trim();
-    const digits = raw.replace(/\D/g, "");
-    const nextValue = digits ? `+${digits}` : "";
-    if (getPhoneInputValue(formRef.current[field]) !== nextValue) {
+  const [mobileCountry, setMobileCountry] = useState("IN");
+  const [alternateCountry, setAlternateCountry] = useState("IN");
+
+  const handlePhoneChange = useCallback((field, value, country = "IN") => {
+    const localDigits = getLocalPhoneDigits(value, country);
+    const dialCode = String(getCountryCallingCode(country || "IN") || "");
+    const nextValue = localDigits ? `+${dialCode}${localDigits}` : "";
+    const currentValue = toE164PhoneValue(formRef.current[field], country);
+
+    if (currentValue !== nextValue) {
       onChangeRef.current(field, nextValue);
     }
   }, []);
 
   const handleMobilePhoneChange = useCallback(
-    (value) => handlePhoneChange("mobile_number", value),
-    [handlePhoneChange],
+    (value) => handlePhoneChange("mobile_number", value, mobileCountry),
+    [handlePhoneChange, mobileCountry],
   );
   const handleAlternatePhoneChange = useCallback(
-    (value) => handlePhoneChange("alternatePhone", value),
-    [handlePhoneChange],
+    (value) => handlePhoneChange("alternatePhone", value, alternateCountry),
+    [alternateCountry, handlePhoneChange],
   );
-
-  const [mobileCountry, setMobileCountry] = useState("IN");
-  const [alternateCountry, setAlternateCountry] = useState("IN");
 
   const countryOptions = useMemo(
     () =>
@@ -249,41 +273,74 @@ export const IndividualDetails = ({
                   "cursor-not-allowed border-dashed bg-muted/50 text-ink-soft",
               )}
             >
-              <span
-                aria-hidden="true"
-                className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
-                title={selectedMobileCountry?.label || "Country"}
+              <div
+                className="relative inline-flex items-center cursor-pointer"
+                onClick={() => {
+                  if (lockedIdentifierField === "mobile_number") return;
+                  mobileCountrySelectRef.current?.click();
+                  mobileCountrySelectRef.current?.focus();
+                }}
               >
-                {MobileFlagIcon ? (
-                  <MobileFlagIcon title={selectedMobileCountry?.label || "Country"} className="h-4 w-5 rounded-xs" />
-                ) : (
-                  <span className="text-[10px] font-semibold text-ink-soft">--</span>
-                )}
-              </span>
-              <select
-                aria-label="Select country code"
-                value={mobileCountry}
-                onChange={(event) => setMobileCountry(event.target.value)}
-                disabled={lockedIdentifierField === "mobile_number"}
-                className="w-28 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none"
-              >
-                {countryOptions.map((country) => (
-                  <option
-                    key={country.code}
-                    value={country.code}
-                    title={`${country.label} (${country.dialCode})`}
-                  >
-                    {country.code} {country.dialCode}
-                  </option>
-                ))}
-              </select>
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
+                  title={selectedMobileCountry?.label || "Country"}
+                >
+                  {MobileFlagIcon ? (
+                    <MobileFlagIcon title={selectedMobileCountry?.label || "Country"} className="h-4 w-5 rounded-xs" />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-ink-soft">--</span>
+                  )}
+                </span>
+                <select
+                  ref={mobileCountrySelectRef}
+                  aria-label="Select country code"
+                  value={mobileCountry}
+                  onChange={(event) => {
+                    const nextCountry = event.target.value;
+                    const localDigits = getLocalPhoneDigits(
+                      formRef.current.mobile_number,
+                      mobileCountry,
+                    );
+
+                    setMobileCountry(nextCountry);
+
+                    if (!localDigits) {
+                      onChangeRef.current("mobile_number", "");
+                      return;
+                    }
+
+                    const nextDialCode = String(
+                      getCountryCallingCode(nextCountry || "IN") || "",
+                    );
+                    onChangeRef.current(
+                      "mobile_number",
+                      `+${nextDialCode}${localDigits}`,
+                    );
+                  }}
+                  disabled={lockedIdentifierField === "mobile_number"}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                >
+                  {countryOptions.map((country) => (
+                    <option
+                      key={country.code}
+                      value={country.code}
+                      title={`${country.label} (${country.dialCode})`}
+                    >
+                      {country.code} {country.dialCode}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-ink-soft/50">
+                  ▾
+                </span>
+              </div>
               <PhoneInput
                 id="mobile_number"
                 name="mobile_number"
                 country={mobileCountry}
-                international
-                withCountryCallingCode
-                value={getPhoneInputValue(form.mobile_number)}
+                international={false}
+                value={toE164PhoneValue(form.mobile_number, mobileCountry)}
                 onChange={handleMobilePhoneChange}
                 placeholder="Enter phone number"
                 autoComplete="tel"
@@ -318,40 +375,72 @@ export const IndividualDetails = ({
                 errors.alternatePhone && "border-destructive",
               )}
             >
-              <span
-                aria-hidden="true"
-                className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
-                title={selectedAlternateCountry?.label || "Country"}
+              <div
+                className="relative inline-flex items-center cursor-pointer"
+                onClick={() => {
+                  alternateCountrySelectRef.current?.click();
+                  alternateCountrySelectRef.current?.focus();
+                }}
               >
-                {AlternateFlagIcon ? (
-                  <AlternateFlagIcon title={selectedAlternateCountry?.label || "Country"} className="h-4 w-5 rounded-xs" />
-                ) : (
-                  <span className="text-[10px] font-semibold text-ink-soft">--</span>
-                )}
-              </span>
-              <select
-                aria-label="Select alternate country code"
-                value={alternateCountry}
-                onChange={(event) => setAlternateCountry(event.target.value)}
-                className="w-28 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none"
-              >
-                {countryOptions.map((country) => (
-                  <option
-                    key={country.code}
-                    value={country.code}
-                    title={`${country.label} (${country.dialCode})`}
-                  >
-                    {country.code} {country.dialCode}
-                  </option>
-                ))}
-              </select>
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
+                  title={selectedAlternateCountry?.label || "Country"}
+                >
+                  {AlternateFlagIcon ? (
+                    <AlternateFlagIcon title={selectedAlternateCountry?.label || "Country"} className="h-4 w-5 rounded-xs" />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-ink-soft">--</span>
+                  )}
+                </span>
+                <select
+                  ref={alternateCountrySelectRef}
+                  aria-label="Select alternate country code"
+                  value={alternateCountry}
+                  onChange={(event) => {
+                    const nextCountry = event.target.value;
+                    const localDigits = getLocalPhoneDigits(
+                      formRef.current.alternatePhone,
+                      alternateCountry,
+                    );
+
+                    setAlternateCountry(nextCountry);
+
+                    if (!localDigits) {
+                      onChangeRef.current("alternatePhone", "");
+                      return;
+                    }
+
+                    const nextDialCode = String(
+                      getCountryCallingCode(nextCountry || "IN") || "",
+                    );
+                    onChangeRef.current(
+                      "alternatePhone",
+                      `+${nextDialCode}${localDigits}`,
+                    );
+                  }}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                >
+                  {countryOptions.map((country) => (
+                    <option
+                      key={country.code}
+                      value={country.code}
+                      title={`${country.label} (${country.dialCode})`}
+                    >
+                      {country.code} {country.dialCode}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-ink-soft/50">
+                  ▾
+                </span>
+              </div>
               <PhoneInput
                 id="alternatePhone"
                 name="alternatePhone"
                 country={alternateCountry}
-                international
-                withCountryCallingCode
-                value={getPhoneInputValue(form.alternatePhone)}
+                international={false}
+                value={toE164PhoneValue(form.alternatePhone, alternateCountry)}
                 onChange={handleAlternatePhoneChange}
                 placeholder="Enter phone number"
                 autoComplete="tel"

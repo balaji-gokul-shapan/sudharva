@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import gsap from "gsap";
+import { useRouter } from "next/navigation";
 import { EventSubnav } from "@/components/animation/EventSubnav";
 import { OverviewSubnav } from "@/components/animation/OverviewSubnav";
 import { LinksSubnav } from "@/components/animation/LinksSubnav";
@@ -10,6 +11,8 @@ import { CaretDownIcon } from "@phosphor-icons/react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RainbowButton } from "@/components/animation/rainbowButton";
 import { CountdownTimer } from "@/components/utilities/CountdownTimer";
+import { useAppDispatch } from "@/store/hooks";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 // import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "@/app/datas/homepage/data";
 import Link from "next/link";
 
@@ -78,9 +81,12 @@ const NAV_LINKS = [
 ];
 
 export const Navbar = () => {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [isTopBarHidden, setIsTopBarHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAuthNavigationPending, setIsAuthNavigationPending] = useState(false);
   const [openSubnav, setOpenSubnav] = useState(null);
   const leaveTimeoutRef = useRef(null);
   const menuButtonRef = useRef(null);
@@ -168,6 +174,23 @@ export const Navbar = () => {
       }
     };
   }, []);
+
+  const handleFreshAuthNavigation = async (event, path) => {
+    event.preventDefault();
+    if (isAuthNavigationPending) return;
+
+    setIsAuthNavigationPending(true);
+    setMobileMenuOpen(false);
+
+    try {
+      await resetClientSessionData(dispatch);
+    } catch {
+      // Continue to destination even if reset partially fails.
+    } finally {
+      router.push(path);
+      setIsAuthNavigationPending(false);
+    }
+  };
 
   return (
     <>
@@ -311,6 +334,7 @@ export const Navbar = () => {
             >
               <Link
                 href="/register"
+                onClick={(event) => handleFreshAuthNavigation(event, "/register")}
                 className="group inline-flex h-full shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap"
               >
                 {/* <span className="max-w-0 overflow-hidden whitespace-nowrap text-[11px] opacity-0 transition-[max-width,opacity,margin] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:mr-2 group-hover:max-w-35 group-hover:opacity-100"> */}
@@ -333,6 +357,7 @@ export const Navbar = () => {
             >
               <Link
                 href="/login"
+                onClick={(event) => handleFreshAuthNavigation(event, "/login")}
                 className="inline-flex h-full items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Login01Icon
@@ -359,7 +384,7 @@ export const Navbar = () => {
             >
               <Link
                 href="/register"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(event) => handleFreshAuthNavigation(event, "/register")}
                 aria-label="Register"
                 className="inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap"
               >
@@ -375,7 +400,7 @@ export const Navbar = () => {
             >
               <Link
                 href="/login"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(event) => handleFreshAuthNavigation(event, "/login")}
                 aria-label="Login"
                 className="inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap"
               >

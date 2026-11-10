@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowCounterClockwise,
   Buildings,
@@ -54,7 +56,6 @@ import {
 import { getMasterData } from "@/store/slices/masters/getMasterSlice";
 import { createPaymentOrder } from "@/store/slices/payment/createPaymentOrderSlice";
 import {
-  clearRegistrationDraft,
   saveRegistrationDraft,
 } from "@/store/slices/registration/registrationDraftSlice";
 import {
@@ -578,74 +579,134 @@ function normalizePhoneForApi(value) {
 }
 
 function StepProgress({ activeIndex, onSelect }) {
-  return (
-    <nav aria-label="Registration progress" className="relative">
-      <div
-        aria-hidden="true"
-        className="absolute left-[10%] right-[10%] top-5 h-0.5 bg-border"
-      />
-      <motion.div
-        aria-hidden="true"
-        className="absolute left-[10%] top-5 h-0.5 bg-accent"
-        initial={false}
-        animate={{ width: `${(activeIndex / (STEPS.length - 1)) * 80}%` }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-      />
-      <ol className="relative grid grid-cols-3 sm:grid-cols-5 py-2">
-        {STEPS.map((step, index) => {
-          const Icon = step.icon;
-          const complete = index < activeIndex;
-          const active = index === activeIndex;
-          const canVisit = index <= activeIndex;
+  const progressPercent =
+    STEPS.length > 1 ? (activeIndex / (STEPS.length - 1)) * 100 : 0;
 
-          return (
-            <li key={step.label} className="flex min-w-0 justify-center">
-              <button
-                type="button"
-                onClick={() => canVisit && onSelect(index)}
-                disabled={!canVisit}
-                aria-current={active ? "step" : undefined}
-                className={cn(
-                  "group flex min-w-0 flex-col items-center gap-2 text-center outline-none",
-                  !canVisit && "cursor-not-allowed ",
-                )}
-              >
-                <span
-                  className={cn(
-                    "relative z-10 grid h-10 w-10 place-items-center rounded-full border-2 bg-muted transition-all duration-300",
-                    active &&
-                      "scale-110 border-accent  text-current shadow-[0_0_0_5px_color-mix(in_srgb,var(--accent)_18%,transparent)]",
-                    complete &&
-                      "border-success bg-success text-success-foreground",
-                    !active &&
-                      !complete &&
-                      "border-border text-ink-soft bg-muted group-hover:border-accent/50 group-hover:bg-accent/10",
-                    "group-focus-visible:ring-4 group-focus-visible:ring-accent/20",
-                  )}
-                >
-                  {complete ? (
-                    <Check size={18} weight="bold" color="white" />
-                  ) : (
-                    <Icon size={18} color="currentColor" />
-                  )}
-                </span>
-                <span
-                  className={cn(
-                    "max-w-full text-[10px] font-bold leading-tight sm:text-xs",
-                    active
-                      ? "text-foreground"
-                      : complete
-                        ? "text-success"
-                        : "text-ink-soft",
-                  )}
-                >
-                  {step.label}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+  return (
+    <nav aria-label="Registration progress" className="relative w-full">
+      <div className="sm:hidden rounded-2xl border border-border/60 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+        <div className="relative px-1">
+          <div
+            className="absolute left-4 right-4 top-4 h-px bg-border/60"
+            aria-hidden="true"
+          />
+          <ol className="relative flex items-center justify-between gap-1">
+            {STEPS.map((step, index) => {
+              const Icon = step.icon;
+              const complete = index < activeIndex;
+              const active = index === activeIndex;
+              const canVisit = index <= activeIndex;
+
+              return (
+                <li key={`mobile-${step.label}`} className="flex min-w-0 flex-1 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => canVisit && onSelect(index)}
+                    disabled={!canVisit}
+                    aria-current={active ? "step" : undefined}
+                    className={cn(
+                      "relative z-10 grid h-9 w-9 place-items-center rounded-full border text-[10px] font-bold outline-none transition-all duration-300",
+                      active &&
+                        "scale-110 border-accent bg-accent text-accent-foreground shadow-[0_0_0_4px_color-mix(in_srgb,var(--accent)_20%,transparent)]",
+                      complete && "border-success bg-success text-success-foreground",
+                      !active && !complete && "border-border bg-background text-ink-soft",
+                      !canVisit && "opacity-60",
+                    )}
+                  >
+                    {complete ? (
+                      <Check size={13} weight="bold" color="white" />
+                    ) : (
+                      <Icon size={13} color="currentColor" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        <div className="mt-3 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-accent">
+            Step {activeIndex + 1} of {STEPS.length}
+          </p>
+          <p className="mt-1 text-sm font-bold text-foreground">
+            {STEPS[activeIndex]?.label}
+          </p>
+          <p className="mt-0.5 text-xs leading-snug text-ink-soft">
+            {STEPS[activeIndex]?.description}
+          </p>
+        </div>
+      </div>
+
+      <div className="relative hidden sm:block">
+        <div className="absolute left-0 right-0 top-[40px] h-0.5 bg-border/50" aria-hidden="true" />
+        <motion.div
+          aria-hidden="true"
+          className="absolute left-0 top-[40px] h-0.5 bg-gradient-to-r from-accent via-primary to-success shadow-[0_0_10px_color-mix(in_srgb,var(--accent)_40%,transparent)]"
+          initial={{ width: 0 }}
+          animate={{ width: `${progressPercent}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+        <div className="overflow-x-auto pb-4">
+          <ol className="relative grid grid-cols-5 gap-3 sm:gap-4 px-2 py-4 min-w-[max-content]">
+            {STEPS.map((step, index) => {
+              const Icon = step.icon;
+              const complete = index < activeIndex;
+              const active = index === activeIndex;
+              const canVisit = index <= activeIndex;
+
+              return (
+                <li key={`desktop-${step.label}`} className="flex flex-col items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => canVisit && onSelect(index)}
+                    disabled={!canVisit}
+                    aria-current={active ? "step" : undefined}
+                    aria-describedby={active ? "active-step-description" : undefined}
+                    className={cn(
+                      "group relative flex flex-col items-center gap-1.5 text-center outline-none transition-all duration-300",
+                      !canVisit && "cursor-not-allowed",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "relative z-10 grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-full border-2 transition-all duration-300",
+                        active &&
+                          "scale-105 border-accent bg-white shadow-[0_0_0_6px_color-mix(in_srgb,var(--accent)_30%,transparent)]",
+                        complete &&
+                          "border-success bg-success text-success-foreground scale-100",
+                        !active &&
+                          !complete &&
+                          "border-2 border-accent/30 text-ink-soft bg-muted/80 group-hover:border-accent/50 group-hover:bg-accent/10 group-hover:scale-105",
+                        "group-focus-visible:ring-4 group-focus-visible:ring-accent/20",
+                      )}
+                    >
+                      {complete ? (
+                        <Check size={18} weight="bold" color="white" />
+                      ) : (
+                        <Icon size={18} className="text-ink-soft" color="currentColor" />
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        "max-w-[110px] text-[9px] sm:text-[10px] mt-2 font-bold text-center leading-snug",
+                        active ? "text-foreground" : complete ? "text-success" : "text-ink-soft",
+                      )}
+                    >
+                      {step.label}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        {/* <p
+          id="active-step-description"
+          className="mt-2 px-2 text-center text-[10px] font-semibold leading-relaxed text-accent sm:text-xs"
+        >
+          {STEPS[activeIndex]?.description}
+        </p> */}
+      </div>
     </nav>
   );
 }
@@ -658,11 +719,11 @@ function StepIntro({ stepIndex }) {
       <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent/10 text-accent">
         <Icon size={24} weight="duotone" />
       </span>
-      <div>
+      <div className="min-w-0">
         <h2
           id="registration-step-heading"
           tabIndex={-1}
-          className="font-serif text-2xl font-bold tracking-tight text-foreground outline-none sm:text-3xl"
+          className="font-serif text-xl font-bold tracking-tight text-foreground outline-none sm:text-3xl"
         >
           {STEPS[stepIndex].label}
         </h2>
@@ -677,6 +738,7 @@ function StepIntro({ stepIndex }) {
 function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const draft = useAppSelector((state) => state.registrationDraft);
 
   const createRegistrationMutation = useMutation({
@@ -688,7 +750,6 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const loading = createRegistrationMutation.isPending;
   const success = createRegistrationMutation.isSuccess;
   const data = createRegistrationMutation.data ?? null;
-  console.log({ data });
 
   const registrationResult =
     data?.data || data?.result || data?.registration || data || null;
@@ -800,6 +861,16 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     : seededForm;
 
   const [form, setForm] = useState(initialForm);
+  const effectiveRegistrationReference =
+    participantReference ||
+    form?.participant_reference ||
+    form?.participantReference ||
+    form?.reference ||
+    registerData?.participant_reference ||
+    registerData?.participantReference ||
+    registerData?.reference ||
+    "";
+  const hasPersistedRegistrationSuccess = Boolean(effectiveRegistrationReference);
   const normalizedIdentifier = String(identifier || "").trim();
   const lockedIdentifierField = normalizedIdentifier
     ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedIdentifier)
@@ -812,6 +883,18 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     : "";
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!effectiveRegistrationReference) return;
+
+    const paymentCompletionKey = `payment.completed.${effectiveRegistrationReference}`;
+    const paidSnapshot = window.localStorage.getItem(paymentCompletionKey);
+
+    if (!paidSnapshot) return;
+
+    router.replace("/login");
+  }, [effectiveRegistrationReference, router]);
+
+  useEffect(() => {
     if (stepIndex > 0) {
       document
         .getElementById("registration-step-heading")
@@ -819,30 +902,63 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     }
   }, [stepIndex]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+
+    const stepperRoot = document.getElementById("registration-flow");
+    if (!stepperRoot) return;
+
+    window.requestAnimationFrame(() => {
+      stepperRoot.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [stepIndex]);
+
   const { options } = usePincodeLookup(form.resident_pincode);
 
   useEffect(() => {
-    if (success) {
-      dispatch(clearRegistrationDraft());
-      return;
-    }
+    const shouldPinPaymentStep =
+      success &&
+      Boolean(
+        participantReference ||
+          form?.participant_reference ||
+          form?.participantReference ||
+          form?.reference,
+      );
+
+    const persistedForm = shouldPinPaymentStep
+      ? {
+          ...form,
+          participant_reference:
+            participantReference ||
+            form?.participant_reference ||
+            form?.participantReference ||
+            form?.reference ||
+            "",
+          participantReference:
+            participantReference ||
+            form?.participant_reference ||
+            form?.participantReference ||
+            form?.reference ||
+            "",
+          reference:
+            participantReference ||
+            form?.participant_reference ||
+            form?.participantReference ||
+            form?.reference ||
+            "",
+        }
+      : form;
 
     dispatch(
       saveRegistrationDraft({
-        stepIndex,
-        form,
+        stepIndex: shouldPinPaymentStep ? STEPS.length - 1 : stepIndex,
+        form: persistedForm,
       }),
     );
-  }, [dispatch, form, stepIndex, success]);
+  }, [dispatch, form, participantReference, stepIndex, success]);
 
   useEffect(() => {
-    console.log(
-      participantReference,
-      success,
-      registrationStatus,
-      payableAmount,
-    );
-
     if (
       !success ||
       !participantReference ||
@@ -1065,7 +1181,17 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     queryClient.setQueryData(["payment-order"], null);
     setIsRegistrationErrorModalOpen(false);
     setRegistrationErrorMessage("");
-    // setIsRegisterSubmitting(true);
+
+    if (!authReady) {
+      setRegistrationErrorMessage(
+        "Your session is still initializing. Please wait a moment and try again.",
+      );
+      setIsRegistrationErrorModalOpen(true);
+      setIsSavingRegistration(false);
+      return;
+    }
+
+    setIsRegisterSubmitting(true);
 
     const {
       companyName,
@@ -1099,6 +1225,36 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
           };
     payload.terms = toBooleanOrDefault(
       payload.event_rules_acceptance ?? payload.terms,
+      false,
+    );
+    payload.previous_marathon_participation = toBooleanOrDefault(
+      payload.previous_marathon_participation,
+      false,
+    );
+    payload.cardiac_condition = toBooleanOrDefault(
+      payload.cardiac_condition,
+      false,
+    );
+    payload.hypertension = toBooleanOrDefault(payload.hypertension, false);
+    payload.has_diabetes = toBooleanOrDefault(payload.has_diabetes, false);
+    payload.medical_fitness_declaration = toBooleanOrDefault(
+      payload.medical_fitness_declaration,
+      false,
+    );
+    payload.physical_exertion_acknowledgement = toBooleanOrDefault(
+      payload.physical_exertion_acknowledgement,
+      false,
+    );
+    payload.event_rules_acceptance = toBooleanOrDefault(
+      payload.event_rules_acceptance,
+      false,
+    );
+    payload.event_communication_consent = toBooleanOrDefault(
+      payload.event_communication_consent,
+      false,
+    );
+    payload.anonymized_impact_reporting_consent = toBooleanOrDefault(
+      payload.anonymized_impact_reporting_consent,
       false,
     );
     payload.mobile_number = normalizePhoneForApi(payload.mobile_number);
@@ -1191,24 +1347,36 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       className="mx-auto w-full max-w-4xl scroll-mt-6"
     >
       <>
-        <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-10">
-          <h1 className="mt-4 font-serif text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Your next <span className="text-accent">great stride </span>starts
-            here.
+        <header className="mx-auto mb-8 max-w-3xl text-center sm:mb-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/5 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent mb-4">
+            <span className="relative flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+            Step {stepIndex + 1} of {STEPS.length}
+          </div>
+          <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
+            Your next{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-primary to-success">
+              great stride
+            </span>{" "}
+            starts here.
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-ink-soft sm:text-base">
-            Complete four quick steps, then review the payment summary. Your
-            details are not saved or submitted from this page.
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink-soft wrap-break-word sm:text-base lg:max-w-2xl">
+            Complete your registration step by step, then review and confirm
+            your entry.
           </p>
         </header>
 
-        <div className="mb-5 rounded-2xl border border-border bg-surface/90 p-4 shadow-sm backdrop-blur sm:mb-6 sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <span className="text-xs font-semibold text-ink-soft">
-              Step {stepIndex + 1} <span className="text-ink-soft/50">of</span>{" "}
+        <div className="relative mb-6 rounded-3xl border border-border/60 bg-gradient-to-b from-surface/90 to-surface/60 backdrop-blur-md shadow-xl shadow-accent/10 ring-1 ring-white/20 p-4 sm:p-6 md:p-8">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+          <div className="mb-4 grid gap-2 sm:mb-6 sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <span className="inline-flex w-max items-center gap-2 rounded-xl border border-border/60 bg-white/50 px-3 py-2 text-xs font-semibold text-ink-soft shadow-sm sm:whitespace-nowrap">
+              <span className="flex h-2 w-2 items-center justify-center">
+                <span className="relative flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
+              </span>
+              Step {stepIndex + 1}
+              <span className="mx-1 text-ink-soft/40">of</span>
               {STEPS.length}
             </span>
-            <span className="text-right text-xs font-semibold text-accent sm:text-sm">
+            <span className="hidden max-w-full text-left text-xs font-semibold leading-snug text-accent wrap-break-word sm:inline sm:text-right sm:text-sm">
               {STEPS[stepIndex].description}
             </span>
           </div>
@@ -1220,11 +1388,12 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
 
         <motion.div
           key={stepIndex}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
-          className="rounded-3xl border border-border bg-surface p-5 shadow-xl shadow-primary/5 sm:p-8"
+          initial={{ opacity: 0, y: 16, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="relative overflow-x-hidden w-[calc(100%-2rem)]  md:w-auto rounded-[2rem] border border-border/60 bg-gradient-to-b from-surface/95 to-surface/80 backdrop-blur-md shadow-2xl shadow-accent/10 ring-1 ring-white/30 p-4 sm:p-6 md:p-8"
         >
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-primary to-success" />
           <form
             noValidate
             onSubmit={(event) => {
@@ -1320,7 +1489,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                 <button
                   type="button"
                   onClick={() => setStepIndex((current) => current - 1)}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border px-5 text-sm font-semibold text-foreground transition hover:border-accent/50 hover:bg-background focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/15"
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-border px-5 text-sm font-semibold text-foreground transition hover:border-accent/50 hover:bg-background focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/15 sm:w-auto"
                 >
                   <CaretLeft size={17} weight="bold" />
                   Back
@@ -1333,7 +1502,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
 
               {stepIndex < STEPS.length - 1 ? (
                 isSaveRegistrationCta ? (
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
                     <ConfettiSideCannons
                       type={isSavingRegistration ? "button" : "submit"}
                       onClick={
@@ -1362,7 +1531,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                     {error ? (
                       <p
                         role="alert"
-                        className="max-w-2/3 text-right text-xs font-medium text-destructive"
+                        className="w-full text-left text-xs font-medium text-destructive sm:max-w-[66%] sm:text-right"
                       >
                         {error}
                       </p>
@@ -1388,22 +1557,22 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                 )
               ) : (
                 <div className="text-center text-xs leading-relaxed text-ink-soft sm:max-w-xs sm:text-right">
-                  {success ? (
+                  {success || hasPersistedRegistrationSuccess ? (
                     <>
                       <p className="mb-2 text-success font-semibold">
                         Registration submitted successfully.
                       </p>
-                      {data && (
+                      {effectiveRegistrationReference && (
                         <p className="text-ink-soft/80">
                           Reference:{" "}
-                          {String(
-                            registrationResult?.participant_reference ??
-                              registrationResult?.reference ??
-                              registrationResult?.id ??
-                              "",
-                          )}
+                          {String(effectiveRegistrationReference)}
                         </p>
                       )}
+                      <div className="mt-3">
+                        <RainbowButton asChild variant="accent" size="sm">
+                          <Link href="/login">Login to portal</Link>
+                        </RainbowButton>
+                      </div>
                     </>
                   ) : error ? (
                     <p className="text-destructive font-semibold">{error}</p>
@@ -1443,10 +1612,15 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
             </div>
           </form>
         </motion.div>
-        <p className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-2 px-3 text-center text-xs leading-relaxed text-ink-soft">
-          <ShieldCheck size={15} className="shrink-0 text-primary" />
-          Your details are submitted securely to the event organizers.
-        </p>
+        <div className="mx-auto mt-8 max-w-xl flex items-center justify-center gap-3 px-4 text-center">
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/5">
+            <ShieldCheck size={16} className="shrink-0 text-primary" />
+            <div className="absolute inset-0 rounded-full border border-primary/30 opacity-0 animate-ping" />
+          </div>
+          <p className="text-xs leading-relaxed text-ink-soft/90 sm:text-sm">
+            Your details are submitted securely to the event organizers.
+          </p>
+        </div>
 
         <Dialog
           open={isRegistrationSuccessModalOpen}

@@ -157,7 +157,8 @@ export default async function Page({ params }) {
   });
 
   const details = registration?.runner?.details || {};
-  console.log(registration, "registration");
+  console.log(details,"details");
+  
 
   const fullName = getFullName(registration);
   const status = formatStatus(

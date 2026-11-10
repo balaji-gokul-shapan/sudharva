@@ -9,10 +9,11 @@ import {
   useState,
 } from "react";
 import Script from "next/script";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { confirmPaymentOrder } from "@/store/slices/payment/paymentOrderConfirmationSlice";
+import { createPaymentOrder } from "@/store/slices/payment/createPaymentOrderSlice";
 import { getMasterData } from "@/store/slices/masters/getMasterSlice";
 import {
   selectCreateRegistrationData,
@@ -79,7 +80,6 @@ const normalizeRazorpayContact = (value) => {
 
 function RazorpayPopupContent() {
   const params = useSearchParams();
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const registrationDataFromStore = useAppSelector(selectCreateRegistrationData);
@@ -88,17 +88,31 @@ function RazorpayPopupContent() {
   );
   const masterData = useAppSelector((state) => state.master.data);
   const registrationData = registrationDataFromStore || null;
+  const orderFetchAttemptedRef = useRef(false);
+  const receiptExportRef = useRef(null);
   
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const hasAutoOpenedRef = useRef(false);
   const autoMode = params.get("auto") !== "0";
   const [isPaymentInitiated, setIsPaymentInitiated] = useState(false);
+  const [isOrderLoading, setIsOrderLoading] = useState(false);
   const registrationReference =
     registrationData?.participant_reference ||
     registrationData?.participantReference ||
     registrationData?.reference ||
     registrationData?.id ||
     "";
+  const referenceFromParams = params.get("reference") || "";
+  const effectiveReference = referenceFromParams || registrationReference;
+  const paymentCompletionKey = effectiveReference
+    ? `payment.completed.${effectiveReference}`
+    : "";
+  const payableFromParams = Number(params.get("payable") || 0) || 0;
+  const isPaymentAlreadyCompleted = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    if (!paymentCompletionKey) return false;
+    return Boolean(window.localStorage.getItem(paymentCompletionKey));
+  }, [paymentCompletionKey]);
 
   useEffect(() => {
     if (masterData) return;
@@ -112,7 +126,7 @@ function RazorpayPopupContent() {
         queryClient.getQueryData(["payment-order"]) ??
         queryClient.getQueryData([
           "payment-order",
-          params.get("reference") || registrationReference || "",
+          effectiveReference || "",
         ]) ??
         null
       );
@@ -167,6 +181,10 @@ function RazorpayPopupContent() {
     Boolean(amountPaise.trim());
   const shouldHideHelper =
     autoMode && hasRequiredCheckoutData && !status.message && !hasResult;
+  const isPreparingCheckout =
+    !hasResult &&
+    (isOrderLoading ||
+      (autoMode && hasRequiredCheckoutData && !sdkLoaded));
   const receiptAmountRupees = Math.max(
     0,
     Number(amountPaise || 0) / 100,
@@ -303,11 +321,92 @@ function RazorpayPopupContent() {
     [],
   );
 
+  const actionWrapStyle = useMemo(
+    () => ({
+      marginTop: 14,
+      display: "grid",
+      gap: 10,
+      gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+      width: "100%",
+    }),
+    [],
+  );
+
+  const actionButtonStyle = useMemo(
+    () => ({
+      ...buttonStyle,
+      marginTop: 0,
+      width: "100%",
+      minHeight: 44,
+      padding: "10px 12px",
+      textAlign: "center",
+    }),
+    [],
+  );
+
   const show = (type, message) => {
     setStatus({ type, message });
   };
 
-  const copyField = async (value) => {
+  useEffect(() => {
+    if (hasRequiredCheckoutData) return;
+    if (!effectiveReference) return;
+    if (orderFetchAttemptedRef.current) return;
+
+    orderFetchAttemptedRef.current = true;
+
+    const fetchOrder = async () => {
+      setIsOrderLoading(true);
+      try {
+        const response = await dispatch(
+          createPaymentOrder({
+            participant_reference: effectiveReference,
+            ...(payableFromParams > 0
+              ? { payable_amount: payableFromParams }
+              : {}),
+          }),
+        ).unwrap();
+
+        const latestOrder =
+          response?.order || response?.data || response?.result || response || {};
+        const latestKey =
+          latestOrder?.rzpKey ||
+          latestOrder?.key ||
+          latestOrder?.key_id ||
+          latestOrder?.razorpay_key ||
+          "";
+        const latestOrderId =
+          latestOrder?.order_id || latestOrder?.orderId || latestOrder?.id || "";
+        const latestAmount =
+          latestOrder?.amount ||
+          latestOrder?.amount_paise ||
+          (payableFromParams > 0 ? Math.round(payableFromParams * 100) : "");
+
+        if (latestKey) setRzpKey(String(latestKey));
+        if (latestOrderId) setOrderId(String(latestOrderId));
+        if (latestAmount) setAmountPaise(String(latestAmount));
+      } catch (error) {
+        show(
+          "error",
+          typeof error === "string"
+            ? error
+            : error?.message ||
+                "Unable to fetch payment details. Please retry from registration.",
+        );
+      } finally {
+        setIsOrderLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [
+    dispatch,
+    effectiveReference,
+    hasRequiredCheckoutData,
+    payableFromParams,
+  ]);
+
+  const copyField = useCallback(async (value) => {
     if (!value) return;
 
     try {
@@ -316,30 +415,139 @@ function RazorpayPopupContent() {
     } catch {
       show("error", "Unable to copy automatically. Please copy manually.");
     }
-  };
+  }, []);
+
+  const receiptPayload = useMemo(
+    () => ({
+      merchant: "Sudharva Marathon",
+      status: "Payment Confirmed",
+      participant_name: participantName || "",
+      participant_phone: participantPhone || "",
+      participant_category: participantCategory || "",
+      amount_inr: Number(receiptAmountRupees || 0),
+      razorpay_order_id: result.razorpay_order_id || "",
+      razorpay_payment_id: result.razorpay_payment_id || "",
+      razorpay_signature: result.razorpay_signature || "",
+      paid_at: new Date().toLocaleString("en-IN"),
+    }),
+    [
+      participantCategory,
+      participantName,
+      participantPhone,
+      receiptAmountRupees,
+      result.razorpay_order_id,
+      result.razorpay_payment_id,
+      result.razorpay_signature,
+    ],
+  );
+
+  const receiptText = useMemo(
+    () => JSON.stringify(receiptPayload, null, 2),
+    [receiptPayload],
+  );
+
+  const handleDownloadReceipt = useCallback(async () => {
+    try {
+      if (!receiptExportRef.current) {
+        show("error", "Receipt preview is not ready yet. Please try again.");
+        return;
+      }
+
+      const htmlToImageModule = await import("html-to-image");
+      const dataUrl = await htmlToImageModule.toPng(receiptExportRef.current, {
+        backgroundColor: "#ffffff",
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+
+      const anchor = document.createElement("a");
+      anchor.href = dataUrl;
+      anchor.download = `sudharva-receipt-${
+        result.razorpay_order_id || "payment"
+      }.png`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      show("success", "Receipt downloaded as PNG.");
+    } catch {
+      show("error", "Unable to download receipt PNG. Please try again.");
+    }
+  }, [result.razorpay_order_id]);
+
+  const handleShareReceipt = useCallback(async () => {
+    const shareText = `Sudharva Marathon Payment Receipt\nOrder: ${
+      result.razorpay_order_id || "NA"
+    }\nPayment: ${result.razorpay_payment_id || "NA"}\nAmount: INR ${Number(
+      receiptAmountRupees || 0,
+    ).toFixed(2)}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Sudharva Marathon Receipt",
+          text: shareText,
+        });
+        show("success", "Receipt shared successfully.");
+        return;
+      }
+
+      await copyField(receiptText);
+      show("success", "Share is not supported. Receipt copied instead.");
+    } catch {
+      show("error", "Unable to share receipt right now.");
+    }
+  }, [copyField, receiptAmountRupees, receiptText, result.razorpay_order_id, result.razorpay_payment_id]);
 
   const handleCloseWindow = useCallback(() => {
-    // window.close();
     // Browsers may block closing if the tab was not script-opened.
+    window.close();
+
+    // If close is blocked, return user to registration route.
     window.setTimeout(() => {
       if (!window.closed) {
-        window.location.assign(userRedirectPath);
+        window.location.replace("/register");
       }
-    }, 150);
-  }, [userRedirectPath]);
+    }, 120);
+  }, []);
+
+  const handleGoToLogin = useCallback(() => {
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.location.href = "/login";
+      }
+    } catch {
+      // Ignore cross-window access issues and fallback to current window navigation.
+    }
+
+    window.location.replace("/login");
+  }, []);
 
   const openPaymentPopup = useCallback(() => {
+    if (isPaymentAlreadyCompleted) {
+      show(
+        "success",
+        "Payment is already completed for this registration. No need to open checkout again.",
+      );
+      return;
+    }
+
     const key = rzpKey.trim();
     const id = orderId.trim();
     const amount = amountPaise.trim();
 
     if (!sdkLoaded || !window.Razorpay) {
-      show("error", "Razorpay SDK is still loading. Try again in a moment.");
+      show(
+        "error",
+        "Secure payment is still loading. Please wait a moment and try again.",
+      );
       return;
     }
 
     if (!key || !id || !amount) {
-      show("error", "Fill Razorpay Key, Order ID and Amount.");
+      show(
+        "error",
+        "Payment details are incomplete. Refresh this page and try again.",
+      );
       return;
     }
 
@@ -365,6 +573,19 @@ function RazorpayPopupContent() {
               razorpay_signature: response.razorpay_signature || "",
             }),
           ).unwrap();
+
+          if (typeof window !== "undefined" && paymentCompletionKey) {
+            window.localStorage.setItem(
+              paymentCompletionKey,
+              JSON.stringify({
+                paid: true,
+                payment_id: response.razorpay_payment_id || "",
+                order_id: response.razorpay_order_id || "",
+                at: Date.now(),
+              }),
+            );
+          }
+
           show("success", "Payment verified and completed successfully.");
           setIsPaymentInitiated(true);
         } catch (error) {
@@ -381,7 +602,10 @@ function RazorpayPopupContent() {
         escape: false,
         confirm_close: true,
         ondismiss: function () {
-          show("dismiss", "Popup closed without completing payment.");
+          show(
+            "dismiss",
+            "Payment window closed before completion. You can retry payment now.",
+          );
         },
       },
       prefill: {
@@ -401,7 +625,7 @@ function RazorpayPopupContent() {
     rzp.on("payment.failed", function (response) {
       show(
         "error",
-        "Payment failed: " +
+        "Payment was not completed: " +
           (response.error?.description || "unknown") +
           " [" +
           (response.error?.code || "") +
@@ -415,7 +639,9 @@ function RazorpayPopupContent() {
   }, [
     amountPaise,
     dispatch,
+    isPaymentAlreadyCompleted,
     orderId,
+    paymentCompletionKey,
     participantContactForPrefill,
     participantEmail,
     participantName,
@@ -429,6 +655,7 @@ function RazorpayPopupContent() {
     const amount = amountPaise.trim();
 
     if (hasAutoOpenedRef.current) return;
+    if (isPaymentAlreadyCompleted) return;
     if (!sdkLoaded) return;
     if (!key || !id || !amount) return;
 
@@ -440,7 +667,14 @@ function RazorpayPopupContent() {
     return () => {
       window.clearTimeout(timerId);
     };
-  }, [amountPaise, openPaymentPopup, orderId, rzpKey, sdkLoaded]);
+  }, [
+    amountPaise,
+    isPaymentAlreadyCompleted,
+    openPaymentPopup,
+    orderId,
+    rzpKey,
+    sdkLoaded,
+  ]);
 
   if (shouldHideHelper) {
     return (
@@ -464,7 +698,7 @@ function RazorpayPopupContent() {
       />
 
       <main style={containerStyle}>
-        {!hasResult ? (
+        {isPreparingCheckout ? (
           <section
             style={{
               border: "1px solid #e5e7eb",
@@ -474,10 +708,31 @@ function RazorpayPopupContent() {
             }}
           >
             <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
+              Preparing secure checkout
+            </h1>
+            <p style={{ ...mutedStyle, marginTop: 8 }}>
+              Please wait while we load your payment details.
+            </p>
+          </section>
+        ) : null}
+
+        {!hasResult ? (
+          <section
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 16,
+              background: "#ffffff",
+              display: isPreparingCheckout ? "none" : "block",
+            }}
+          >
+            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>
               Razorpay Checkout
             </h1>
             <p style={{ ...mutedStyle, marginTop: 8 }}>
-              {hasRequiredCheckoutData
+              {isPaymentAlreadyCompleted
+                ? "Payment already completed for this registration. You can close this window."
+                : hasRequiredCheckoutData
                 ? "Opening checkout automatically. If it does not open, use the button below."
                 : "Unable to auto-open checkout. Required payment details are missing (key/order/amount)."}
             </p>
@@ -488,10 +743,14 @@ function RazorpayPopupContent() {
               style={{
                 ...buttonStyle,
                 marginTop: 12,
-                opacity: hasRequiredCheckoutData ? 1 : 0.6,
-                cursor: hasRequiredCheckoutData ? "pointer" : "not-allowed",
+                opacity:
+                  hasRequiredCheckoutData && !isPaymentAlreadyCompleted ? 1 : 0.6,
+                cursor:
+                  hasRequiredCheckoutData && !isPaymentAlreadyCompleted
+                    ? "pointer"
+                    : "not-allowed",
               }}
-              disabled={!hasRequiredCheckoutData}
+              disabled={!hasRequiredCheckoutData || isPaymentAlreadyCompleted}
             >
               Open Payment Popup
             </button>
@@ -652,7 +911,7 @@ function RazorpayPopupContent() {
             </div>
 
             <div style={{ padding: 16 }}>
-              <div style={resultWrapStyle}>
+              <div ref={receiptExportRef} style={resultWrapStyle}>
                 <ReceiptPrinter
                   merchant="Sudharva Marathon"
                   order={result.razorpay_order_id || "#CONFIRMED"}
@@ -704,13 +963,22 @@ function RazorpayPopupContent() {
                 </div> */}
               </div>
 
-              <div style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div style={actionWrapStyle}>
+                <button
+                  type="button"
+                  onClick={handleGoToLogin}
+                  style={{
+                    ...actionButtonStyle,
+                    background: "#14532d",
+                  }}
+                >
+                  Go to Login
+                </button>
                 <button
                   type="button"
                   onClick={handleCloseWindow}
                   style={{
-                    ...buttonStyle,
-                    marginTop: 0,
+                    ...actionButtonStyle,
                     background: "#1f8b4e",
                   }}
                 >
@@ -718,22 +986,31 @@ function RazorpayPopupContent() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleShareReceipt}
+                  style={{
+                    ...actionButtonStyle,
+                    background: "#6b21a8",
+                  }}
+                >
+                  Share Receipt
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadReceipt}
+                  style={{
+                    ...actionButtonStyle,
+                    background: "#0f766e",
+                  }}
+                >
+                  Download Receipt
+                </button>
+                <button
+                  type="button"
                   onClick={() =>
-                    copyField(
-                      JSON.stringify(
-                        {
-                          razorpay_order_id: result.razorpay_order_id,
-                          razorpay_payment_id: result.razorpay_payment_id,
-                          razorpay_signature: result.razorpay_signature,
-                        },
-                        null,
-                        2,
-                      ),
-                    )
+                    copyField(receiptText)
                   }
                   style={{
-                    ...buttonStyle,
-                    marginTop: 0,
+                    ...actionButtonStyle,
                     background: "#2f5ea8",
                   }}
                 >

@@ -46,7 +46,7 @@ export default function RegisterPage() {
       </header>
       <main className="relative flex flex-1 isolate  overflow-hidden bg-background">
         {/* Animated grid background */}
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
           <FlickeringGrid
             className="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_at_center,black_0%,transparent_100%)]"
             squareSize={4}
@@ -59,7 +59,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Decorative glow */}
-        <div className="pointer-events-none absolute -right-24 -top-24 z-0 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+        <div className="absolute pointer-events-none  -right-24 -top-24 z-0 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
 
         {/* Registration content */}
         <section className="relative z-10 overflow-x-clip flex flex-1 flex-col">

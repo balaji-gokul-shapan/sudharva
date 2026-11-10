@@ -164,7 +164,8 @@ export function EventSubnav({ link, leaveTimeoutRef, setOpenSubnav }) {
           {eventPrizesData.map((prize) => (
             <motion.div
               key={prize.number}
-              className="subnav-prize flex flex-col items-center gap-1 px-2 py-2 rounded-lg border border-border/50 bg-surface/50 group"
+
+              className={`subnav-prize flex flex-col items-center gap-1 px-2 py-2 rounded-lg border border-border/50 bg-surface/50 group ${prize.className ?? ""}`}
               whileHover={{ y: -3, scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}

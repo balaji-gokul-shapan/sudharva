@@ -182,7 +182,7 @@ function HealthSnapshot({ form, onChange }) {
                     <Icon size={17} aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start flex-col sm:flex-row justify-between gap-2">
                       <p className="text-xs font-semibold leading-relaxed text-foreground">
                         {item.label}
                       </p>

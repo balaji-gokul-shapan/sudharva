@@ -19,8 +19,8 @@ export async function generateMetadata({ params }) {
 
   return {
     title: category
-      ? `${category.label} — Sudharva Marathon`
-      : "Event Category — Sudharva Marathon",
+      ? `${category.label} - Sudharva Marathon`
+      : "Event Category - Sudharva Marathon",
     description: category?.description ?? "Explore Sudharva Marathon events.",
   };
 }

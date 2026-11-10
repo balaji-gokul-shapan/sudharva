@@ -89,6 +89,10 @@ export default async function UserDashboard({ params }) {
   }
 
   const showPaymentStepper = isPendingPayment;
+  const raceStatusLabel = showPaymentStepper ? "Payment pending" : "Confirmed";
+  const raceStatusTone = showPaymentStepper
+    ? "bg-warning/12 text-warning"
+    : "bg-success/12 text-success";
 
   const getData = getUserData(userId, registration);
   const userData = {
@@ -161,8 +165,8 @@ export default async function UserDashboard({ params }) {
                 <h2 className="mt-2 text-xl font-bold">{user.eventName}</h2>
               </div>
 
-              <span className="rounded-full bg-success/12 px-3 py-1.5 text-xs font-semibold text-success">
-                Confirmed
+              <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${raceStatusTone}`}>
+                {raceStatusLabel}
               </span>
             </div>
 
@@ -176,9 +180,7 @@ export default async function UserDashboard({ params }) {
               <div className="rounded-xl border border-border bg-muted/50 p-4">
                 <Flag01Icon className="text-accent" size={20} />
                 <p className="mt-3 text-sm text-ink-soft">Location</p>
-                <p className="mt-1 font-semibold">
-                  {"Ajeya Stadium, Avadi, Chennai"}
-                </p>
+                <p className="mt-1 font-semibold">{"Ajeya Stadium, Avadi, Chennai" ||  user.location}</p>
                 <Link 
                   target="_blank"
                   rel="noopener noreferrer"
@@ -217,7 +219,10 @@ export default async function UserDashboard({ params }) {
           </div>
 
           <div className="space-y-6">
+            {!showPaymentStepper && (
+
             <RunnerRegistrationCard />
+            )}
 
             <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
               <h2 className="text-lg font-bold">Recent Activity</h2>

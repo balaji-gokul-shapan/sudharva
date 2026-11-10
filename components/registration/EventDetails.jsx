@@ -23,10 +23,7 @@ import { PincodeField } from "./components/PincodeField";
 import { SelectField } from "./components/SelectField";
 import { AnimatedShinyText } from "../animation/AnimatedShinyText";
 import PhoneInput from "react-phone-number-input/input";
-import {
-  getCountries,
-  getCountryCallingCode,
-} from "react-phone-number-input";
+import { getCountries, getCountryCallingCode } from "react-phone-number-input";
 import countryFlags from "react-phone-number-input/flags";
 import countryLabels from "react-phone-number-input/locale/en.json";
 
@@ -39,12 +36,32 @@ const resolveCategoryMeta = (name = "") => {
   return matchedRule || DEFAULT_CATEGORY_META;
 };
 
-const getPhoneInputValue = (value) => {
+const toE164PhoneValue = (value, country = "IN") => {
   const raw = String(value || "").trim();
   if (!raw) return "";
-  if (raw.startsWith("+")) return raw;
   const digits = raw.replace(/\D/g, "");
-  return digits ? `+${digits}` : "";
+  if (!digits) return "";
+
+  if (raw.startsWith("+")) {
+    return `+${digits}`;
+  }
+
+  const dialCode = String(getCountryCallingCode(country || "IN") || "");
+  return dialCode ? `+${dialCode}${digits}` : `+${digits}`;
+};
+
+const getLocalPhoneDigits = (value, country = "IN") => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+
+  const dialCode = String(getCountryCallingCode(country || "IN") || "");
+  if (raw.startsWith("+") && dialCode && digits.startsWith(dialCode)) {
+    return digits.slice(dialCode.length);
+  }
+
+  return digits;
 };
 
 export const EventDetails = ({
@@ -55,16 +72,11 @@ export const EventDetails = ({
   fetchMasterData,
 }) => {
   const [emergencyCountry, setEmergencyCountry] = useState("IN");
+  const countrySelectRef = useRef(null);
   const [emergencyRelationCustom, setEmergencyRelationCustom] = useState("");
   const [showCustomRelation, setShowCustomRelation] = useState(false);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
-  // Refs keep the latest handler/form stable so callbacks passed to
-  // PhoneInput do not change identity on every render. Passing inline
-  // arrow functions or closure-dependent callbacks to PhoneInput makes
-  // its internal useEffect re-fire on every render, which calls onChange,
-  // updates the parent form, re-renders EventDetails, and repeats —
-  // producing the "maximum update depth exceeded" loop.
   const onChangeRef = useRef(onChange);
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -94,28 +106,28 @@ export const EventDetails = ({
   // Memoized so the controlled `value` prop is referentially stable unless
   // the underlying phone number actually changes.
   const emergencyPhoneValue = useMemo(
-    () => getPhoneInputValue(form.emergency_contact_mobile),
-    [form.emergency_contact_mobile],
+    () => toE164PhoneValue(form.emergency_contact_mobile, emergencyCountry),
+    [emergencyCountry, form.emergency_contact_mobile],
   );
 
   // Stable callback — reads latest form/onChange via refs so its identity
   // never changes across renders.
-  const handlePhoneChange = useCallback(
-    (field, value) => {
-      const raw = String(value || "").trim();
-      const digits = raw.replace(/\D/g, "");
-      const nextValue = digits ? `+${digits}` : "";
-      if (getPhoneInputValue(formRef.current[field]) !== nextValue) {
-        onChangeRef.current(field, nextValue);
-      }
-    },
-    [],
-  );
+  const handlePhoneChange = useCallback((field, value, country = "IN") => {
+    const localDigits = getLocalPhoneDigits(value, country);
+    const dialCode = String(getCountryCallingCode(country || "IN") || "");
+    const nextValue = localDigits ? `+${dialCode}${localDigits}` : "";
+    const currentValue = toE164PhoneValue(formRef.current[field], country);
+
+    if (currentValue !== nextValue) {
+      onChangeRef.current(field, nextValue);
+    }
+  }, []);
 
   // Stable onChange prop for PhoneInput (fixed field name).
   const handleEmergencyPhoneChange = useCallback(
-    (value) => handlePhoneChange("emergency_contact_mobile", value),
-    [handlePhoneChange],
+    (value) =>
+      handlePhoneChange("emergency_contact_mobile", value, emergencyCountry),
+    [emergencyCountry, handlePhoneChange],
   );
   //   (field, value) => {
   //     const raw = String(value || "").trim();
@@ -162,17 +174,19 @@ export const EventDetails = ({
 
   const mappedMasterCategories = getCategories(masterData);
   // console.log(masterData,"masterData3333333333");
-  
+
   const fallbackCategories = CATEGORIES.map((item) => ({
     ...item,
     id: String(item.id ?? item.value),
     value: String(item.value ?? item.id),
   }));
   const categoriesToRender =
-    mappedMasterCategories.length > 0 ? mappedMasterCategories : fallbackCategories;
-    // console.log(categoriesToRender,"categoriesToRender");
-    // console.log(mappedMasterCategories,"mappedMasterCategories");
-    
+    mappedMasterCategories.length > 0
+      ? mappedMasterCategories
+      : fallbackCategories;
+  // console.log(categoriesToRender,"categoriesToRender");
+  // console.log(mappedMasterCategories,"mappedMasterCategories");
+
   const shirtSizesFromMaster =
     masterData?.tshirt_size
       ?.filter((item) => item.is_active)
@@ -193,8 +207,6 @@ export const EventDetails = ({
 
   const shirtSizesToRender =
     shirtSizesFromMaster.length > 0 ? shirtSizesFromMaster : fallbackShirtSizes;
-    console.log(shirtSizesToRender,"shirtSizesToRender");
-    
 
   const isGettingDetails = Array.isArray(options) && options.length > 0;
 
@@ -215,8 +227,12 @@ export const EventDetails = ({
   const taluksForDelivery = getOptions("taluk");
 
   return (
-    <div className="space-y-7">
-      <fieldset>
+    <div className="space-y-7 overflow-x-hidden">
+      <fieldset className="relative overflow-hidden rounded-2xl border border-border/60 bg-linear-to-b from-background via-background to-surface/70 p-4 shadow-sm sm:p-5">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-accent/10 blur-2xl"
+        />
         <legend className="text-sm font-semibold text-foreground">
           Choose your event{" "}
           <span className="text-accent" aria-hidden="true">
@@ -237,7 +253,7 @@ export const EventDetails = ({
               Retry loading events
             </button>
           )}
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="relative z-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {categoriesToRender.map((category) => {
             const selected = String(form.runner_category_id) === category.id;
 
@@ -245,7 +261,7 @@ export const EventDetails = ({
               <label
                 key={category.id}
                 className={cn(
-                  "relative flex cursor-pointer flex-col items-center rounded-2xl border p-4 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+                  "group relative flex h-full min-h-48 w-full cursor-pointer flex-col rounded-2xl border p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
                   selected ? category.selected : category.className,
                   "has-focus-visible:ring-accent/15",
                 )}
@@ -256,23 +272,29 @@ export const EventDetails = ({
                   name="runner_category_id"
                   value={category.value}
                   checked={selected}
-                  onChange={() => onChange("runner_category_id", category.value)}
+                  onChange={() =>
+                    onChange("runner_category_id", category.value)
+                  }
                   aria-describedby={
                     errors.runner_category_id ? "category-error" : undefined
                   }
                   className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
                 />
-                <span className="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-surface shadow-sm">
+                <span
+                  aria-hidden="true"
+                  className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-transparent via-accent/60 to-transparent opacity-70"
+                />
+                <span className="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-surface shadow-sm transition-transform duration-300 group-hover:scale-105">
                   <Trophy
                     size={22}
                     weight="duotone"
                     className={category.icon}
                   />
                 </span>
-                <span className="font-bold text-foreground">
+                <span className="max-w-full text-balance font-bold text-foreground wrap-break-word">
                   {category.label}
                 </span>
-                <span className="mt-1 text-xs text-ink-soft">
+                <span className="mt-1 max-w-full text-balance text-xs leading-relaxed text-ink-soft wrap-break-word">
                   {category.detail}
                 </span>
                 {category.price ? (
@@ -283,9 +305,16 @@ export const EventDetails = ({
                     ₹{category.price}
                   </AnimatedShinyText>
                 ) : null}
-                <span className="mt-auto rounded-full bg-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft">
-                  {category.distance}
-                </span>
+                <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+                  <span className="rounded-full bg-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                    {category.distance}
+                  </span>
+                  {selected ? (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-accent">
+                      Selected
+                    </span>
+                  ) : null}
+                </div>
                 {selected && (
                   <span
                     aria-hidden="true"
@@ -308,9 +337,9 @@ export const EventDetails = ({
         )}
       </fieldset>
 
-      <fieldset>
+      <fieldset className="rounded-2xl border border-border/60 bg-linear-to-b from-background to-surface/50 p-4 shadow-sm sm:p-5">
         <legend className="flex items-center justify-between text-sm font-semibold text-foreground w-full">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 pr-3">
             Event T-shirt size{" "}
             <span className="text-accent" aria-hidden="true">
               *
@@ -328,15 +357,15 @@ export const EventDetails = ({
           Run in a size that fits you comfortably — we order in small batches,
           so this choice is final once the race closes.
         </p>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {shirtSizesToRender.map((sizeOption) => (
             <label
               key={sizeOption.value}
               className={cn(
-                "relative flex cursor-pointer justify-center rounded-xl border px-3 py-3 text-sm font-bold transition",
+                "relative flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 py-3 text-sm font-bold transition duration-200",
                 String(form.tshirt_size_id) === sizeOption.value
-                  ? "border-accent bg-accent text-accent-foreground shadow-sm"
-                  : "border-border bg-background text-ink-soft hover:border-accent/50",
+                  ? "border-accent bg-accent text-accent-foreground shadow-md"
+                  : "border-border bg-background text-ink-soft hover:border-accent/50 hover:bg-accent/5",
                 "has-focus-visible:ring-accent/15",
               )}
             >
@@ -366,7 +395,7 @@ export const EventDetails = ({
         )}
       </fieldset>
 
-      <div>
+      <div className="rounded-2xl border border-border/60 bg-linear-to-b from-background to-surface/50 p-4 shadow-sm sm:p-5">
         <h3 className="text-sm font-semibold text-foreground">
           Emergency contact{" "}
           <span className="text-accent" aria-hidden="true">
@@ -382,13 +411,13 @@ export const EventDetails = ({
           <Field
             id="emergency_contact_name"
             name="emergency_contact_name"
-            label="Emergency contact name"
+            label="Contact name"
             placeholder="e.g. Priya Kumar"
             value={form.emergency_contact_name}
-           onChange={(e) => {
-            const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-            onChange("emergency_contact_name", value);
-          }}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+              onChange("emergency_contact_name", value);
+            }}
             icon={UserIcon}
             error={errors.emergency_contact_name}
             autoComplete="off"
@@ -399,7 +428,7 @@ export const EventDetails = ({
               htmlFor="emergency_contact_mobile"
               className="mb-2 block text-sm font-semibold text-foreground"
             >
-              Emergency contact phone{" "}
+               Contact Phone Number{" "}
               <span className="text-accent" aria-hidden="true">
                 *
               </span>
@@ -412,49 +441,80 @@ export const EventDetails = ({
               />
               <div
                 className={cn(
-                  "flex h-12 w-full items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 pl-11 text-sm text-foreground transition focus-within:border-accent",
+                  "flex min-h-12 w-full flex-wrap items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 pl-11 text-sm text-foreground transition focus-within:border-accent sm:h-12 sm:flex-nowrap sm:py-0",
                   errors.emergency_contact_mobile && "border-destructive",
                 )}
               >
-                <span
-                  aria-hidden="true"
-                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
-                  title={selectedEmergencyCountry?.label || "Country"}
+                <div
+                  className="relative inline-flex items-center cursor-pointer"
+                  onClick={() => {
+                    countrySelectRef.current?.click();
+                    countrySelectRef.current?.focus();
+                  }}
                 >
-                  {EmergencyFlagIcon ? (
-                    <EmergencyFlagIcon
-                      title={selectedEmergencyCountry?.label || "Country"}
-                      className="h-4 w-5 rounded-xs"
-                    />
-                  ) : (
-                    <span className="text-[10px] font-semibold text-ink-soft">
-                      --
-                    </span>
-                  )}
-                </span>
-                <select
-                  aria-label="Select emergency country code"
-                  value={emergencyCountry}
-                  onChange={(event) => setEmergencyCountry(event.target.value)}
-                  className="w-12 rounded-md border border-border bg-background px-2 py-1 text-[11px] text-foreground outline-none"
-                >
-                  {countryOptions.map((country) => (
-                    <option
-                      key={country.code}
-                      value={country.code}
-                      title={`${country.label} (${country.dialCode})`}
-                    >
-                      {country.code} {country.dialCode}
-                    </option>
-                  ))}
-                </select>
+                  <span
+                    className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted/40 px-1"
+                    title={selectedEmergencyCountry?.label || "Country"}
+                  >
+                    {EmergencyFlagIcon ? (
+                      <EmergencyFlagIcon
+                        title={selectedEmergencyCountry?.label || "Country"}
+                        className="h-4 w-5 rounded-xs"
+                      />
+                    ) : (
+                      <span className="text-[10px] font-semibold text-ink-soft">
+                        --
+                      </span>
+                    )}
+                  </span>
+                  <select
+                    ref={countrySelectRef}
+                    aria-label="Select emergency country code"
+                    value={emergencyCountry}
+                    onChange={(event) => {
+                      const nextCountry = event.target.value;
+                      const localDigits = getLocalPhoneDigits(
+                        formRef.current.emergency_contact_mobile,
+                        emergencyCountry,
+                      );
+
+                      setEmergencyCountry(nextCountry);
+
+                      if (!localDigits) {
+                        onChangeRef.current("emergency_contact_mobile", "");
+                        return;
+                      }
+
+                      const nextDialCode = String(
+                        getCountryCallingCode(nextCountry || "IN") || "",
+                      );
+                      onChangeRef.current(
+                        "emergency_contact_mobile",
+                        `+${nextDialCode}${localDigits}`,
+                      );
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  >
+                    {countryOptions.map((country) => (
+                      <option
+                        key={country.code}
+                        value={country.code}
+                        title={`${country.label} (${country.dialCode})`}
+                      >
+                        {country.code} {country.dialCode}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-ink-soft/50">
+                    ▾
+                  </span>
+                </div>
                 <PhoneInput
                   id="emergency_contact_mobile"
                   name="emergency_contact_mobile"
                   country={emergencyCountry}
-                  international
-                  withCountryCallingCode
-                  value={getPhoneInputValue(form.emergency_contact_mobile)}
+                  international={false}
+                  value={emergencyPhoneValue}
                   onChange={handleEmergencyPhoneChange}
                   placeholder="Enter phone number"
                   autoComplete="off"
@@ -465,7 +525,7 @@ export const EventDetails = ({
                       ? "emergency-contact-mobile-error"
                       : undefined
                   }
-                  className="min-w-0 w-full border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
+                  className="min-w-0 grow basis-35 border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
                 />
               </div>
             </div>
@@ -482,7 +542,7 @@ export const EventDetails = ({
             <SelectField
               id="emergency_contact_relationship"
               name="emergency_contact_relationship"
-              label="Emergency contact relation"
+              label="Contact relation"
               value={
                 form.emergency_contact_relationship === "others"
                   ? "others"
@@ -525,11 +585,9 @@ export const EventDetails = ({
                   placeholder="e.g. Cousin, Guardian"
                   value={emergencyRelationCustom}
                   onChange={(e) => {
-                    setEmergencyRelationCustom(e.target.value);
-                    onChange(
-                      "emergency_contact_relationship",
-                      e.target.value,
-                    );
+                    const value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                    setEmergencyRelationCustom(value);
+                    onChange("emergency_contact_relationship", value);
                   }}
                   autoComplete="off"
                   className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-accent focus:ring-accent/10"
@@ -685,7 +743,6 @@ export const EventDetails = ({
         open={sizeGuideOpen}
         onOpenChange={setSizeGuideOpen}
       />
-
     </div>
   );
 };

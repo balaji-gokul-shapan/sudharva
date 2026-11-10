@@ -243,7 +243,7 @@ export const EVENT_SUBNAV = [
   {
     id: "5k",
     href: "/categories/5k",
-    label: "5K Run",
+    label: "5K Walk",
     title: "5K Community Walk",
     description:
       "A relaxed community walk designed for every age and fitness level.",
@@ -335,22 +335,22 @@ export const OVERVIEW_SUBNAV = [
       "Read the rules and regulations governing the Sudharva Marathon event.",
     icon: ActivityIcon,
   },
-  {
-    id: "partners",
-    href: "/",
-    label: "Our Partners",
-    description:
-      "Meet the changemakers supporting healthier lifestyles and stronger communities through every stride.",
-    icon: HandshakeIcon,
-  },
-  {
-    id: "join",
-    href: "/",
-    label: "Become a Partner",
-    description:
-      "Partner with Sudharva Marathon to amplify your brand, inspire communities, and make a lasting impact.",
-    icon: UserGroupIcon,
-  },
+  // {
+  //   id: "partners",
+  //   href: "/",
+  //   label: "Our Partners",
+  //   description:
+  //     "Meet the changemakers supporting healthier lifestyles and stronger communities through every stride.",
+  //   icon: HandshakeIcon,
+  // },
+  // {
+  //   id: "join",
+  //   href: "/",
+  //   label: "Become a Partner",
+  //   description:
+  //     "Partner with Sudharva Marathon to amplify your brand, inspire communities, and make a lasting impact.",
+  //   icon: UserGroupIcon,
+  // },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -389,15 +389,16 @@ export const eventPrizesData = [
     icon: ActivityIcon,
     iconBg: "bg-health/10 border border-health/40",
     textColor: "text-health",
+    className: "col-span-2",
   },
-  {
-    number: "05",
-    title: "Family Health Coupon",
-    description: "A digital coupon for your family’s health checkup.",
-    icon: HeartCheckIcon,
-    iconBg: "bg-environment/10 border border-environment/40",
-    textColor: "text-environment",
-  },
+  // {
+  //   number: "05",
+  //   title: "Family Health Coupon",
+  //   description: "A digital coupon for your family’s health checkup.",
+  //   icon: HeartCheckIcon,
+  //   iconBg: "bg-environment/10 border border-environment/40",
+  //   textColor: "text-environment",
+  // },
   {
     number: "06",
     title: "Refreshments",
@@ -405,5 +406,7 @@ export const eventPrizesData = [
     icon: ShieldCheckIcon,
     iconBg: "bg-volunteer/10 border border-volunteer/40",
     textColor: "text-volunteer",
+        className: "col-span-1",
+
   },
 ];

@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { pickUserRegistration } from "@/lib/users/registrationPayload";
 import { extractApiErrorMessage } from "../../utils/apiError";
+import { refreshUserToken } from "./userRefreshTokenSlice";
 
 const ACCESS_TOKEN_KEY = "auth.accessToken";
 
@@ -24,7 +25,7 @@ const getStoredAccessToken = () => {
 
 export const getUserDetails = createAsyncThunk(
   "users/getUserDetails",
-  async ({ token, query } = {}, { getState, rejectWithValue }) => {
+  async ({ token, query } = {}, { getState, rejectWithValue, dispatch }) => {
     const stateToken = getState()?.userRefreshToken?.accessToken || "";
     const accessToken = token || stateToken || getStoredAccessToken();
 
@@ -37,17 +38,49 @@ export const getUserDetails = createAsyncThunk(
       ...(query?.userId ? { user_id: query?.userId } : {}),
     };
 
-    try {
-      const response = await axios.request({
+    const requestUserDetails = async (requestToken) => {
+      return axios.request({
         ...options,
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${requestToken}`,
         },
         params: requestParams,
       });
+    };
+
+    try {
+      const response = await requestUserDetails(accessToken);
 
       return response.data;
     } catch (error) {
+      const status = error?.response?.status;
+      const authMessage = String(
+        error?.response?.data?.detail || error?.response?.data?.message || "",
+      ).toLowerCase();
+      const isAuthFailure =
+        status === 401 ||
+        authMessage.includes("authentication") ||
+        authMessage.includes("credentials");
+
+      if (isAuthFailure) {
+        try {
+          const refreshResult = await dispatch(refreshUserToken()).unwrap();
+          const refreshedAccessToken =
+            refreshResult?.accessToken ||
+            getState()?.userRefreshToken?.accessToken ||
+            getStoredAccessToken();
+
+          if (refreshedAccessToken) {
+            const retryResponse = await requestUserDetails(refreshedAccessToken);
+            return retryResponse.data;
+          }
+        } catch {
+          return rejectWithValue(
+            "Session expired. Please log in again to view your details.",
+          );
+        }
+      }
+
       return rejectWithValue(
         extractApiErrorMessage(error, {
           fallback: "Unable to fetch user details.",
