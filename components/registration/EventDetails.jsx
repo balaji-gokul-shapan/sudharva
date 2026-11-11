@@ -110,7 +110,7 @@ export const EventDetails = ({
     [emergencyCountry, form.emergency_contact_mobile],
   );
 
-  // Stable callback — reads latest form/onChange via refs so its identity
+  // Stable callback - reads latest form/onChange via refs so its identity
   // never changes across renders.
   const handlePhoneChange = useCallback((field, value, country = "IN") => {
     const localDigits = getLocalPhoneDigits(value, country);
@@ -354,7 +354,7 @@ export const EventDetails = ({
           </button>
         </legend>
         <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
-          Run in a size that fits you comfortably — we order in small batches,
+          Run in a size that fits you comfortably - we order in small batches,
           so this choice is final once the race closes.
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

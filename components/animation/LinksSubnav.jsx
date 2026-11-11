@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { ArrowRight02Icon } from "@animateicons/react/huge";
 
 /* ------------------------------------------------------------------ */
-/*  LinksSubnav — simple anchor-list dropdown (e.g. "Contact").        */
+/*  LinksSubnav - simple anchor-list dropdown (e.g. "Contact").        */
 /* ------------------------------------------------------------------ */
 
 export function LinksSubnav({ link, leaveTimeoutRef, setOpenSubnav }) {

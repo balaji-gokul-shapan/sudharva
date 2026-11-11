@@ -21,7 +21,7 @@ const PRESETS = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Reveal — animate once when scrolled into view                      */
+/*  Reveal - animate once when scrolled into view                      */
 /*                                                                     */
 /*  <Reveal preset="fade-up" delay={0.1}>…</Reveal>                      */
 /* ------------------------------------------------------------------ */
@@ -77,7 +77,7 @@ export function Reveal({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Stagger — orchestrate children with staggerChildren                */
+/*  Stagger - orchestrate children with staggerChildren                */
 /*                                                                     */
 /*  <Stagger delay={0.1} gap={0.09}>                                     */
 /*    <StaggerItem>…</StaggerItem>                                       */
@@ -156,7 +156,7 @@ export function StaggerItem({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Float — gentle infinite y bob (badges, icons)                      */
+/*  Float - gentle infinite y bob (badges, icons)                      */
 /* ------------------------------------------------------------------ */
 
 export function Float({

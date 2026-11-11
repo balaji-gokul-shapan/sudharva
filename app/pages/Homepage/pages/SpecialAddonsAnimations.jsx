@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { AnimatedShinyText } from "@/components/animation/AnimatedShinyText";
-import { ArrowRight02Icon, HeartIcon } from "@animateicons/react/huge";
+import { ArrowRight02Icon, GoogleGeminiIcon, HeartIcon } from "@animateicons/react/huge";
 import { AuroraText } from "@/components/animation/AuroraText";
 import { ShineBorder } from "@/components/animation/shine-border";
 import { MarathonPassTicket } from "@/components/animation/MarathonPassTicket";
@@ -18,7 +18,7 @@ import { GsParallax } from "@/components/animation/GsScroll";
 import { Ribbon } from "@/components/animation/Ribbon";
 
 /* ------------------------------------------------------------------ */
-/*  AddonsPill — exclusive-benefit badge (Motion float + fade)         */
+/*  AddonsPill - exclusive-benefit badge (Motion float + fade)         */
 /* ------------------------------------------------------------------ */
 
 export function AddonsPill() {
@@ -27,8 +27,11 @@ export function AddonsPill() {
       <Float distance={5} duration={3.5}>
         <span className="inline-flex items-center gap-2 rounded-full border border-border bg-[var(--color-surface)] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-soft)] shadow-sm">
           <AnimatedShinyText className="inline-flex items-center justify-center gap-1 px-0 py-0 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-            <span>✨ EXCLUSIVE RUNNER BENEFIT</span>
-            <ArrowRight02Icon className="size-3 shrink-0 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
+            <span className="flex items-center">
+              <GoogleGeminiIcon className="size-8 shrink-0" aria-hidden="true" />
+              EXCLUSIVE RUNNER BENEFIT
+            </span>
+            {/* <ArrowRight02Icon className="size-3 shrink-0 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" /> */}
           </AnimatedShinyText>
         </span>
       </Float>
@@ -37,7 +40,7 @@ export function AddonsPill() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  AddonsIntro — headline + HbA1c copy + benefit rows (Motion)        */
+/*  AddonsIntro - headline + HbA1c copy + benefit rows (Motion)        */
 /* ------------------------------------------------------------------ */
 
 export function AddonsIntro({ items }) {
@@ -65,7 +68,7 @@ export function AddonsIntro({ items }) {
 
       {items.map((addon) => (
         <StaggerItem key={addon.id} preset="fade-up">
-          <span className="mt-4 flex items-center gap-4">
+          <span className="my-8 flex items-center gap-4">
             <span
               className={cn(
                 "flex size-12 shrink-0 items-center justify-center rounded-full",
@@ -88,7 +91,7 @@ export function AddonsIntro({ items }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  ShareHealthCard — coupon panel with shine border (Motion + GSAP)   */
+/*  ShareHealthCard - coupon panel with shine border (Motion + GSAP)   */
 /* ------------------------------------------------------------------ */
 
 export function ShareHealthCard({ items }) {
@@ -169,7 +172,7 @@ export function ShareHealthCard({ items }) {
           // color="#c679c4"
           stubEvent="Sudharva Marathon 2027"
           stubDistance="21.1 km"
-          stubLocation="Chennai, Tamil Nadu"
+          stubLocation="Avadi, Chennai, Tamil Nadu"
           stubRegNo="SM-284619"
           showQRCode={false}
           style={{
@@ -192,7 +195,7 @@ export function ShareHealthCard({ items }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  AddonsTicket — interactive tear ticket (stateful client island)    */
+/*  AddonsTicket - interactive tear ticket (stateful client island)    */
 /* ------------------------------------------------------------------ */
 
 // export function AddonsTicket() {
@@ -204,7 +207,7 @@ export function ShareHealthCard({ items }) {
 // }
 
 /* ------------------------------------------------------------------ */
-/*  AddonsBackground — GSAP-drifted glow layer                         */
+/*  AddonsBackground - GSAP-drifted glow layer                         */
 /* ------------------------------------------------------------------ */
 
 export function AddonsBackground() {

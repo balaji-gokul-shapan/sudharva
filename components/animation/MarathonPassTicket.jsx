@@ -37,13 +37,13 @@ export const PASS_TICKET_PROPS = {
   recenter: true,
 };
 
-/* The printable stub — official event pass details. Reusable with dynamic props. */
+/* The printable stub - official event pass details. Reusable with dynamic props. */
 export function MarathonPassStub({
   className,
   label = "OFFICIAL EVENT PASS",
   event = "Sudharva Marathon 2027",
   distance = "10K RUN · OPEN REGISTRATION",
-  location = "Chennai, Tamil Nadu",
+  location = "Avadi, Chennai, Tamil Nadu",
   regNo = "SM-284619",
   participantName,
   showQRCode = true,

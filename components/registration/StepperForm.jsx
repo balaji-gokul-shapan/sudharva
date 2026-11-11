@@ -205,7 +205,7 @@ function mapRegistrationToForm(registerData, identifier) {
   }
 
   const runner = registerData?.runner || {};
-  const details = runner?.details || {};
+  const details = runner?.details || registerData?.details || {};
   const normalizedIdentifier = String(identifier || "").trim();
   const isIdentifierEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
     normalizedIdentifier,
@@ -262,7 +262,14 @@ function mapRegistrationToForm(registerData, identifier) {
     gender: details?.gender || "",
     height: details?.height || "",
     weight: details?.weight || "",
-    bloodGroup: details?.blood_group || "",
+    bloodGroup:
+      details?.blood_group ??
+      details?.blood_group_id ??
+      details?.bloodGroup ??
+      registerData?.blood_group ??
+      registerData?.blood_group_id ??
+      registerData?.bloodGroup ??
+      "",
     resident_address_line1: details?.resident_address_line1 || "",
     resident_address_line2: details?.resident_address_line2 || "",
     resident_city: details?.resident_city || "",
@@ -407,9 +414,15 @@ function validateField(name, value) {
 
   switch (name) {
     case "first_name":
-      return trimmedValue ? "" : "Please enter your first name.";
+      if (!trimmedValue) return "Please enter your first name.";
+      return trimmedValue.length > 3
+        ? ""
+        : "Your first name must be more than 3 characters.";
     case "last_name":
-      return trimmedValue ? "" : "Please enter your last name.";
+      if (!trimmedValue) return "Please enter your last name.";
+      return trimmedValue.length > 3
+        ? ""
+        : "Your last name must be more than 3 characters.";
     // case "email":
     //   if (!trimmedValue) return "Please enter your email address.";
     //   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
@@ -688,7 +701,7 @@ function StepProgress({ activeIndex, onSelect }) {
                     </span>
                     <span
                       className={cn(
-                        "max-w-[110px] text-[9px] sm:text-[10px] mt-2 font-bold text-center leading-snug",
+                        "max-w-[110px] text-[9px] sm:text-sm mt-2 font-bold text-center leading-snug",
                         active ? "text-foreground" : complete ? "text-success" : "text-ink-soft",
                       )}
                     >
@@ -1223,6 +1236,8 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
             companyPhone,
             teamSize,
           };
+    payload.blood_group = payload.blood_group ?? payload.bloodGroup ?? "";
+    delete payload.bloodGroup;
     payload.terms = toBooleanOrDefault(
       payload.event_rules_acceptance ?? payload.terms,
       false,
@@ -1368,7 +1383,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
         <div className="relative mb-6 rounded-3xl border border-border/60 bg-gradient-to-b from-surface/90 to-surface/60 backdrop-blur-md shadow-xl shadow-accent/10 ring-1 ring-white/20 p-4 sm:p-6 md:p-8">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
           <div className="mb-4 grid gap-2 sm:mb-6 sm:flex sm:items-center sm:justify-between sm:gap-4">
-            <span className="inline-flex w-max items-center gap-2 rounded-xl border border-border/60 bg-white/50 px-3 py-2 text-xs font-semibold text-ink-soft shadow-sm sm:whitespace-nowrap">
+            <span className="inline-flex w-max items-center gap-2 rounded-xl border border-border/60 bg-background px-3 py-2 text-xs font-semibold text-ink-soft shadow-sm sm:whitespace-nowrap">
               <span className="flex h-2 w-2 items-center justify-center">
                 <span className="relative flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
               </span>

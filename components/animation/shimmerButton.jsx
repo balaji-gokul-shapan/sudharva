@@ -4,7 +4,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * ShimmerButton — reusable shimmer-glow button.
+ * ShimmerButton - reusable shimmer-glow button.
  *
  * Colors are controlled by props (any CSS color / var()):
  *   background / foreground / shimmerColor / borderColor
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * (--shimmer-button-background, --shimmer-button-foreground, ...).
  *
  * `asChild` renders the shimmer styles onto its single child element
- * (e.g. a Next.js <Link>) instead of a <button> — this avoids the invalid
+ * (e.g. a Next.js <Link>) instead of a <button> - this avoids the invalid
  * <button><a/></button> nesting and lets the link keep href behaviour.
  */
 

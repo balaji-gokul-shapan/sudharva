@@ -505,7 +505,7 @@ function RazorpayPopupContent() {
     // If close is blocked, return user to registration route.
     window.setTimeout(() => {
       if (!window.closed) {
-        window.location.replace("/register");
+        window.location.replace("/");
       }
     }, 120);
   }, []);

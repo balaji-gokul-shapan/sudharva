@@ -26,7 +26,7 @@ import { requestOtp } from "@/store/slices/otp/otpRequestSlice";
 import { registerUser } from "@/store/slices/users/userRegisterSlice";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { verifyOtp } from "@/store/slices/otp/otpVerifySlice";
-import { EyeIcon, EyeOffIcon, HelpCircleIcon, Mail01Icon, PhoneIcon } from "@animateicons/react/huge";
+import { CancelCircleIcon, EyeIcon, EyeOffIcon, HelpCircleIcon, Mail01Icon, PhoneIcon } from "@animateicons/react/huge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -800,7 +800,7 @@ export default function RegisterForm({
                           aria-label="Clear identifier"
                           className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                         >
-                          <X size={14} aria-hidden="true" />
+                          <CancelCircleIcon size={20} aria-hidden="true" />
                         </Button>
                       )}
                     </div>
@@ -1021,7 +1021,7 @@ export default function RegisterForm({
                         aria-label="Clear username"
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                       >
-                        <X size={14} aria-hidden="true" />
+                        <CancelCircleIcon size={20} aria-hidden="true" />
                       </Button>
                     )}
                   </div>
@@ -1089,7 +1089,7 @@ export default function RegisterForm({
                         aria-label="Clear password"
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                       >
-                        <X size={14} aria-hidden="true" />
+                        <CancelCircleIcon size={20} aria-hidden="true" />
                       </Button>
                     )}
                     <button
@@ -1154,7 +1154,7 @@ export default function RegisterForm({
                         aria-label="Clear confirm password"
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                       >
-                        <X size={14} aria-hidden="true" />
+                        <CancelCircleIcon size={20} aria-hidden="true" />
                       </Button>
                     )}
                     <button

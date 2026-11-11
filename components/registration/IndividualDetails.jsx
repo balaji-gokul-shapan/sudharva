@@ -101,6 +101,8 @@ export const IndividualDetails = ({
         if (!item || typeof item !== "object") return null;
 
         const rawValue =
+          item.blood_group_id ??
+          item.blood_group_master_id ??
           item.value ??
           item.id ??
           item.code ??
@@ -109,10 +111,11 @@ export const IndividualDetails = ({
           item.blood_group_name ??
           item.group;
         const rawLabel =
+          item.blood_group_name ??
           item.label ??
           item.name ??
           item.value ??
-          item.blood_group_name ??
+          item.bloodGroupName ??
           item.group ??
           item.code ??
           item.id;
@@ -624,7 +627,7 @@ export const IndividualDetails = ({
             </span>
           </h3>
           <p className="mt-1 mb-3 text-xs leading-relaxed text-ink-soft">
-            Where you live — used for the start-line city grouping and prize
+            Where you live - used for the start-line city grouping and prize
             dispatch.
           </p>
           <div className="grid gap-5 sm:grid-cols-1">

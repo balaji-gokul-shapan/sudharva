@@ -85,7 +85,7 @@ export function NumberTicker({
     [springValue, decimalPlaces]
   )
 
-  // Non-numeric values (e.g. "1 Cause") can't animate — render as plain text.
+  // Non-numeric values (e.g. "1 Cause") can't animate - render as plain text.
   if (!isNumeric) {
     return (
       <span

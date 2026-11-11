@@ -124,7 +124,7 @@ export default function EventOverviewSection() {
       ref={sectionRef}
       className="overflow-hidden bg-background text-foreground"
     >
-      {/* 01 — EVENT OVERVIEW */}
+      {/* 01 - EVENT OVERVIEW */}
       <section
         id="event-Overview"
         aria-labelledby="event-overview-heading"
@@ -206,7 +206,7 @@ export default function EventOverviewSection() {
         </div>
       </section>
 
-      {/* 02 — EVENT OBJECTIVES */}
+      {/* 02 - EVENT OBJECTIVES */}
       <section
         id="event-objectives"
         aria-labelledby="objectives-heading"
@@ -320,7 +320,7 @@ export default function EventOverviewSection() {
         </div>
       </section>
 
-      {/* 03 — EVENT HIGHLIGHTS */}
+      {/* 03 - EVENT HIGHLIGHTS */}
       <section
         id="event-highlights"
         aria-labelledby="highlights-heading"
@@ -537,7 +537,7 @@ export default function EventOverviewSection() {
         </div>
       </section>
 
-      {/* 04 — SPONSOR CALL TO ACTION */}
+      {/* 04 - SPONSOR CALL TO ACTION */}
       <section
         id="event-partnerships"
         aria-labelledby="partnership-heading"
@@ -599,7 +599,7 @@ export default function EventOverviewSection() {
             </div>
 
             <Link
-              href="/contact"
+              href="mailto:sudharvarun@gmail.com"
               className="group inline-flex min-h-14 items-center justify-center gap-3 self-center rounded-full bg-accent px-7 py-4 text-sm font-bold text-accent-foreground shadow-md transition-all duration-300 hover:-translate-y-1 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-donate-night"
             >
               Become a partner

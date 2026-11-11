@@ -65,7 +65,7 @@ export const DECLARATION_STYLES = {
 };
 
 /**
- * SNAPSHOT_TINTS — colors for the health-snapshot chips. Every value maps to
+ * SNAPSHOT_TINTS - colors for the health-snapshot chips. Every value maps to
  * a theme token in app/globals.css so the group adapts to light/dark mode.
  */
 export const SNAPSHOT_TINTS = {
@@ -203,7 +203,7 @@ export const HEALTH_SNAPSHOT = [
     id: "allergies",
     kind: "text",
     label: "Allergies (medicines, food, dust…)",
-    placeholder: "e.g. Penicillin, peanuts — or leave blank",
+    placeholder: "e.g. Penicillin, peanuts - or leave blank",
     icon: AlertCircleIcon,
     tint: "education",
   },
@@ -211,7 +211,7 @@ export const HEALTH_SNAPSHOT = [
     id: "other_medical_conditions",
     kind: "text",
     label: "Anything else the medical crew should know?",
-    placeholder: "e.g. Asthma under control — or leave blank",
+    placeholder: "e.g. Asthma under control - or leave blank",
     icon: FileCheckIcon,
     tint: "primary",
   },
@@ -330,7 +330,7 @@ export const RULE_SECTIONS = [
     rules: [
       "Open to all participants aged 16 years and above.",
       "Participants below 18 must submit a signed parental consent form.",
-      "Each runner must register individually — group registrations are not permitted.",
+      "Each runner must register individually - group registrations are not permitted.",
       "Participants with known medical conditions must carry a doctor's clearance certificate.",
     ],
   },
@@ -416,7 +416,7 @@ export const RULE_SECTIONS = [
       "All finishers will receive an official finisher medal at the finish line.",
       "E-certificates will be emailed within 7 working days after the event.",
       "Category winners will be announced at the post-race ceremony.",
-      "Prize winners must be present at the ceremony — no proxies are allowed.",
+      "Prize winners must be present at the ceremony - no proxies are allowed.",
       "Official results will be published on the website within 24 hours of the event.",
     ],
   },

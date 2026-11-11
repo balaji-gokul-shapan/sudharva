@@ -34,7 +34,7 @@ export default function DedicationForm() {
       fullName: data.get("fullName"),
       dedicateTo: data.get("dedicateTo"),
     });
-    // NOTE: there is no backend yet — submissions are acknowledged on the
+    // NOTE: there is no backend yet - submissions are acknowledged on the
     // client only. Wire this to your API/dedication service here.
   };
 

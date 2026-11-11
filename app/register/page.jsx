@@ -1,12 +1,16 @@
 import Index from "./pages";
 import { FlickeringGrid } from "@/components/animation/flickering-grid";
-import Link from "next/link";
 import Image from "next/image";
+import ResetHomeLink from "@/app/components/ResetHomeLink";
 
 export const metadata = {
   title: "Register - Sudharva Marathon",
   description:
     "Register for the Sudharva Marathon - run 5K or 10K, or join as a volunteer, for health, the environment, and education.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const instant = false;
@@ -17,8 +21,7 @@ export default function RegisterPage() {
       {/* Registration area */}
        <header className="border-b border-border bg-surface">
         <div className="container-page flex min-h-[76px] items-center justify-between gap-3 sm:min-h-20">
-          <Link
-            href="/"
+          <ResetHomeLink
             aria-label="Sudharva Marathon home"
             className="flex shrink-0 flex-col items-center"
           >
@@ -35,13 +38,12 @@ export default function RegisterPage() {
             <span className="mt-0.5 block max-w-full px-1 text-center text-[7px] font-bold uppercase leading-none tracking-[0.12em] text-ink-soft min-[375px]:text-[8px] sm:mt-1 sm:text-[10px]">
               Run Against Diabetes
             </span>
-          </Link>
-          <Link
-            href="/"
+          </ResetHomeLink>
+          <ResetHomeLink
             className="whitespace-nowrap text-xs font-semibold text-ink-soft transition-colors hover:text-accent sm:text-sm"
           >
             Back to website
-          </Link>
+          </ResetHomeLink>
         </div>
       </header>
       <main className="relative flex flex-1 isolate  overflow-hidden bg-background">

@@ -17,7 +17,7 @@ function ensureRegistered() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  GsParallax — GSAP scroll-driven parallax wrapper                   */
+/*  GsParallax - GSAP scroll-driven parallax wrapper                   */
 /*                                                                     */
 /*  Moves its child at a fraction of scroll speed. Use for hero        */
 /*  backgrounds, floating shapes, oversized type.                      */
@@ -70,7 +70,7 @@ export function GsParallax({
 }
 
 /* ------------------------------------------------------------------ */
-/*  GsRevealGroup — GSAP batch reveal for `[data-gs-reveal]` children  */
+/*  GsRevealGroup - GSAP batch reveal for `[data-gs-reveal]` children  */
 /*                                                                     */
 /*  Declarative: children opt in with the data attribute instead of    */
 /*  wiring one hook per element.                                       */
@@ -134,7 +134,7 @@ export function GsRevealGroup({
 }
 
 /* ------------------------------------------------------------------ */
-/*  GsScaleIn — GSAP scroll-scrubbed scale + fade for badges / art     */
+/*  GsScaleIn - GSAP scroll-scrubbed scale + fade for badges / art     */
 /* ------------------------------------------------------------------ */
 
 export function GsScaleIn({

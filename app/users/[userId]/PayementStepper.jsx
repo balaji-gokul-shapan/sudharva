@@ -62,7 +62,7 @@ export default function PayementStepper({ registration, userId, onClose }) {
               <div className="flex-1">
                 <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent shadow-sm">
                   <span className="relative flex h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-                  Payment Step — Final Stage
+                  Payment Step - Final Stage
                 </div>
                 <h1 className="mt-3 font-serif text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
                   Finish your{" "}

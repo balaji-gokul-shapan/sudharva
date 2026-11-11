@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 ------------------------------------------------------- */
 
 const quickStats = [
-  { icon: UserGroupIcon, label: "Open to ages 16+" },
+  { icon: UserGroupIcon, label: "Open to ages 6+" },
   { icon: Clock01Icon, label: "Chip timed" },
   {
     icon: ShieldCheckIcon,
@@ -283,8 +283,8 @@ export default function RulesHero() {
             itemScale={0.025}
             dimAmount={0.08}
             blurAmount={0}
-            smoothScroll
-            snap
+            smoothScroll={false}
+            snap={false}
           >
             {RULE_SECTIONS.map((section, index) => (
               <RuleCard key={section.id} section={section} index={index} />
@@ -342,14 +342,13 @@ export default function RulesHero() {
               {/* <Button asChild variant="outline" size="lg">
                 <Link
                   href="/event"
-                  className="text-sm font-medium text-[var(--color-ink-soft)] underline-offset-4 transition-colors hover:text-[var(--color-ink)] hover:underline"
+                  className="text-sm font-medium text-(--color-ink-soft) underline-offset-4 transition-colors hover:text-(--color-ink) hover:underline"
                 >
                   View Event Categories →
                 </Link>
               </Button> */}
-              <button
-                type="button"
-                onClick={() => setSubmitted(null)}
+              <Link
+                href="/event"
                 className="cursor-pointer inline-flex items-center rounded-md border border-border px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[var(--color-ink)] transition hover:border-accent hover:text-accent"
               >
                 View Event Categories
@@ -358,7 +357,7 @@ export default function RulesHero() {
                   duration={1}
                   className="shrink-0 ml-2"
                 />
-              </button>
+              </Link>
             </div>
           </Reveal>
         </div>

@@ -203,7 +203,7 @@ export default function HorizontalScrollCards() {
           <div className="h-px w-20 bg-accent/70" />
 
           <span className="text-xs text-(--hc-text-faint)">
-            01 — 04
+            01 - 04
           </span>
         </div>
       </div>

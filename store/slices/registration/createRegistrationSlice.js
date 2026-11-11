@@ -69,7 +69,7 @@ const flattenValidationErrors = (payload, prefix = "") => {
 
   if (typeof payload === "string") {
     // Server returned raw HTML (e.g. a 500/404 page). Do not surface
-    // raw markup as an error — show a generic message instead.
+    // raw markup as an error - show a generic message instead.
     if (isHtmlString(payload)) return [];
     const value = payload.trim();
     if (!value) return [];

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eventCategoryRecords } from "@/app/datas/eventCategories";
 import { Particles } from "@/components/animation/particles";
+import { createPageMetadata } from "@/app/seo";
 
 export function generateStaticParams() {
   return eventCategoryRecords.map(({ anchorId }) => ({
@@ -17,12 +18,22 @@ export async function generateMetadata({ params }) {
     ({ anchorId }) => anchorId === categoryId,
   );
 
-  return {
-    title: category
-      ? `${category.label} - Sudharva Marathon`
-      : "Event Category - Sudharva Marathon",
-    description: category?.description ?? "Explore Sudharva Marathon events.",
-  };
+  if (!category) {
+    return {
+      title: "Event Category - Sudharva Marathon",
+      description: "Explore Sudharva Marathon events.",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  return createPageMetadata({
+    title: `${category.label} - Sudharva Marathon`,
+    description: category.description,
+    path: `/categories/${categoryId}`,
+  });
 }
 
 function CategoryLoading() {

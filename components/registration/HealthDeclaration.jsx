@@ -34,12 +34,16 @@ const REQUIRED_DECLARATIONS = [
     label: "I accept the event rules and regulations.",
     icon: CheckListIcon,
     tint: "education",
+    link: "/event/rules",
+    linkText: "Read the rules",
   },
   {
     id: "event_communication_consent",
     label: "I consent to communication regarding event updates.",
     icon: InformationCircle,
     tint: "primary",
+    link: "/event/terms-and-conditions",
+    linkText: "Read terms and conditions",
   },
   {
     id: "anonymized_impact_reporting_consent",
@@ -82,6 +86,8 @@ function normalizeBooleanLike(value) {
 function DeclarationRow({
   id,
   label,
+  link,
+  linkText,
   icon: Icon,
   tint,
   checked,
@@ -91,7 +97,7 @@ function DeclarationRow({
   const styles = DECLARATION_STYLES[tint];
 
   return (
-    <Label
+    <div
       className={cn(
         "group flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-colors duration-200",
         "has-focus-visible:ring-accent/20",
@@ -120,15 +126,28 @@ function DeclarationRow({
       >
         <Icon size={20} weight="duotone" />
       </span>
-      <span
-        className={cn(
-          "min-w-0 text-sm leading-relaxed transition-colors",
-          checked ? "text-foreground" : "text-ink-soft",
-        )}
-      >
-        {label}
-      </span>
-    </Label>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <Label
+          htmlFor={id}
+          className={cn(
+            "min-w-0 flex-1 cursor-pointer text-sm leading-relaxed",
+            checked ? "text-foreground" : "text-ink-soft",
+          )}
+        >
+          {label}
+        </Label>
+        {link && linkText ? (
+          <a
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 whitespace-nowrap text-xs font-semibold text-accent underline underline-offset-2 hover:text-accent/80"
+          >
+            {linkText}
+          </a>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

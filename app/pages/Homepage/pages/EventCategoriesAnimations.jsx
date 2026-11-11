@@ -35,7 +35,7 @@ const CATEGORY_META = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  EventsHeroHeader — hero-style title block                           */
+/*  EventsHeroHeader - hero-style title block                           */
 /* ------------------------------------------------------------------ */
 
 export function EventsHeroHeader() {
@@ -66,7 +66,7 @@ export function EventsHeroHeader() {
           </div>
 
           {/* Spinning text on the right */}
-          <div className="mb-2 ml-auto flex h-24 w-24 shrink-0 items-center justify-center sm:h-28 sm:w-28 md:h-32 md:w-32 lg:h-36 lg:w-36">
+          <div className="mb-2 ml-auto flex h-20 w-20 shrink-0 items-center justify-center sm:h-20 sm:w-20 md:h-32 md:w-32 lg:h-36 lg:w-36">
             <SpinningText
               radius={12}
               className="relative size-full font-bold text-[9px] leading-none text-ink-soft sm:text-[10px]"
@@ -85,12 +85,12 @@ export function EventsHeroHeader() {
         </span>
       </StaggerItem> */}
 
-      {/* Stats band — hero-style ticker row */}
+      {/* Stats band - hero-style ticker row */}
       <StaggerItem preset="fade-up">
         <div className="mt-8 grid grid-cols-2 gap-6 border-t border-border/50 pt-8 sm:grid-cols-4 sm:gap-8">
           {[
             { value: "3", label: "Distances" },
-            { value: "₹ 500", label: "Starting at" },
+            { value: "₹ 499", label: "Starting at" },
             { value: "4", label: "Categories" },
             { value: "100%", label: "For charity" },
           ].map((stat, i) => (
@@ -115,7 +115,7 @@ export function EventsHeroHeader() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  EventsStrip — interactive pill nav (stateful client island)        */
+/*  EventsStrip - interactive pill nav (stateful client island)        */
 /* ------------------------------------------------------------------ */
 
 export function EventsStrip({ items, defaultKey }) {
@@ -159,7 +159,7 @@ export function EventsStrip({ items, defaultKey }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  EventCategoryFeature — creative category pass (hero-style card)    */
+/*  EventCategoryFeature - creative category pass (hero-style card)    */
 /* ------------------------------------------------------------------ */
 
 export function EventCategoryFeature({ item, index, reveal = true }) {
@@ -230,7 +230,7 @@ export function EventCategoryFeature({ item, index, reveal = true }) {
           </span>
         </div>
 
-        {/* Category label — reserved height keeps every card's rows aligned.
+        {/* Category label - reserved height keeps every card's rows aligned.
              Reserved for up to 3 lines so wrapped titles (e.g. "21.1K Run (Half Marathon)")
              do not push the price/pill out of alignment across cards. */}
         <h3 className="min-h-[4rem] text-base font-bold leading-tight text-foreground sm:min-h-[5rem] sm:text-xl">
@@ -244,7 +244,7 @@ export function EventCategoryFeature({ item, index, reveal = true }) {
           />
         </h3>
 
-        {/* Description — reserved height keeps every card's rows aligned */}
+        {/* Description - reserved height keeps every card's rows aligned */}
         <p className="mt-2 min-h-[4rem] text-sm leading-6 text-[var(--color-ink-soft)] sm:text-xs">
           {description}
         </p>
@@ -319,7 +319,7 @@ export function EventCategoryFeature({ item, index, reveal = true }) {
   );
 }
 /* ------------------------------------------------------------------ */
-/*  EventsFeatureGrid — responsive creative grid (replaces cards)      */
+/*  EventsFeatureGrid - responsive creative grid (replaces cards)      */
 /*   Desktop (lg+): 3-col featured grid                                */
 /*   Tablet: 2-col                                                     */
 /*   Mobile: 1-col                                                     */
@@ -343,7 +343,7 @@ export function EventsFeatureGrid({ items }) {
 export const EventsCardGrid = EventsFeatureGrid;
 
 /* ------------------------------------------------------------------ */
-/*  EventsBackground — GSAP-drifted glow layer                         */
+/*  EventsBackground - GSAP-drifted glow layer                         */
 /* ------------------------------------------------------------------ */
 
 export function EventsBackground() {

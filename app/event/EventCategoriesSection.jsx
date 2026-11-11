@@ -180,7 +180,7 @@ export default function EventCategoriesSection() {
                   {/* ---- Lane start: bib number + distance tag ---- */}
                   <div className="flex flex-col items-center gap-3 z-10">
                     <div
-                      className="relative z-10 flex size-15 aspect-square shrink-0 items-center justify-center rounded-full border-2 border-[color:var(--lane-color)] bg-[var(--color-surface)] text-xs font-bold uppercase tracking-wider text-[var(--lane-color)] shadow-sm transition-colors duration-300"
+                      className="relative z-10 flex size-15 aspect-square shrink-0 items-center justify-center rounded-full border-2 border-[color:var(--lane-color)] bg-[var(--color-surface)] text-xs font-bold uppercase tracking-wider text-(--lane-color) shadow-sm transition-colors duration-300"
                       style={{
                         "--lane-color": lane.color,
                         backgroundColor: isActive
@@ -222,7 +222,7 @@ export default function EventCategoriesSection() {
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                         isActive
-                          ? "bg-[var(--lane-color)] text-[var(--color-ink)] border-[var(--lane-color)]"
+                          ? "bg-(--lane-color) text-[var(--color-ink)] border-[var(--lane-color)]"
                           : "border-border/50 bg-bg text-[var(--color-ink-soft)]",
                       )}
                       style={{ "--lane-color": lane.color }}
@@ -244,7 +244,7 @@ export default function EventCategoriesSection() {
                           {category.Amount}
                         </LineShadowText> */}
                         {/* <span className="text-4xl font-bold text-[var(--lane-color)]">{category.Amount}</span> */}
-                        <span className="text-4xl font-bold text-[var(--lane-color)]">
+                        <span className="text-4xl font-bold text-(--lane-color)">
                           <LineShadowText
                             className="italic"
                             shadowColor="hsl(0 0% 100%)"
@@ -304,7 +304,7 @@ export default function EventCategoriesSection() {
                     <button
                       type="button"
                       onClick={() => setOpenCategory(category.key)}
-                      className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-border/50 bg-bg px-3 py-1 text-[9px] font-medium text-[var(--color-ink)] transition-all hover:border-[color:var(--lane-color)] hover:bg-[var(--lane-color)] hover:text-[var(--color-ink)]"
+                      className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-border/50 bg-bg px-3 py-1 text-[9px] font-medium text-[var(--color-ink)] transition-all hover:border-[color:var(--lane-color)] hover:bg-(--lane-color) hover:text-white"
                     >
                       View Details
                     </button>
@@ -328,8 +328,8 @@ export default function EventCategoriesSection() {
                   className={cn(
                     "event-category-pill shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition-all duration-300",
                     openCategory === category.key
-                      ? "border-[color:var(--lane-color)] bg-[var(--lane-tint)] font-bold text-[var(--lane-color)]"
-                      : "border-border/50 bg-bg text-[var(--color-ink)] hover:border-[color:var(--lane-color)] hover:text-[var(--lane-color)]",
+                      ? "border-[color:var(--lane-color)] bg-(--lane-tint) font-bold text-(--lane-color)"
+                      : "border-border/50 bg-bg text-[var(--color-ink)] hover:border-[color:var(--lane-color)] hover:text-(--lane-color)",
                   )}
                   style={{
                     "--lane-color": lane.color,

@@ -10,7 +10,7 @@ import { ArrowRight02Icon } from "@animateicons/react/huge";
 import { OVERVIEW_SUBNAV } from "@/app/datas/homepage/data";
 
 /* ------------------------------------------------------------------ */
-/*  OverviewSubnav — dropdown for the "Event Overview" nav link.      */
+/*  OverviewSubnav - dropdown for the "Event Overview" nav link.      */
 /*  Every entry points at a real section anchor on the landing page.  */
 /* ------------------------------------------------------------------ */
 

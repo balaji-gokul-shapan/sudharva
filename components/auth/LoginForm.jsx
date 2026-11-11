@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { RainbowButton } from "@/components/animation/rainbowButton";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
-import { EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
+import { CancelCircleIcon, EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -457,7 +457,7 @@ export default function LoginForm({ setIsAuthenticated }) {
                       aria-label="Clear username"
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                     >
-                      <X size={14} aria-hidden="true" />
+                      <CancelCircleIcon size={14} aria-hidden="true" />
                     </Button>
                   )}
                 </div>
@@ -508,7 +508,7 @@ export default function LoginForm({ setIsAuthenticated }) {
                       aria-label="Clear password"
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
                     >
-                      <X size={14} aria-hidden="true" />
+                      <CancelCircleIcon size={14} aria-hidden="true" />
                     </Button>
                   )}
                   <button

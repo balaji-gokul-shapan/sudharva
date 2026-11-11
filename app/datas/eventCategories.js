@@ -30,7 +30,7 @@ export const eventCategoryRecords = [
     message: "For every pace, and every first step.",
     Amount: "₹499",
     description: "Run for a cause and make every step count.",
-    tag: "comfortable Jog",
+    tag: " comfortable run",
     iconBg: "bg-health-tint border border-health/50",
     textColor: "text-health",
     glow: "bg-health/30",

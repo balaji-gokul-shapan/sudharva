@@ -2,7 +2,8 @@ import EventRegistrationModule from "./EventRegistrationModule";
 import { getUserRegistrationServer } from "@/lib/server/getUserRegistration";
 
 export default async function UserEventsPage({ params }) {
-  const userId = String(params?.userId || "").trim();
+  const resolvedParams = await params;
+  const userId = String(resolvedParams?.userId || "").trim();
   const registration = await getUserRegistrationServer(userId);
 
   return (

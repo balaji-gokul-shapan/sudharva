@@ -19,7 +19,7 @@ import { ShimmerButton } from "@/components/animation/shimmerButton";
 import Link from "next/link";
 
 /* ------------------------------------------------------------------ */
-/* Pillar card — cursor-tracked spotlight + staggered scroll reveal     */
+/* Pillar card - cursor-tracked spotlight + staggered scroll reveal     */
 /* ------------------------------------------------------------------ */
 function PillarCard({ pillar, index }) {
   const { icon: Icon, label, description, iconBg, cardBg, textColor, accent, numberBg } = pillar;
@@ -153,7 +153,7 @@ const Overview = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.08 }}
-              className="mt-5 max-w-2xl text-3xl font-bold leading-tight text-accent sm:text-4xl lg:text-5xl"
+              className="mt-5 max-w-2xl text-3xl font-bold leading-tight text-accent sm:text-5xl lg:text-6xl"
             >
               Our Cause - <AuroraText colors={["#0a2400", "#7000ff", "#ff007a", "#ff3d00"]}>A Future Free from Diabetes</AuroraText>
             </motion.h2>

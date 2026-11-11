@@ -1,16 +1,20 @@
 import { FlickeringGrid } from "@/components/animation/flickering-grid";
 import RegisterForm from "@/components/auth/RegisterForm";
 import Image from "next/image";
-import Link from "next/link";
 import Index from "./pages/Index";
 import { Suspense } from "react";
 import { LightRays } from "@/components/animation/light-rays";
 import { GridPattern } from "@/components/animation/GridPattern";
+import ResetHomeLink from "@/app/components/ResetHomeLink";
 
 export const metadata = {
   title: "Login - Sudharva Marathon",
   description:
     "Sign-in preview for the Sudharva Marathon. Email and phone authentication will be available when the sign-in service is connected.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const instant = false;
@@ -26,8 +30,7 @@ export default function LoginPage() {
       {/* Registration area */}
       <header className="border-b border-border bg-surface">
         <div className="container-page flex min-h-[76px] items-center justify-between gap-3 sm:min-h-20">
-          <Link
-            href="/"
+          <ResetHomeLink
             aria-label="Sudharva Marathon home"
             className="flex shrink-0 flex-col items-center"
           >
@@ -44,13 +47,12 @@ export default function LoginPage() {
             <span className="mt-0.5 block max-w-full px-1 text-center text-[7px] font-bold uppercase leading-none tracking-[0.12em] text-ink-soft min-[375px]:text-[8px] sm:mt-1 sm:text-[10px]">
               Run Against Diabetes
             </span>
-          </Link>
-          <Link
-            href="/"
+          </ResetHomeLink>
+          <ResetHomeLink
             className="whitespace-nowrap text-xs font-semibold text-ink-soft transition-colors hover:text-accent sm:text-sm"
           >
             Back to website
-          </Link>
+          </ResetHomeLink>
         </div>
       </header>
       <main className="relative flex flex-1 isolate  overflow-hidden bg-background">

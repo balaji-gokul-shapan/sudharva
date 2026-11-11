@@ -1,4 +1,5 @@
 import { Heartbeat, IdentificationCard, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import BloodGroupValue from "./BloodGroupValue";
 
 function HealthCell({ label, value, tone = "primary" }) {
   const toneClass =
@@ -61,7 +62,11 @@ export default function HealthSnapshotCard({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <HealthCell label="Blood Group" value={bloodGroup} tone="success" />
+        <HealthCell
+          label="Blood Group"
+          value={<BloodGroupValue value={bloodGroup} />}
+          tone="success"
+        />
         <HealthCell label="Cardiac Condition" value={cardiacCondition} tone={criticalFlag ? "warning" : "success"} />
         <HealthCell label="Allergies" value={allergies} tone="primary" />
         <HealthCell label="Diabetes" value={diabetes} tone={diabetesFlag ? "warning" : "success"} />

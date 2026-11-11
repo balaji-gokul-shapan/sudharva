@@ -8,7 +8,7 @@ import Link from "next/link";
 import { EVENT_SUBNAV, eventPrizesData } from "@/app/datas/homepage/data";
 
 /* ------------------------------------------------------------------ */
-/*  EventSubnav — creative dropdown (Motion entrance + GSAP prize     */
+/*  EventSubnav - creative dropdown (Motion entrance + GSAP prize     */
 /*  stagger + hover lifts)                                            */
 /* ------------------------------------------------------------------ */
 
@@ -92,7 +92,7 @@ export function EventSubnav({ link, leaveTimeoutRef, setOpenSubnav }) {
           Events
         </h3>
         <p className="mt-1 text-xs text-ink-soft uppercase tracking-wider">
-          Sudharva Marathon — choose your distance
+          Sudharva Marathon - choose your distance
         </p>
       </motion.div>
 

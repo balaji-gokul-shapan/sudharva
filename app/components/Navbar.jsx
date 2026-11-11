@@ -38,7 +38,7 @@ import {
 import { EVENT_SUBNAV, OVERVIEW_SUBNAV } from "../datas/homepage/data";
 
 /* ------------------------------------------------------------------ */
-/*  NavSubnav — dispatches to the right dropdown for a nav link        */
+/*  NavSubnav - dispatches to the right dropdown for a nav link        */
 /* ------------------------------------------------------------------ */
 
 function NavSubnav({ type, link, leaveTimeoutRef, setOpenSubnav }) {

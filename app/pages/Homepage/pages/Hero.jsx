@@ -21,7 +21,7 @@ const Hero = () => {
       aria-label="Sudharva Marathon hero"
       className="relative -mt-19 flex min-h-svh w-full flex-col overflow-hidden pt-19 sm:-mt-20 sm:pt-20"
     >
-      {/* 1. Preloader overlay — keep it first */}
+      {/* 1. Preloader overlay - keep it first */}
       <HeroPreloader />
 
       {/* 2. Background image */}
@@ -52,9 +52,10 @@ const Hero = () => {
         <div className="mx-auto w-full max-w-5xl text-center sm:text-left">
           <HeroBadge />
 
-          <h1 className="contents">
-            <HeroHeading />
+          <h1 className="sr-only">
+            Sudharva Marathon 2027: Run Against Diabetes
           </h1>
+          <HeroHeading />
 
           <HeroEventMeta />
 

@@ -84,7 +84,7 @@ export function EventSpotlightDialog({ open, onOpenChange, category }) {
   const meta      = CATEGORY_META[category.key] ?? CATEGORY_META.volunteer;
   const laneColor = `var(--brand-${category.key})`;
 
-  /* Parent holds a key string or null — always pass null to close */
+  /* Parent holds a key string or null - always pass null to close */
   const handleClose = () => onOpenChange(null);
 
   return (
@@ -178,13 +178,13 @@ export function EventSpotlightDialog({ open, onOpenChange, category }) {
                       </div>
 
                       {/* Location pill */}
-                      <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-xl border border-border/60 bg-[var(--color-surface)]/80 backdrop-blur-sm shadow-lg">
+                      <Link target="_blank" href="https://www.google.com/maps/place/Ajeya+Stadium/@13.1330554,80.1024462,17z/data=!3m1!4b1!4m6!3m5!1s0x3a52627fc6dca50d:0xad76da86c69d66ca!8m2!3d13.1330554!4d80.1024462!16s%2Fg%2F11b67yjhqk?entry=ttu&g_ep=EgoyMDI2MTEwOC4wIKXMDSoASAFQAw%3D%3D" className="absolute bottom-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-xl border border-border/60 bg-[var(--color-surface)]/80 backdrop-blur-sm shadow-lg">
                         <div className="flex flex-col">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink-soft)] opacity-70">Location</span>
-                          <span className="text-sm font-semibold text-[var(--color-ink)] leading-tight">Chennai, Tamil Nadu</span>
+                          <span className="text-sm font-semibold text-[var(--color-ink)] leading-tight">Ajeya Stadium, Avadi, Chennai, Tamil Nadu</span>
                         </div>
                         <ArrowRight02Icon size={14} duration={1} className="shrink-0 text-[var(--color-ink-soft)] rotate-45 ml-1" />
-                      </div>
+                      </Link>
                     </div>
 
                     {/* ── RIGHT: Content ───────────────────── */}

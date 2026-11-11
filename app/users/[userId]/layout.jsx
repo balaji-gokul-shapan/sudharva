@@ -17,6 +17,7 @@ import Image from "next/image";
 import { RunnerRegistrationProvider } from "./data/registerInfo";
 import { useAppDispatch } from "@/store/hooks";
 import { resetClientSessionData } from "@/lib/resetClientSession";
+import { ThemeToggle } from "@/components/theme-toggle";
 const getUserId = (params) => params?.userId ?? "";
 const navigation = [
   { label: "Dashboard", href: "", icon: LayoutDashboardIcon },
@@ -95,9 +96,9 @@ function UserLayoutInner({ children, params }) {
           }`}
           aria-hidden={!sidebarOpen}
         >
-          <div className="flex h-20 items-center border-b border-border px-6">
+          <div className="flex h-20 items-center border-b border-border px-6 gap-4">
             <Link
-              href="/"
+              href={`/users/${userId}`}
               aria-label="Sudharva Marathon home"
               className="inline-flex w-fit flex-col items-center rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-white"
               onClick={() => setSidebarOpen(false)}
@@ -123,6 +124,8 @@ function UserLayoutInner({ children, params }) {
             >
               <Cancel01Icon size={20} className="text-foreground" />
             </button>
+                        <ThemeToggle />
+            
           </div>
 
           <div className="border-b border-border px-4 py-4">

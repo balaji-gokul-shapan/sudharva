@@ -55,8 +55,8 @@ const CarouselPage = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="z-20 left-3 border-[var(--color-surface)]/40 bg-black/30 text-[var(--color-ink)] hover:bg-black/50 hover:text-[var(--color-ink)] sm:left-5" />
-            <CarouselNext className="z-20 right-3 border-[var(--color-surface)]/40 bg-black/30 text-[var(--color-ink)] hover:bg-black/50 hover:text-[var(--color-ink)] sm:right-5" />
+            <CarouselPrevious className="z-20 left-3 border-[var(--color-surface)]/40 bg-black/30 text-(--color-ink) hover:bg-black/50 hover:text-(--color-ink) sm:left-5" />
+            <CarouselNext className="z-20 right-3 border-[var(--color-surface)]/40 bg-black/30 text-(--color-ink) hover:bg-black/50 hover:text-(--color-ink) sm:right-5" />
             <CarouselIndicators className="absolute inset-x-0 bottom-5 z-20" />
           </Carousel>
         </div>
@@ -66,4 +66,3 @@ const CarouselPage = () => {
 };
 
 export default CarouselPage;
-

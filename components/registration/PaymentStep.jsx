@@ -1694,7 +1694,7 @@ export default function PaymentStep({
                       />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-foreground">
-                          Payment reported — awaiting verification
+                          Payment reported - awaiting verification
                         </p>
                         <p className="mt-1 text-xs leading-relaxed text-ink-soft">
                           Thanks for letting us know. This is not a verified

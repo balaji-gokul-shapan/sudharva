@@ -3,22 +3,55 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import StepperForm from "@/components/registration/StepperForm";
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useAppDispatch } from "@/store/hooks";
+import { clearRegistrationDraft } from "@/store/slices/registration/registrationDraftSlice";
+import { resetCreateRegistrationState } from "@/store/slices/registration/createRegistrationSlice";
+
+const isLoginReferrer = () => {
+  if (typeof window === "undefined") return false;
+
+  const referrer = String(document.referrer || "").trim();
+  if (!referrer) return false;
+
+  try {
+    const parsed = new URL(referrer, window.location.origin);
+    return parsed.pathname === "/login";
+  } catch {
+    return referrer.includes("/login");
+  }
+};
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const dispatch = useAppDispatch();
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+
+    if (isLoginReferrer()) return false;
+
+    return Boolean(window.localStorage.getItem("auth.accessToken"));
+  });
   const [identifier, setIdentifier] = useState("");
 
   useEffect(() => {
-    // Keep the registration stepper active on page refresh when auth exists.
-    // This prevents dropping back to the register form during payment step.
-    const hasAccessToken =
-      typeof window !== "undefined" &&
-      Boolean(window.localStorage.getItem("auth.accessToken"));
+    if (typeof window === "undefined") return;
+    if (!isLoginReferrer()) return;
 
-    if (hasAccessToken) {
-      setIsAuthenticated(true);
+    try {
+      const keysToRemove = [];
+      for (let index = 0; index < window.localStorage.length; index += 1) {
+        const key = window.localStorage.key(index);
+        if (key && key.startsWith("payment.completed.")) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    } catch {
+      // Ignore storage failures and continue with best-effort cleanup.
     }
-  }, []);
+
+    dispatch(clearRegistrationDraft());
+    dispatch(resetCreateRegistrationState());
+  }, [dispatch]);
 
   return (
     <div className="relative">

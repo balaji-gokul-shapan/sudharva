@@ -6,7 +6,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* =========================================
-   THEME — TAILWIND CSS v4
+   THEME - TAILWIND CSS v4
 ========================================= */
 
 @theme {
@@ -32,7 +32,7 @@
   --color-volunteer: var(--brand-volunteer);
   --color-volunteer-tint: var(--brand-volunteer-tint);
 
-  /* Lane colors — set per category via CSS variables, with light/dark defaults */
+  /* Lane colors - set per category via CSS variables, with light/dark defaults */
   --lane-color: var(--brand-volunteer);
   --lane-tint: var(--brand-volunteer-tint);
 
@@ -141,14 +141,14 @@
 }
 
 /* =========================================
-   LIGHT MODE — SHADCN/UI + BRAND PALETTE
+   LIGHT MODE - SHADCN/UI + BRAND PALETTE
 ========================================= */
 
 :root {
   color-scheme: light;
 
   /* =========================================
-     BRAND PALETTE — LIGHT (source of truth)
+     BRAND PALETTE - LIGHT (source of truth)
      Referenced by @theme above via var(--brand-*).
   ========================================= */
 
@@ -174,7 +174,7 @@
   --color-events-leaf: var(--brand-environment);
   --color-events-ink: var(--brand-ink);
 
-  /* Decorative tokens for the overview section (.overview-section) — light */
+  /* Decorative tokens for the overview section (.overview-section) - light */
   --overview-base-1: color-mix(in srgb, var(--brand-health) 26%, #ffffff);
   --overview-base-2: color-mix(in srgb, var(--brand-health) 12%, #ffffff);
   --overview-base-3: var(--brand-bg);
@@ -220,7 +220,7 @@
   --hc-grid-line: rgb(16 32 40 / 0.08);
 
   /* =========================================
-     SHADCN/UI SEMANTIC TOKENS — LIGHT
+     SHADCN/UI SEMANTIC TOKENS - LIGHT
   ========================================= */
 
   --background: #f4f8fc;
@@ -308,7 +308,7 @@
 }
 
 /* =========================================
-   DARK MODE — ALL TOKENS
+   DARK MODE - ALL TOKENS
    Activated by .dark on <html> (see app/layout.js
    and components/theme-toggle.jsx).
 ========================================= */
@@ -372,7 +372,7 @@
   --hc-card-to: rgb(255 255 255 / 0.03);
   --hc-grid-line: rgb(255 255 255 / 0.06);
 
-  /* Decorative tokens for the overview section (.overview-section) — dark */
+  /* Decorative tokens for the overview section (.overview-section) - dark */
   --overview-base-1: color-mix(in srgb, var(--brand-health), #000 74%);
   --overview-base-2: color-mix(in srgb, var(--brand-health), #000 88%);
   --overview-base-3: #060a12;
@@ -471,7 +471,6 @@
   }
 
   html {
-    scroll-behavior: smooth;
     scroll-padding-top: 6rem;
   }
 
@@ -1161,7 +1160,9 @@
 /* ============================================================
    BUTTONS
    ============================================================ */
-
+button{
+  cursor: pointer;
+}
 .events-primary-button,
 .events-secondary-button {
   will-change: transform;
@@ -1986,7 +1987,7 @@
      layer scrollable. */
   /* Wrapper around the spotlight + registration dialogs. The dialog content
      itself is portalled to <body> (FloatingPortal), so this layer must never
-     intercept pointer events — otherwise it would swallow every click on the
+     intercept pointer events - otherwise it would swallow every click on the
      page behind it (it is always mounted via EventSpotlightOnLoad). */
   .dialog-scroll-lock {
     position: fixed;
@@ -3427,7 +3428,7 @@
 }
 
 /* ============================================================
-   Magic UI — Ripple background (components/magicui/Ripple.jsx)
+   Magic UI - Ripple background (components/magicui/Ripple.jsx)
    ============================================================ */
 @keyframes magic-ripple {
   0% {
@@ -3613,7 +3614,7 @@
 }
 @layer components {
   /* Countdown digit window: soft "slot" edges so digits slide into shadow
-     instead of hard-clipping at the top/bottom — the roll reads as one
+     instead of hard-clipping at the top/bottom - the roll reads as one
      continuous mechanism. Both digit layers live inside this window. */
   .countdown-digit-window {
     -webkit-mask-image: linear-gradient(
@@ -4634,15 +4635,20 @@ html[data-hero-preloader="seen"] .hero-preloader-shell {
 
 .preloader-gif {
   width: clamp(160px, 42vw, 420px);
+  height: clamp(160px, 42vw, 420px);
   max-width: 78vw;
-  height: auto;
-  object-fit: contain;
+  max-height: 78vw;
   filter: drop-shadow(0 16px 36px rgb(0 0 0 / 0.35));
   position: relative;
   z-index: 3;
   animation: preloader-gif-slide var(--preloader-main-duration, 2.8s) ease-in-out both;
   animation-play-state: paused;
   will-change: transform;
+}
+
+.preloader-gif > :is(svg, canvas) {
+  width: 100%;
+  height: 100%;
 }
 
 .preloader-sun-text {

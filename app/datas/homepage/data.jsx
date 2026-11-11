@@ -257,7 +257,7 @@ export const EVENT_SUBNAV = [
     label: "5K Fun Run",
     title: "5K Fun Run",
     description:
-      "For every pace and every first step — a fun run for the whole family.",
+      "For every pace and every first step - a fun run for the whole family.",
     Amount: "₹ 499",
     distance: "5 KM",
     icon: SparkleIcon,
@@ -354,7 +354,7 @@ export const OVERVIEW_SUBNAV = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Prizes — what every registered runner walks away with             */
+/*  Prizes - what every registered runner walks away with             */
 /* ------------------------------------------------------------------ */
 
 export const eventPrizesData = [

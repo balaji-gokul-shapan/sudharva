@@ -5,7 +5,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/animation/Reveal";
 import { GsParallax } from "@/components/animation/GsScroll";
 
 /* ------------------------------------------------------------------ */
-/*  PartnersHeader — pill + title + copy (Motion stagger)              */
+/*  PartnersHeader - pill + title + copy (Motion stagger)              */
 /* ------------------------------------------------------------------ */
 
 export function PartnersHeader() {
@@ -41,7 +41,7 @@ export function PartnersHeader() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PartnersLoop — logo marquee (Motion reveal wrapper)                */
+/*  PartnersLoop - logo marquee (Motion reveal wrapper)                */
 /*  PartnerLoop itself is already a client component with its own      */
 /*  rAF loop + drag physics, so this island only handles the entrance. */
 /* ------------------------------------------------------------------ */
@@ -55,7 +55,7 @@ export function PartnersLoop({ logos, ...props }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  PartnersBackground — GSAP-drifted ambient glow + streaks           */
+/*  PartnersBackground - GSAP-drifted ambient glow + streaks           */
 /* ------------------------------------------------------------------ */
 
 export function PartnersBackground() {

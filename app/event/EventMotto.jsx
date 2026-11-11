@@ -344,14 +344,14 @@ export default function EventMotto() {
 
               <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
                 Let&apos;s encourage preventive action through exercise,
-                periodic screening, and healthier living — together with our
+                periodic screening, and healthier living - together with our
                 families and communities.
               </p>
             </div>
 
             <div className="flex justify-center lg:justify-end">
               <motion.a
-                href="#overview"
+                href="/register"
                 whileHover={reduceMotion ? undefined : { scale: 1.04 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.97 }}
                 className="inline-flex items-center gap-3 rounded-full bg-primary px-6 py-4 text-sm font-bold text-primary-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"

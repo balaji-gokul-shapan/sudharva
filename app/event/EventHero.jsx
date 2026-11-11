@@ -15,7 +15,7 @@ export default function EventHero() {
       aria-label="Sudharva Marathon events hero"
       className="relative -mt-19 flex h-screen w-full flex-col overflow-hidden"
     >
-      {/* GSAP parallax background — scrolls slower than the content */}
+      {/* GSAP parallax background - scrolls slower than the content */}
       <GsParallax speed={0.22} className="absolute inset-0" aria-hidden="true">
         <Image
           src="/image/cta/events/event_hero.webp"
@@ -71,7 +71,7 @@ export default function EventHero() {
 
             <StaggerItem preset="fade-up">
               <p className="mt-4 max-w-xl text-sm leading-7 text-ink/90 sm:text-base">
-                Be part of Sudharva Marathon in Chennai — a movement bringing
+                Be part of Sudharva Marathon in Chennai - a movement bringing
                 people together through running, diabetes awareness, early
                 detection, and healthier living. Choose your distance, embrace
                 the challenge, and make every stride count.
@@ -98,7 +98,7 @@ export default function EventHero() {
 
                 <Link
                   href="#event-overview"
-                  className="inline-flex items-center justify-center rounded-full border border-accent/30 bg-accent/10 px-6 py-3 text-sm font-semibold text-accent backdrop-blur-md transition hover:bg-accent/20"
+                  className="inline-flex items-center justify-center rounded-full border border-accent/30 bg-white px-6 py-3 text-sm font-semibold text-accent backdrop-blur-md transition hover:bg-white/20"
                 >
                   Explore the Event
                 </Link>

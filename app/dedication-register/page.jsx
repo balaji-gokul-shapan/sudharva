@@ -1,10 +1,12 @@
 import DedicationForm from "./DedicationForm";
+import { createPageMetadata } from "../seo";
 
-export const metadata = {
-  title: "Register a Dedication — Sudharva Marathon",
+export const metadata = createPageMetadata({
+  title: "Register a Dedication - Sudharva Marathon",
   description:
-    "Dedicate your stride to someone special. Register your dedication for the Sudharva Marathon — run 5K or 10K, or join as a volunteer, for health, the environment, and education.",
-};
+    "Dedicate your stride to someone special. Register your dedication for the Sudharva Marathon - run 5K or 10K, or join as a volunteer, for health, the environment, and education.",
+  path: "/dedication-register",
+});
 
 export default function DedicationRegisterPage() {
   return (
@@ -18,7 +20,7 @@ export default function DedicationRegisterPage() {
             Register a Dedication
           </h1>
           <p className="mt-3 text-sm text-[var(--color-ink-soft)] sm:text-base">
-            Dedicate your run to someone you love — for health, the
+            Dedicate your run to someone you love - for health, the
             environment, and education. Pick your category and confirm your
             dedication in a minute.
           </p>

@@ -169,7 +169,7 @@ export const highlights = [
 ];
 
 export const overviewStats = [
-  { value: "4", label: "Race distances" },
+  { value: "3", label: "Race distances" },
   { value: "₹499", label: "Starting registration" },
   { value: "21.1K", label: "Longest distance" },
   { value: "100%", label: "Purpose driven" },

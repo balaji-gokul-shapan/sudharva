@@ -4,6 +4,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Lottie } from "lottie-react";
 import gsap from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
@@ -28,6 +29,7 @@ import { heroRuningData, META } from "../../../datas/homepage/data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LineShadowText } from "@/components/animation/line-shadow-text";
+import preloaderAnimation from "../../../../public/image/cta/preloader.json";
 
 gsap.registerPlugin(CustomEase, SplitText);
 
@@ -465,7 +467,14 @@ export function HeroPreloader() {
         <div className="preloader-bg" />
 
         <div className="preloader-logo">
-          <Image
+          <Lottie
+            src={preloaderAnimation}
+            loop
+            autoplay
+            className="preloader-gif"
+            aria-label="Sudharva preloader animation"
+          />
+          {/* <Image
             src="/video/preloader.gif"
             alt="Sudharva preloader"
             width={400}
@@ -473,8 +482,7 @@ export function HeroPreloader() {
             priority
             unoptimized
             className="preloader-gif"
-          />
-
+          /> */}
           <p className="preloader-sun-text">
             Sudharva 2027
           </p>
@@ -542,7 +550,7 @@ export function HeroHeading() {
         className="mt-5"
       >
         <StaggerItem preset="blur">
-          <div className="relative flex h-auto flex-wrap items-center">
+          <div className="relative flex h-auto flex-wrap items-center justify-center sm:justify-start">
             <Image
               src="/image/cta/logo.png"
               alt="Sudharva 2027"
@@ -555,6 +563,7 @@ export function HeroHeading() {
 
             <LineShadowText
               data-text-anim="headerAnimation"
+              shadowColor="white"
               className="hero-main-title invisible block font-serif text-4xl font-bold leading-[1.05] text-accent sm:text-5xl lg:text-7xl"
             >
               2027
@@ -682,7 +691,7 @@ export function HeroCtas() {
         <Button
           nativeButton={false}
           className="h-auto w-full items-center justify-center gap-2.5 rounded-lg border-white/50 bg-white/10 px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:w-auto"
-          render={<Link href="/register" />}
+          render={<Link href="/event" />}
         >
           <HandshakeIcon
             size={24}

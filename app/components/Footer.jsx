@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const QUICK_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "Event Details", href: "#overview" },
-  { label: "Join Us", href: "#join" },
+  { label: "Home", href: "/" },
+  { label: "Event Details", href: "/event" },
+  { label: "Join Us", href: "/register" },
 ];
 
 const PILLARS = [
