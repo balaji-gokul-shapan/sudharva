@@ -25,15 +25,13 @@ export default function RegistrationStepper() {
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain p-4 sm:p-6"
-      onWheelCapture={(event) => event.stopPropagation()}
-      onTouchMoveCapture={(event) => event.stopPropagation()}
+      className="fixed inset-0 z-50 overflow-hidden overscroll-contain p-4 sm:p-6"
     >
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
 
-      <div className="relative z-10 mx-auto flex min-h-full w-full max-w-5xl items-start sm:items-center">
-        <div className="w-full overflow-hidden rounded-3xl border border-border bg-surface shadow-2xl">
-          <div className="border-b border-accent/20 bg-accent/5 p-5 sm:p-6">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl items-center">
+        <div className="flex max-h-full w-full flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-2xl">
+          <div className="shrink-0 border-b border-accent/20 bg-accent/5 p-5 sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">
               Complete Registration
             </p>
@@ -47,9 +45,7 @@ export default function RegistrationStepper() {
           </div>
 
           <div
-            className="max-h-[75vh] overflow-y-auto overscroll-contain p-4 sm:max-h-[78vh] sm:p-6"
-            onWheelCapture={(event) => event.stopPropagation()}
-            onTouchMoveCapture={(event) => event.stopPropagation()}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6"
           >
             <StepperForm identifier={identifier} setIdentifier={setIdentifier} />
           </div>

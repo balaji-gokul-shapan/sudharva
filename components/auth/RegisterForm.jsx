@@ -20,6 +20,7 @@ import {
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 import { RainbowButton } from "@/components/animation/rainbowButton";
 import { useAppDispatch } from "@/store/hooks";
 import { requestOtp } from "@/store/slices/otp/otpRequestSlice";
@@ -172,6 +173,7 @@ export default function RegisterForm({
   setIdentifier,
 }) {
   const dispatch = useAppDispatch();
+  const [isResettingSession, setIsResettingSession] = useState(false);
   const [identifierType, setIdentifierType] = useState("email");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState("identifier");
@@ -199,6 +201,21 @@ export default function RegisterForm({
   const reducedMotion = useReducedMotion();
 
   const isEmail = identifierType === "email";
+
+  const handleSignInClick = async (event) => {
+    event.preventDefault();
+    if (isResettingSession) return;
+
+    setIsResettingSession(true);
+
+    try {
+      await resetClientSessionData(dispatch);
+    } catch {
+      // Continue to sign in even if reset has partial failures.
+    } finally {
+      window.location.replace("/login");
+    }
+  };
 
   // GSAP entrance animation for the registration-only visual panel.
   useEffect(() => {
@@ -1237,6 +1254,8 @@ export default function RegisterForm({
                 Already part of the movement?{" "}
                 <Link
                   href="/login"
+                  onClick={handleSignInClick}
+                  aria-disabled={isResettingSession}
                   className="font-bold text-accent underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-accent"
                 >
                   Sign in to your account

@@ -153,29 +153,31 @@ function StatCard({ label, value }) {
 
 function CompletionOrb({ completion, hoverText }) {
   return (
-    <div
-      className="group relative isolate grid h-40 w-40 place-items-center overflow-hidden rounded-full"
-      title={hoverText}
-    >
-      <div
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: `conic-gradient(color-mix(in srgb, var(--accent) 72%, var(--primary)) ${completion * 3.6}deg, color-mix(in srgb, var(--border) 82%, var(--background)) 0deg)`,
-        }}
-      />
-      <div className="absolute inset-2.5 rounded-full bg-background" />
-      <div className="relative text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft">
-          Readiness
-        </p>
-        <p className="mt-1 text-3xl font-black text-foreground">
-          {completion}%
-        </p>
-      </div>
-      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+10px)] z-20 hidden w-max max-w-72 -translate-x-1/2 rounded-lg border border-border bg-background/95 px-3 py-2 text-[10px] font-medium normal-case tracking-normal text-foreground shadow-xl group-hover:block group-focus-within:block">
+    <details className="group relative">
+      <summary
+        className="relative isolate grid h-40 w-40 cursor-pointer place-items-center overflow-hidden rounded-full list-none outline-none [&::-webkit-details-marker]:hidden"
+        aria-label="Readiness details"
+      >
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: `conic-gradient(color-mix(in srgb, var(--accent) 72%, var(--primary)) ${completion * 3.6}deg, color-mix(in srgb, var(--border) 82%, var(--background)) 0deg)`,
+          }}
+        />
+        <div className="absolute inset-2.5 rounded-full bg-background" />
+        <div className="relative text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-ink-soft">
+            Readiness
+          </p>
+          <p className="mt-1 text-3xl font-black text-foreground">
+            {completion}%
+          </p>
+        </div>
+      </summary>
+      <span className="pointer-events-none absolute left-1/2 top-[calc(100%+10px)] z-20 hidden w-max max-w-72 -translate-x-1/2 rounded-lg border border-border bg-background/95 px-3 py-2 text-[10px] font-medium normal-case tracking-normal text-foreground shadow-xl group-hover:block group-focus-within:block group-open:block">
         {hoverText}
       </span>
-    </div>
+    </details>
   );
 }
 
@@ -271,6 +273,9 @@ async function ProfileContent({ params }) {
     "blood_group_id",
     "bloodGroup",
   ]);
+
+  console.log(registration, "registration ");
+  
 
   const cardiacCondition = asHealthFlag(
     getRegistrationValue(registration, ["cardiac_condition"], null),

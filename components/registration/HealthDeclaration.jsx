@@ -99,7 +99,7 @@ function DeclarationRow({
   return (
     <div
       className={cn(
-        "group flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition-colors duration-200",
+        "group flex cursor-pointer items-start gap-3 rounded-2xl border p-3.5 transition-colors duration-200 sm:items-center sm:gap-4 sm:p-4",
         "has-focus-visible:ring-accent/20",
         checked
           ? styles.selected
@@ -120,17 +120,17 @@ function DeclarationRow({
       />
       <span
         className={cn(
-          "grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors",
+          "grid h-9 w-9 shrink-0 place-items-center rounded-xl transition-colors sm:h-10 sm:w-10",
           checked ? styles.icon : "bg-muted text-ink-soft",
         )}
       >
         <Icon size={20} weight="duotone" />
       </span>
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <Label
           htmlFor={id}
           className={cn(
-            "min-w-0 flex-1 cursor-pointer text-sm leading-relaxed",
+            "min-w-0 flex-1 cursor-pointer text-sm leading-6 sm:leading-relaxed",
             checked ? "text-foreground" : "text-ink-soft",
           )}
         >
@@ -141,7 +141,7 @@ function DeclarationRow({
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className="shrink-0 whitespace-nowrap text-xs font-semibold text-accent underline underline-offset-2 hover:text-accent/80"
+            className="self-start text-[11px] font-semibold text-accent underline underline-offset-2 hover:text-accent/80 sm:self-auto sm:whitespace-nowrap sm:text-xs"
           >
             {linkText}
           </a>

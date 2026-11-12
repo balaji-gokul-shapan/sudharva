@@ -200,7 +200,7 @@ export const Navbar = () => {
         ref={topBarRef}
         className="fixed top-0 left-0 right-0 z-50 hidden border-b border-accent/35 bg-gradient-brand text-primary-foreground sm:block"
       >
-        <div className="mx-auto flex h-10 w-full max-w-content items-center justify-center gap-4 px-3 sm:px-4 lg:px-6 xl:px-10">
+        <div className="mx-auto flex h-10 w-full max-w-content items-center justify-center gap-4  px-3 sm:px-4 lg:px-6 xl:px-10">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] sm:text-xs">
             Sudharva 2027
           </p>

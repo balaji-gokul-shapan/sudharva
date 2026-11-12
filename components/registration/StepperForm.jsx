@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowCounterClockwise,
@@ -41,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import PaymentStep from "@/components/registration/PaymentStep";
 import { cn } from "@/lib/utils";
 import { calculateAge } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HeartIcon } from "@animateicons/react/huge";
 import { PersonalDetails } from "./RegistrationStep";
 import { HealthDeclaration } from "./HealthDeclaration";
@@ -51,11 +51,13 @@ import { usePincodeLookup } from "./PincodeContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   createRegistration,
+  resetCreateRegistrationState,
   setCreateRegistrationSnapshot,
 } from "@/store/slices/registration/createRegistrationSlice";
 import { getMasterData } from "@/store/slices/masters/getMasterSlice";
 import { createPaymentOrder } from "@/store/slices/payment/createPaymentOrderSlice";
 import {
+  clearRegistrationDraft,
   saveRegistrationDraft,
 } from "@/store/slices/registration/registrationDraftSlice";
 import {
@@ -597,7 +599,7 @@ function StepProgress({ activeIndex, onSelect }) {
 
   return (
     <nav aria-label="Registration progress" className="relative w-full">
-      <div className="sm:hidden rounded-2xl border border-border/60 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+      <div className="sm:hidden rounded-2xl border border-border/60 bg-background/80 p-3 shadow-sm backdrop-blur-sm">
         <div className="relative px-1">
           <div
             className="absolute left-4 right-4 top-4 h-px bg-border/60"
@@ -665,7 +667,7 @@ function StepProgress({ activeIndex, onSelect }) {
               const Icon = step.icon;
               const complete = index < activeIndex;
               const active = index === activeIndex;
-              const canVisit = index <= activeIndex;
+              const canVisit = index === activeIndex;
 
               return (
                 <li key={`desktop-${step.label}`} className="flex flex-col items-center gap-2">
@@ -686,7 +688,7 @@ function StepProgress({ activeIndex, onSelect }) {
                         active &&
                           "scale-105 border-accent bg-white shadow-[0_0_0_6px_color-mix(in_srgb,var(--accent)_30%,transparent)]",
                         complete &&
-                          "border-success bg-success text-success-foreground scale-100",
+                          "border-success bg-success text-success-foreground scale-100 pointer-events-none",
                         !active &&
                           !complete &&
                           "border-2 border-accent/30 text-ink-soft bg-muted/80 group-hover:border-accent/50 group-hover:bg-accent/10 group-hover:scale-105",
@@ -752,6 +754,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const isMobile = useIsMobile();
   const draft = useAppSelector((state) => state.registrationDraft);
 
   const createRegistrationMutation = useMutation({
@@ -896,16 +899,30 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     : "";
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (!effectiveRegistrationReference) return;
 
     const paymentCompletionKey = `payment.completed.${effectiveRegistrationReference}`;
-    const paidSnapshot = window.localStorage.getItem(paymentCompletionKey);
+    const clearDraftAfterPayment = () => {
+      if (!window.localStorage.getItem(paymentCompletionKey)) return;
 
-    if (!paidSnapshot) return;
+      dispatch(clearRegistrationDraft());
+      dispatch(resetCreateRegistrationState());
+      router.replace("/login");
+    };
 
-    router.replace("/login");
-  }, [effectiveRegistrationReference, router]);
+    const handlePaymentCompleted = (event) => {
+      if (event.key === paymentCompletionKey && event.newValue) {
+        clearDraftAfterPayment();
+      }
+    };
+
+    window.addEventListener("storage", handlePaymentCompleted);
+    clearDraftAfterPayment();
+
+    return () => {
+      window.removeEventListener("storage", handlePaymentCompleted);
+    };
+  }, [dispatch, effectiveRegistrationReference, router]);
 
   useEffect(() => {
     if (stepIndex > 0) {
@@ -930,6 +947,16 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const { options } = usePincodeLookup(form.resident_pincode);
 
   useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      effectiveRegistrationReference &&
+      window.localStorage.getItem(
+        `payment.completed.${effectiveRegistrationReference}`,
+      )
+    ) {
+      return;
+    }
+
     const shouldPinPaymentStep =
       success &&
       Boolean(
@@ -1342,16 +1369,40 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
 
   const primaryCtaLabel =
     stepIndex === 0
-      ? "Continue to race details"
+      ? isMobile
+        ? "Continue"
+        : "Continue to race details"
       : stepIndex === 1
-        ? "Continue to health declaration"
+        ? isMobile
+          ? "Continue"
+          : "Continue to health declaration"
         : stepIndex === 2
-          ? "Review registration"
+          ? isMobile
+            ? "Review"
+            : "Review registration"
           : isRegisterSubmitting
-            ? "Saving registration..."
+            ? isMobile
+              ? "Saving..."
+              : "Saving registration..."
             : isSavingRegistration
-              ? "Continue to payment"
-              : "Save registration";
+              ? isMobile
+                ? "Continue"
+                : "Continue to payment"
+              : isMobile
+                ? "Save"
+                : "Save registration";
+
+  const saveRegistrationCtaLabel = isRegisterSubmitting
+    ? isMobile
+      ? "Saving..."
+      : "Saving registration..."
+    : isSavingRegistration
+      ? isMobile
+        ? "Continue"
+        : "Continue to payment"
+      : isMobile
+        ? "Save"
+        : "Save registration";
 
   const isSaveRegistrationCta = stepIndex === STEPS.length - 2;
 
@@ -1406,7 +1457,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="relative overflow-x-hidden w-[calc(100%-2rem)]  md:w-auto rounded-[2rem] border border-border/60 bg-gradient-to-b from-surface/95 to-surface/80 backdrop-blur-md shadow-2xl shadow-accent/10 ring-1 ring-white/30 p-4 sm:p-6 md:p-8"
+          className="relative overflow-x-hidden w-full  md:w-auto rounded-[2rem] border border-border/60 bg-gradient-to-b from-surface/95 to-surface/80 backdrop-blur-md shadow-2xl shadow-accent/10 ring-1 ring-white/30 p-4 sm:p-6 md:p-8"
         >
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-primary to-success" />
           <form
@@ -1536,11 +1587,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                           className="animate-spin"
                         />
                       ) : null}
-                      {isRegisterSubmitting
-                        ? "Saving registration..."
-                        : isSavingRegistration
-                          ? "Continue to payment"
-                          : "Save registration"}
+                      {saveRegistrationCtaLabel}
                       <CaretRight size={18} weight="bold" />
                     </ConfettiSideCannons>
                     {error ? (
@@ -1574,8 +1621,9 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                 <div className="text-center text-xs leading-relaxed text-ink-soft sm:max-w-xs sm:text-right">
                   {success || hasPersistedRegistrationSuccess ? (
                     <>
-                      <p className="mb-2 text-success font-semibold">
-                        Registration submitted successfully.
+                      <p className="mb-2 font-semibold text-foreground">
+                        Registration details saved. Complete payment above to
+                        finalize your entry.
                       </p>
                       {effectiveRegistrationReference && (
                         <p className="text-ink-soft/80">
@@ -1583,11 +1631,6 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                           {String(effectiveRegistrationReference)}
                         </p>
                       )}
-                      <div className="mt-3">
-                        <RainbowButton asChild variant="accent" size="sm">
-                          <Link href="/login">Login to portal</Link>
-                        </RainbowButton>
-                      </div>
                     </>
                   ) : error ? (
                     <p className="text-destructive font-semibold">{error}</p>

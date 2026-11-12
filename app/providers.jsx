@@ -24,7 +24,10 @@ export default function Providers({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
-        <PersistGate loading={children} persistor={persistor}>
+        <PersistGate
+          loading={<div aria-busy="true" className="min-h-screen bg-background" />}
+          persistor={persistor}
+        >
           <TooltipProvider>
             <AuthBootstrap>{children}</AuthBootstrap>
           </TooltipProvider>

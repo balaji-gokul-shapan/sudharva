@@ -317,7 +317,7 @@ export default function EventCategoriesSection() {
 
         {/* Quick-nav strip — lane selectors */}
         <div className="mt-14 sm:mt-20">
-          <div className="events-category-track flex flex-wrap justify-center gap-2 sm:gap-3">
+          <div className="events-category-track flex flex-wrap flex-col sm: flex-row justify-center gap-2 sm:gap-3">
             {eventCategoriesData.map((category) => {
               const lane = laneFor(category.key);
               return (

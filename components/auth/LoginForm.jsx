@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { RainbowButton } from "@/components/animation/rainbowButton";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { CancelCircleIcon, EyeIcon, EyeOffIcon } from "@animateicons/react/huge";
 import { useRouter } from "next/navigation";
@@ -72,6 +73,7 @@ export default function LoginForm({ setIsAuthenticated }) {
   const [justLoggedIn, setJustLoggedIn] = useState(false);
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResettingSession, setIsResettingSession] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -80,6 +82,21 @@ export default function LoginForm({ setIsAuthenticated }) {
   const loginTimerRef = useRef(null);
 
   const shouldReduceMotion = useReducedMotion();
+
+  const handleRegisterClick = async (event) => {
+    event.preventDefault();
+    if (isResettingSession) return;
+
+    setIsResettingSession(true);
+
+    try {
+      await resetClientSessionData(dispatch);
+    } catch {
+      // Continue to registration even if reset has partial failures.
+    } finally {
+      window.location.replace("/register");
+    }
+  };
 
   useEffect(() => {
     if (shouldReduceMotion) return;
@@ -576,6 +593,8 @@ export default function LoginForm({ setIsAuthenticated }) {
                 Haven&rsquo;t joined the movement yet?{" "}
                 <Link
                   href="/register"
+                  onClick={handleRegisterClick}
+                  aria-disabled={isResettingSession}
                   className="font-bold text-accent underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-accent"
                 >
                   Claim your place at the starting line

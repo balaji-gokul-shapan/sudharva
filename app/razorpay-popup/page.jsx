@@ -179,8 +179,6 @@ function RazorpayPopupContent() {
     Boolean(rzpKey.trim()) &&
     Boolean(orderId.trim()) &&
     Boolean(amountPaise.trim());
-  const shouldHideHelper =
-    autoMode && hasRequiredCheckoutData && !status.message && !hasResult;
   const isPreparingCheckout =
     !hasResult &&
     (isOrderLoading ||
@@ -676,19 +674,6 @@ function RazorpayPopupContent() {
     sdkLoaded,
   ]);
 
-  if (shouldHideHelper) {
-    return (
-      <>
-        <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="afterInteractive"
-          onLoad={() => setSdkLoaded(true)}
-        />
-        <main aria-hidden="true" style={{ minHeight: "100vh" }} />
-      </>
-    );
-  }
-
   return (
     <>
       <Script
@@ -863,7 +848,7 @@ function RazorpayPopupContent() {
             </div>
           </section>
         ) : null} */}
-        {isPaymentInitiated && hasResult && (
+        {isPaymentInitiated && hasResult ? (
           <section
             style={{
               marginTop: 8,
@@ -1019,6 +1004,8 @@ function RazorpayPopupContent() {
               </div>
             </div>
           </section>
+        ) : (
+          <h6>Please wait... Your request is being processed.!</h6>
         )}
       </main>
     </>
