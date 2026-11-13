@@ -10,10 +10,18 @@ import {
 } from "react";
 import Script from "next/script";
 import { useSearchParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { confirmPaymentOrder } from "@/store/slices/payment/paymentOrderConfirmationSlice";
-import { createPaymentOrder } from "@/store/slices/payment/createPaymentOrderSlice";
+import {
+  confirmPaymentOrder as confirmPaymentOrderAction,
+  selectPaymentConfirmationResponse,
+  selectPaymentOrderConfirmation,
+} from "@/store/slices/payment/paymentOrderConfirmationSlice";
+import {
+  createPaymentOrder,
+  selectCreatePaymentOrder,
+  selectCreatePaymentOrderLoading,
+  selectRazorpayOrderConfig,
+} from "@/store/slices/payment/createPaymentOrderSlice";
 import { getMasterData } from "@/store/slices/masters/getMasterSlice";
 import {
   selectCreateRegistrationData,
@@ -78,24 +86,55 @@ const normalizeRazorpayContact = (value) => {
   return "";
 };
 
+const toRupees = (...values) => {
+  for (const value of values) {
+    if (value === undefined || value === null || value === "") continue;
+    const parsed = Number(String(value).replace(/[^0-9.-]/g, ""));
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return 0;
+};
+
 function RazorpayPopupContent() {
   const params = useSearchParams();
   const dispatch = useAppDispatch();
-  const queryClient = useQueryClient();
-  const registrationDataFromStore = useAppSelector(selectCreateRegistrationData);
+  const registrationDataFromStore = useAppSelector(
+    selectCreateRegistrationData,
+  );
   const registrationRequestPayloadFromStore = useAppSelector(
     selectCreateRegistrationRequestPayload,
   );
+  const paymentConfirmation = useAppSelector(selectPaymentConfirmationResponse);
+  console.log(paymentConfirmation, "paymentConfirmation");
+  const paymentOrderConfirmation = useAppSelector(
+    selectPaymentOrderConfirmation,
+  );
+  console.log(paymentOrderConfirmation, "paymentOrderConfirmation");
+
   const masterData = useAppSelector((state) => state.master.data);
   const registrationData = registrationDataFromStore || null;
   const orderFetchAttemptedRef = useRef(false);
   const receiptExportRef = useRef(null);
-  
+  const {
+    key: reduxRzpKey,
+    orderId: reduxOrderId,
+    amountPaise: reduxAmount,
+    totalAmountPaise: reduxTotalAmountPaise,
+    currency: reduxCurrency,
+    notes: reduxOrderNotes,
+    registrationAmount: reduxRegistrationAmount,
+    premiumBibFee: reduxPremiumBibFee,
+    premiumBibNumber: reduxPremiumBibNumber,
+    isPremium: reduxIsPremium,
+  } = useAppSelector(selectRazorpayOrderConfig);
+  const isOrderLoading = useAppSelector(selectCreatePaymentOrderLoading);
+  const getPaymentOrder = useAppSelector(selectCreatePaymentOrder);
+  console.log(getPaymentOrder, "getPaymentOrder");
+
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const hasAutoOpenedRef = useRef(false);
   const autoMode = params.get("auto") !== "0";
   const [isPaymentInitiated, setIsPaymentInitiated] = useState(false);
-  const [isOrderLoading, setIsOrderLoading] = useState(false);
   const registrationReference =
     registrationData?.participant_reference ||
     registrationData?.participantReference ||
@@ -118,29 +157,7 @@ function RazorpayPopupContent() {
     if (masterData) return;
     dispatch(getMasterData());
   }, [dispatch, masterData]);
-    
-  const { data: paymentOrder = null } = useQuery({
-    queryKey: ["payment-order", "popup"],
-    queryFn: async () => {
-      return (
-        queryClient.getQueryData(["payment-order"]) ??
-        queryClient.getQueryData([
-          "payment-order",
-          effectiveReference || "",
-        ]) ??
-        null
-      );
-    },
-    staleTime: Infinity,
-  });
-  const keyFromStore =
-    paymentOrder?.rzpKey ||
-    paymentOrder?.key ||
-    paymentOrder?.key_id ||
-    paymentOrder?.razorpay_key ||
-    "";
-  const orderIdFromStore =
-    paymentOrder?.order_id || paymentOrder?.orderId || paymentOrder?.id || "";
+
   const registrationAmountRupees =
     Number(
       registrationData?.payable_amount ||
@@ -148,19 +165,52 @@ function RazorpayPopupContent() {
         registrationData?.amount ||
         0,
     ) || 0;
-  const amountFromStore =
-    paymentOrder?.amount ||
-    paymentOrder?.amount_paise ||
-    (registrationAmountRupees > 0 ? Math.round(registrationAmountRupees * 100) : "");
+  const rzpKey = String(params.get("key") || reduxRzpKey || "");
+  const orderId = String(params.get("orderId") || reduxOrderId || "");
+  const amountPaise = String(
+    params.get("amount") ||
+      reduxAmount ||
+      (registrationAmountRupees > 0
+        ? Math.round(registrationAmountRupees * 100)
+        : ""),
+  );
+  const totalAmountPaise = String(
+    reduxTotalAmountPaise || params.get("total_amount_paise") || amountPaise,
+  );
+  const orderCurrency = String(
+    params.get("currency") || reduxCurrency || "INR",
+  );
+  const orderNotes = useMemo(
+    () =>
+      reduxOrderNotes && typeof reduxOrderNotes === "object"
+        ? reduxOrderNotes
+        : {},
+    [reduxOrderNotes],
+  );
+  const premiumBibNumber =
+    String(reduxPremiumBibNumber || orderNotes?.premium_bib_number || "") || "";
+  const premiumBibFee =
+    String(reduxPremiumBibFee || orderNotes?.premium_bib_fee || "") || "";
+  const registrationAmountFromOrder =
+    String(reduxRegistrationAmount || orderNotes?.registration_amount || "") ||
+    "";
+  const registrationAmountFromOrderRupees =
+    Number(registrationAmountFromOrder || 0) / 100;
 
-  const [rzpKey, setRzpKey] = useState(
-    () => params.get("key") || String(keyFromStore || ""),
-  );
-  const [orderId, setOrderId] = useState(
-    () => params.get("orderId") || String(orderIdFromStore || ""),
-  );
-  const [amountPaise, setAmountPaise] = useState(
-    () => params.get("amount") || String(amountFromStore || ""),
+  const premiumBibFeeRupees =
+    Number(reduxPremiumBibFee || orderNotes?.premium_bib_fee || 0) / 100;
+
+  console.log(
+    {
+      totalAmountPaise,
+      premiumBibFeeRupees,
+      registrationAmountFromOrderRupees,
+      amountPaise,
+      premiumBibNumber,
+      premiumBibFee,
+      registrationAmountFromOrder,
+    },
+    "dsdsdssdsd",
   );
 
   const [status, setStatus] = useState({ type: "", message: "" });
@@ -172,8 +222,8 @@ function RazorpayPopupContent() {
 
   const hasResult = Boolean(
     result.razorpay_order_id ||
-      result.razorpay_payment_id ||
-      result.razorpay_signature,
+    result.razorpay_payment_id ||
+    result.razorpay_signature,
   );
   const hasRequiredCheckoutData =
     Boolean(rzpKey.trim()) &&
@@ -181,14 +231,40 @@ function RazorpayPopupContent() {
     Boolean(amountPaise.trim());
   const isPreparingCheckout =
     !hasResult &&
-    (isOrderLoading ||
-      (autoMode && hasRequiredCheckoutData && !sdkLoaded));
-  const receiptAmountRupees = Math.max(
-    0,
-    Number(amountPaise || 0) / 100,
+    (isOrderLoading || (autoMode && hasRequiredCheckoutData && !sdkLoaded));
+  const receiptAmountRupees = Math.max(0, Number(totalAmountPaise || 0) / 100);
+  const baseAmt = toRupees(
+    registrationAmountFromOrder,
+    registrationData?.base_fee,
+    registrationData?.base_amount,
+    registrationData?.amount,
+    registrationData?.payment_amount,
+    registrationData?.fee,
+    receiptAmountRupees,
   );
+  const totalAmount = toRupees(
+    Number(totalAmountPaise || 0) / 100,
+    registrationData?.payable_amount,
+    registrationData?.amount_payable,
+    registrationData?.paid_amount,
+    registrationData?.payment_amount,
+    registrationData?.amount,
+    registrationData?.fee,
+    receiptAmountRupees,
+  );
+  console.log(registrationData, "registrationData");
+  const isPremiumMember =
+    Boolean(reduxIsPremium) ||
+    Boolean(paymentConfirmation?.premium_bib_number_status) ||
+    Boolean(premiumBibNumber);
+  console.log(isPremiumMember, "isPremiumMember");
+  const referenceCode =
+    registrationData?.participant_reference ||
+    registrationRequestPayloadFromStore?.reference_code ||
+    "";
 
   const participantName =
+    orderNotes?.participant_name ||
     registrationData?.full_name ||
     registrationRequestPayloadFromStore?.full_name ||
     registrationRequestPayloadFromStore?.contactName ||
@@ -218,9 +294,8 @@ function RazorpayPopupContent() {
     registrationData?.contact_email ||
     registrationRequestPayloadFromStore?.contact_email ||
     "";
-  const participantContactForPrefill = normalizeRazorpayContact(
-    participantPhone,
-  );
+  const participantContactForPrefill =
+    normalizeRazorpayContact(participantPhone);
   const categorySourceValue =
     registrationData?.runner_category_id ||
     registrationRequestPayloadFromStore?.runner_category_id ||
@@ -250,7 +325,6 @@ function RazorpayPopupContent() {
     return userId ? `/users/${userId}` : "/";
   }, [params, registrationData]);
 
-  
   const receiptItems = useMemo(
     () => [
       {
@@ -262,7 +336,7 @@ function RazorpayPopupContent() {
     ],
     [participantCategory, receiptAmountRupees],
   );
-  
+
   const containerStyle = useMemo(
     () => ({
       fontFamily: "-apple-system, Segoe UI, Roboto, sans-serif",
@@ -354,9 +428,8 @@ function RazorpayPopupContent() {
     orderFetchAttemptedRef.current = true;
 
     const fetchOrder = async () => {
-      setIsOrderLoading(true);
       try {
-        const response = await dispatch(
+        await dispatch(
           createPaymentOrder({
             participant_reference: effectiveReference,
             ...(payableFromParams > 0
@@ -364,25 +437,6 @@ function RazorpayPopupContent() {
               : {}),
           }),
         ).unwrap();
-
-        const latestOrder =
-          response?.order || response?.data || response?.result || response || {};
-        const latestKey =
-          latestOrder?.rzpKey ||
-          latestOrder?.key ||
-          latestOrder?.key_id ||
-          latestOrder?.razorpay_key ||
-          "";
-        const latestOrderId =
-          latestOrder?.order_id || latestOrder?.orderId || latestOrder?.id || "";
-        const latestAmount =
-          latestOrder?.amount ||
-          latestOrder?.amount_paise ||
-          (payableFromParams > 0 ? Math.round(payableFromParams * 100) : "");
-
-        if (latestKey) setRzpKey(String(latestKey));
-        if (latestOrderId) setOrderId(String(latestOrderId));
-        if (latestAmount) setAmountPaise(String(latestAmount));
       } catch (error) {
         show(
           "error",
@@ -391,8 +445,6 @@ function RazorpayPopupContent() {
             : error?.message ||
                 "Unable to fetch payment details. Please retry from registration.",
         );
-      } finally {
-        setIsOrderLoading(false);
       }
     };
 
@@ -427,12 +479,14 @@ function RazorpayPopupContent() {
       razorpay_payment_id: result.razorpay_payment_id || "",
       razorpay_signature: result.razorpay_signature || "",
       paid_at: new Date().toLocaleString("en-IN"),
+      reference_code: referenceCode || "",
     }),
     [
       participantCategory,
       participantName,
       participantPhone,
       receiptAmountRupees,
+      referenceCode,
       result.razorpay_order_id,
       result.razorpay_payment_id,
       result.razorpay_signature,
@@ -451,8 +505,13 @@ function RazorpayPopupContent() {
         return;
       }
 
+      const receiptOnlyNode =
+        receiptExportRef.current.querySelector(
+          '[data-receipt-export-content="true"]',
+        ) || receiptExportRef.current;
+
       const htmlToImageModule = await import("html-to-image");
-      const dataUrl = await htmlToImageModule.toPng(receiptExportRef.current, {
+      const dataUrl = await htmlToImageModule.toPng(receiptOnlyNode, {
         backgroundColor: "#ffffff",
         pixelRatio: 2,
         cacheBust: true,
@@ -494,7 +553,13 @@ function RazorpayPopupContent() {
     } catch {
       show("error", "Unable to share receipt right now.");
     }
-  }, [copyField, receiptAmountRupees, receiptText, result.razorpay_order_id, result.razorpay_payment_id]);
+  }, [
+    copyField,
+    receiptAmountRupees,
+    receiptText,
+    result.razorpay_order_id,
+    result.razorpay_payment_id,
+  ]);
 
   const handleCloseWindow = useCallback(() => {
     // Browsers may block closing if the tab was not script-opened.
@@ -552,10 +617,18 @@ function RazorpayPopupContent() {
     const options = {
       key,
       amount: Number(amount),
-      currency: "INR",
+      currency: orderCurrency,
       order_id: id,
-      name: "Sudharva Marathon",
+      name: String(orderNotes?.event_name || "Sudharva Marathon"),
       description: "Registration Payment",
+      notes: {
+        ...orderNotes,
+        is_premium: reduxIsPremium,
+        premium_bib_fee: premiumBibFee,
+        total_amount_paise: Number(totalAmountPaise || amount || 0),
+        registration_amount: registrationAmountFromOrder,
+        premium_bib_number: premiumBibNumber,
+      },
       handler: async function (response) {
         setResult({
           razorpay_order_id: response.razorpay_order_id || "",
@@ -565,7 +638,7 @@ function RazorpayPopupContent() {
 
         try {
           await dispatch(
-            confirmPaymentOrder({
+            confirmPaymentOrderAction({
               razorpay_order_id: response.razorpay_order_id || "",
               razorpay_payment_id: response.razorpay_payment_id || "",
               razorpay_signature: response.razorpay_signature || "",
@@ -579,6 +652,11 @@ function RazorpayPopupContent() {
                 paid: true,
                 payment_id: response.razorpay_payment_id || "",
                 order_id: response.razorpay_order_id || "",
+                total_amount_paise: Number(totalAmountPaise || amount || 0),
+                registration_amount: registrationAmountFromOrder,
+                premium_bib_fee: premiumBibFee,
+                premium_bib_number: premiumBibNumber,
+                is_premium: Boolean(reduxIsPremium),
                 at: Date.now(),
               }),
             );
@@ -594,7 +672,6 @@ function RazorpayPopupContent() {
             )}`,
           );
         }
-
       },
       modal: {
         escape: false,
@@ -643,6 +720,13 @@ function RazorpayPopupContent() {
     participantContactForPrefill,
     participantEmail,
     participantName,
+    orderCurrency,
+    orderNotes,
+    premiumBibFee,
+    premiumBibNumber,
+    registrationAmountFromOrder,
+    reduxIsPremium,
+    totalAmountPaise,
     rzpKey,
     sdkLoaded,
   ]);
@@ -718,8 +802,8 @@ function RazorpayPopupContent() {
               {isPaymentAlreadyCompleted
                 ? "Payment already completed for this registration. You can close this window."
                 : hasRequiredCheckoutData
-                ? "Opening checkout automatically. If it does not open, use the button below."
-                : "Unable to auto-open checkout. Required payment details are missing (key/order/amount)."}
+                  ? "Opening checkout automatically. If it does not open, use the button below."
+                  : "Unable to auto-open checkout. Required payment details are missing (key/order/amount)."}
             </p>
 
             <button
@@ -729,7 +813,9 @@ function RazorpayPopupContent() {
                 ...buttonStyle,
                 marginTop: 12,
                 opacity:
-                  hasRequiredCheckoutData && !isPaymentAlreadyCompleted ? 1 : 0.6,
+                  hasRequiredCheckoutData && !isPaymentAlreadyCompleted
+                    ? 1
+                    : 0.6,
                 cursor:
                   hasRequiredCheckoutData && !isPaymentAlreadyCompleted
                     ? "pointer"
@@ -757,7 +843,7 @@ function RazorpayPopupContent() {
         <label style={labelStyle}>Razorpay Key</label>
         <input
           value={rzpKey}
-          onChange={(event) => setRzpKey(event.target.value)}
+          readOnly
           placeholder="rzp_test_..."
           style={baseFieldStyle}
         />
@@ -765,7 +851,7 @@ function RazorpayPopupContent() {
         <label style={labelStyle}>Order ID</label>
         <input
           value={orderId}
-          onChange={(event) => setOrderId(event.target.value)}
+          readOnly
           placeholder="order_..."
           style={baseFieldStyle}
         />
@@ -773,7 +859,7 @@ function RazorpayPopupContent() {
         <label style={labelStyle}>Amount in Paise (must equal order amount)</label>
         <input
           value={amountPaise}
-          onChange={(event) => setAmountPaise(event.target.value)}
+          readOnly
           placeholder="8250"
           type="number"
           style={baseFieldStyle}
@@ -908,7 +994,11 @@ function RazorpayPopupContent() {
                   participantPhone={participantPhone}
                   participantCategory={participantCategory}
                   autoPrint={true}
+                  baseAmt={baseAmt}
+                  totalAmount={totalAmount}
+                  isPremiumMember={isPremiumMember}
                   className="mx-auto"
+                  referenceCode={referenceCode}
                 />
 
                 {/* <div style={{ marginTop: 12 }}>
@@ -991,9 +1081,7 @@ function RazorpayPopupContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    copyField(receiptText)
-                  }
+                  onClick={() => copyField(receiptText)}
                   style={{
                     ...actionButtonStyle,
                     background: "#2f5ea8",

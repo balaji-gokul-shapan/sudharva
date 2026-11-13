@@ -1,4 +1,4 @@
-"use client";;
+"use client";
 /**
  * @author: @dorianbaffier
  * @description: Receipt Printer
@@ -10,7 +10,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+// import * as HugeIcons from "@animateicons/react/huge";
+import { cn, formatDateTime } from "@/lib/utils";
+import {
+  ArrowRight02Icon,
+  ArrowUpRight01Icon,
+  DownloadIcon,
+  Loading02Icon,
+  Share01Icon,
+} from "@animateicons/react/huge";
 
 // Where the paper comes out, from the top of the card.
 const SLOT_Y = 64;
@@ -40,11 +48,30 @@ const DEFAULT_ITEMS = [
   { name: "Banana bread", quantity: 1, price: 3.2 },
 ];
 
-// Barcode bar widths, fixed so server and browser agree.
-const BARS = [
+// Fallback bar widths when no reference code is available.
+const DEFAULT_BARS = [
   2, 1, 1, 3, 1, 2, 2, 1, 3, 1, 1, 2, 1, 1, 2, 3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1,
   3, 1, 1, 2, 2, 1, 1, 3, 1, 2,
 ];
+
+function toBarcodeBars(referenceCode, length = 36) {
+  const normalized = String(referenceCode || "")
+    .trim()
+    .toUpperCase();
+
+  if (!normalized) {
+    return DEFAULT_BARS;
+  }
+
+  const codes = Array.from(normalized).map((char) => char.charCodeAt(0));
+
+  return Array.from({ length }, (_, index) => {
+    const current = codes[index % codes.length];
+    const next = codes[(index + 1) % codes.length];
+    const mixed = (current + next + index * 17) % 3;
+    return mixed + 1;
+  });
+}
 
 function damp(distance, max) {
   return max * (1 - Math.exp(-distance / max));
@@ -63,7 +90,13 @@ function turn(px, py, angle) {
   return [px * cos - py * sin, px * sin + py * cos];
 }
 
+
+
 function Receipt({
+  paymentDate,
+  isPremiumMember = false,
+  baseAmt = 0,
+  totalAmount = 0,
   merchant,
   order,
   date,
@@ -73,19 +106,35 @@ function Receipt({
   participantName,
   participantPhone,
   participantCategory,
+  referenceCode
 }) {
   const money = (n) => n.toFixed(2);
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
   const taxAmount = subtotal * tax;
-  // console.log(items,"items");
+  const effectiveBase = Number.isFinite(Number(baseAmt))
+    ? Number(baseAmt)
+    : subtotal;
+  const effectiveTotal =
+    Number.isFinite(Number(totalAmount)) && Number(totalAmount) > 0
+      ? Number(totalAmount)
+      : effectiveBase + taxAmount;
+
+  const premiumBibAmount = effectiveTotal - effectiveBase;
+  const barcodeBars = toBarcodeBars(referenceCode || order);
+
+  console.log(effectiveTotal,"effectiveTotal");
+  console.log(effectiveBase,"effectiveBase");
+  console.log(premiumBibAmount,"premiumBibAmount");
+  console.log(subtotal,"subtotal");
   
+  
+
   return (
     <div className="px-5 pt-6 pb-8 font-mono text-[11px] text-zinc-800 leading-[15px]">
       <p className="text-center font-semibold text-xs tracking-[0.2em]">
         {merchant.toUpperCase()}
       </p>
-      <p className="text-center text-zinc-500">{date}</p>
-      <p className="text-center text-zinc-500">Order {order}</p>
+      
       {participantName ? (
         <p className="text-center text-zinc-600">Name: {participantName}</p>
       ) : null}
@@ -93,8 +142,18 @@ function Receipt({
         <p className="text-center text-zinc-600">Phone: {participantPhone}</p>
       ) : null}
       {participantCategory ? (
-        <p className="text-center text-zinc-600">Category: {participantCategory}</p>
+        <p className="text-center text-zinc-600">
+          Category: {participantCategory}
+        </p>
       ) : null}
+      {paymentDate ? (
+        <p className="text-center text-zinc-500">
+          paid on: {formatDateTime(paymentDate)}
+        </p>
+      ) : <p className="text-center text-zinc-500">
+          paid on: {date}
+        </p>}
+      {/* <p className="text-center text-zinc-500">Order {order}</p> */}
       <p
         aria-hidden="true"
         className="my-[7px] overflow-hidden whitespace-nowrap text-zinc-400"
@@ -102,12 +161,15 @@ function Receipt({
         {"- ".repeat(40)}
       </p>
       {items.map((item) => (
-        <p className="flex justify-between gap-3" key={item.name}>
-          <span className="truncate">
+        <p
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1"
+          key={item.name}
+        >
+          <span className="min-w-0 whitespace-normal wrap-break-word leading-snug">
             {/* {item.quantity} × {item.name} */}
             {item.name}
           </span>
-          <span className="tabular-nums">
+          <span className="shrink-0 text-right tabular-nums">
             {money(item.quantity * item.price)}
           </span>
         </p>
@@ -119,22 +181,33 @@ function Receipt({
         {"- ".repeat(40)}
       </p>
       <p className="flex justify-between text-zinc-500">
-        <span>Subtotal</span>
-        <span className="tabular-nums">{money(subtotal)}</span>
+        <span>Registration Price</span>
+        <span className="tabular-nums">{money(effectiveBase)}</span>
       </p>
+      {isPremiumMember ? (
+        <p className="flex justify-between text-zinc-500">
+          <span>Premium Bib Amount</span>
+          <span className="tabular-nums">{money(premiumBibAmount) ?? 500}</span>
+        </p>
+      ) : null}
       <p className="flex justify-between text-zinc-500">
         <span>Tax {Math.round(tax * 100)}%</span>
         <span className="tabular-nums">{money(taxAmount)}</span>
       </p>
+      <p className="flex justify-between text-zinc-500">
+        <span>Subtotal</span>
+        <span className="tabular-nums">{money(subtotal)}</span>
+      </p>
+
       <p className="mt-1 flex justify-between font-semibold text-[13px]">
-        <span>Total</span>
+        <span>Total Amount</span>
         <span className="tabular-nums">
           {currency}
-          {money(subtotal + taxAmount)}
+          {money(effectiveTotal)}
         </span>
       </p>
       <div aria-hidden="true" className="mt-4 flex h-9 justify-center gap-px">
-        {BARS.map((width, i) => (
+        {barcodeBars.map((width, i) => (
           <span
             className={i % 2 ? "bg-transparent" : "bg-zinc-800"}
             key={`bar-${i.toString()}`}
@@ -142,7 +215,15 @@ function Receipt({
           />
         ))}
       </div>
-      <p className="mt-3 text-center text-zinc-500">Welcome, Runner! We&apos;re excited to have you on board </p>
+      {referenceCode ? (
+        <p className="mt-1 text-center text-[10px] tracking-[0.25em] text-zinc-600">
+          {String(referenceCode).toUpperCase()}
+        </p>
+      ) : null}
+      <p className="mt-3 text-center text-zinc-500">
+        Welcome, Runner! We&apos;re excited to have you on board{" "}
+      </p>
+      <p className="text-center text-[10px] text-zinc-500">{date}</p>
     </div>
   );
 }
@@ -166,18 +247,23 @@ export default function ReceiptPrinter({
   participantName = "",
   participantPhone = "",
   participantCategory = "",
+  baseAmt = 0,
+  totalAmount = 0,
   autoPrint = true,
   onPrint,
   onTear,
   onShare,
-  className
+  downloadOnly = false,
+  actionLabel,
+  isPremiumMember = false,
+  className,
+  paymentDate,
+  referenceCode,
 }) {
   const [phase, setPhase] = useState("idle");
   const [torn, setTorn] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
-  console.log(items,"items");
-  
 
   const cardRef = useRef(null);
   const paperRef = useRef(null);
@@ -263,7 +349,7 @@ export default function ReceiptPrinter({
     const [dx, dy] = turn(
       s.width / 2 - s.hingeX,
       s.height / 2 - s.hingeY,
-      angle
+      angle,
     );
     return [s.hx + dx, s.hy + dy];
   }, []);
@@ -282,7 +368,7 @@ export default function ReceiptPrinter({
       s.pcy = cy;
       s.angle = 0;
     },
-    [hangAt]
+    [hangAt],
   );
 
   // A thermal printer moves in short bursts: feed a line, stop, feed.
@@ -315,7 +401,7 @@ export default function ReceiptPrinter({
       }
       return 1;
     },
-    [placeAtSlot, setPhaseBoth]
+    [placeAtSlot, setPhaseBoth],
   );
 
   // Hanging from a hinge: the centre of mass swings on a fixed-length
@@ -372,7 +458,7 @@ export default function ReceiptPrinter({
       }
       return s.busy;
     },
-    [stepFalling, stepPendulum]
+    [stepFalling, stepPendulum],
   );
 
   const finishFall = useCallback(() => {
@@ -404,7 +490,7 @@ export default function ReceiptPrinter({
         s.last = 0;
       }
     },
-    [draw, finishFall, stepPhysics, stepPrinting]
+    [draw, finishFall, stepPhysics, stepPrinting],
   );
 
   const wake = useCallback(() => {
@@ -462,7 +548,7 @@ export default function ReceiptPrinter({
           { transform: "translate3d(0,1.5px,0)" },
           { transform: "translate3d(0,0,0)" },
         ],
-        { duration: 220, easing: "cubic-bezier(0.23, 1, 0.32, 1)" }
+        { duration: 220, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
       );
       if (s.reduceMotion) {
         setPhaseBoth("idle");
@@ -471,7 +557,7 @@ export default function ReceiptPrinter({
       setPhaseBoth(held ? "held" : "falling");
       wake();
     },
-    [setPhaseBoth, wake]
+    [setPhaseBoth, wake],
   );
 
   // Print once it scrolls into view; pause the loop when it's offscreen.
@@ -482,13 +568,25 @@ export default function ReceiptPrinter({
       return;
     }
     s.reduceMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
+      "(prefers-reduced-motion: reduce)",
     ).matches;
     measure();
     placeAtSlot(-s.height);
     draw();
     let printed = false;
     let onScreen = false;
+    let autoPrintTimer;
+
+    if (autoPrint) {
+      // Popup windows can miss the intersection threshold in some layouts.
+      autoPrintTimer = window.setTimeout(() => {
+        if (!printed) {
+          printed = true;
+          print();
+        }
+      }, 260);
+    }
+
     const update = () => {
       s.visible = onScreen && !document.hidden;
       if (!s.visible) {
@@ -508,11 +606,14 @@ export default function ReceiptPrinter({
         onScreen = entry.isIntersecting;
         update();
       },
-      { threshold: 0.4 }
+      { threshold: 0.15 },
     );
     intersection.observe(card);
     document.addEventListener("visibilitychange", update);
     return () => {
+      if (autoPrintTimer) {
+        window.clearTimeout(autoPrintTimer);
+      }
       intersection.disconnect();
       document.removeEventListener("visibilitychange", update);
       cancelAnimationFrame(s.raf);
@@ -687,16 +788,20 @@ export default function ReceiptPrinter({
         throw new Error("Unable to create image from receipt.");
       }
 
-      const safeOrder = String(order || "receipt").replace(/[^a-zA-Z0-9_-]/g, "");
+      const safeOrder = String(order || "receipt").replace(
+        /[^a-zA-Z0-9_-]/g,
+        "",
+      );
       const fileName = `${safeOrder || "receipt"}.png`;
       const file = new File([blob], fileName, { type: "image/png" });
 
       const canShareFile =
+        !downloadOnly &&
         typeof navigator !== "undefined" &&
         navigator.canShare &&
         navigator.canShare({ files: [file] });
 
-      if (canShareFile && navigator.share) {
+      if (!downloadOnly && canShareFile && navigator.share) {
         await navigator.share({
           title: `${merchant} receipt`,
           text: `Payment receipt ${order}`,
@@ -717,11 +822,18 @@ export default function ReceiptPrinter({
 
       onShare?.({ fileName });
     } catch (error) {
-      setShareStatus(`Unable to share receipt image: ${String(error?.message || error)}`);
+      setShareStatus(
+        `Unable to share receipt image: ${String(error?.message || error)}`,
+      );
     } finally {
       setIsSharing(false);
     }
-  }, [merchant, onShare, order]);
+  }, [downloadOnly, merchant, onShare, order]);
+
+  const ctaLabel = actionLabel || (downloadOnly ? "Download" : "Share");
+  const printDownloadIcon = DownloadIcon || ArrowRight02Icon;
+  const ShareIcon = Share01Icon || ArrowUpRight01Icon || ArrowRight02Icon;
+  const CtaIcon = downloadOnly ? printDownloadIcon : ShareIcon;
 
   const busy = phase === "printing";
   let status = "Ready";
@@ -734,8 +846,8 @@ export default function ReceiptPrinter({
   return (
     <div
       className={cn(
-        "relative h-[30rem] w-72 select-none overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100",
-        className
+        "relative h-[32rem] w-72 select-none overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100",
+        className,
       )}
       ref={cardRef}
     >
@@ -743,7 +855,7 @@ export default function ReceiptPrinter({
       <div
         className={cn(
           "absolute inset-x-0 bottom-0",
-          torn ? "overflow-visible" : "overflow-hidden"
+          torn ? "overflow-visible" : "overflow-hidden",
         )}
         style={{ top: SLOT_Y }}
       >
@@ -753,7 +865,7 @@ export default function ReceiptPrinter({
             "absolute top-0 w-56 bg-white shadow-[0_1px_2px_rgb(0_0_0/0.06),0_8px_24px_-12px_rgb(0_0_0/0.25)] dark:bg-zinc-100",
             phase === "hanging" && "cursor-grab active:cursor-grabbing",
             phase === "held" && "cursor-grabbing",
-            phase === "idle" && torn && "invisible"
+            phase === "idle" && torn && "invisible",
           )}
           onLostPointerCapture={handlePointerUp}
           onPointerCancel={handlePointerUp}
@@ -782,6 +894,8 @@ export default function ReceiptPrinter({
             />
           )}
           <Receipt
+            baseAmt={baseAmt}
+            totalAmount={totalAmount}
             currency={currency}
             date={date}
             items={items}
@@ -791,6 +905,9 @@ export default function ReceiptPrinter({
             participantName={participantName}
             participantPhone={participantPhone}
             tax={tax}
+            isPremiumMember={isPremiumMember}
+            paymentDate={paymentDate}
+            referenceCode={referenceCode}
           />
         </div>
       </div>
@@ -798,10 +915,11 @@ export default function ReceiptPrinter({
       {/* Off-screen export node for sharing full receipt image without mask/transform clipping. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed -left-[9999px] -top-[9999px] opacity-0"
+        className="pointer-events-none fixed -left-[9999px] -top-[9999px]"
       >
         <div
           ref={exportRef}
+          data-receipt-export-content="true"
           style={{
             width: 320,
             background: "#ffffff",
@@ -821,6 +939,11 @@ export default function ReceiptPrinter({
             participantName={participantName}
             participantPhone={participantPhone}
             tax={tax}
+            baseAmt={baseAmt}
+            totalAmount={totalAmount}
+            isPremiumMember={isPremiumMember}
+            paymentDate={paymentDate}
+            referenceCode={referenceCode}
           />
         </div>
       </div>
@@ -856,9 +979,18 @@ export default function ReceiptPrinter({
             className="rounded-full bg-zinc-900 px-4 py-2 font-medium text-xs text-white outline-none transition-colors duration-150 ease-out hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
             disabled={busy || isSharing}
             onClick={shareReceiptImage}
+            aria-label={ctaLabel}
+            title={ctaLabel}
             type="button"
           >
-            {isSharing ? "Preparing..." : "Share"}
+            {isSharing ? (
+              <Loading02Icon size={16} className="animate-spin" />
+            ) : CtaIcon ? (
+              <CtaIcon size={16} />
+            ) : (
+              <span>{ctaLabel}</span>
+            )}
+            <span className="sr-only">{ctaLabel}</span>
           </button>
           {shareStatus ? (
             <p className="max-w-52 rounded-md bg-zinc-900/90 px-2.5 py-1.5 text-[10px] leading-4 text-white dark:bg-zinc-100 dark:text-zinc-900">
@@ -871,7 +1003,7 @@ export default function ReceiptPrinter({
       <div
         className={cn(
           "absolute inset-x-0 bottom-0 flex justify-center p-5 transition-opacity duration-200 ease-out",
-          phase === "idle" ? "opacity-100" : "pointer-events-none opacity-0"
+          phase === "idle" ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <button

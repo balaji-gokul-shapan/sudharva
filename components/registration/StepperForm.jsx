@@ -128,6 +128,7 @@ const STEP_FIELDS = {
       "resident_taulk",
       "resident_district",
       "resident_pincode",
+      // "blood_group_id",
       // "height",
       // "weight",
       // "bloodGroup",
@@ -264,7 +265,7 @@ function mapRegistrationToForm(registerData, identifier) {
     gender: details?.gender || "",
     height: details?.height || "",
     weight: details?.weight || "",
-    bloodGroup:
+    blood_group_id:
       details?.blood_group ??
       details?.blood_group_id ??
       details?.bloodGroup ??
@@ -352,13 +353,13 @@ function createInitialForm(identifier, getRegistrationType, registerData) {
     first_name: "",
     // email: isEmail ? identifier : "",
     mobile_number: isEmail ? "" : identifier || "",
-    alternatePhone: "",
+    alternate_phone: "",
     date_of_birth: "",
     // age: "",
     gender: "",
     height: "",
     weight: "",
-    bloodGroup: "",
+    blood_group_id: "",
     last_name: "",
     companyName: "",
     contactName: "",
@@ -437,7 +438,7 @@ function validateField(name, value) {
         ? ""
         : "Enter a phone number with 7-15 digits.";
     }
-    case "alternatePhone": {
+    case "alternate_phone": {
       if (!trimmedValue) return "Please enter your alternate phone number.";
       const digits = trimmedValue.replace(/\D/g, "");
       return digits.length >= 7 && digits.length <= 15
@@ -449,8 +450,8 @@ function validateField(name, value) {
     //   return trimmedValue ? "" : "Please enter your height.";
     // case "weight":
     //   return trimmedValue ? "" : "Please enter your weight.";
-    // case "bloodGroup":
-    //   return trimmedValue ? "" : "Please enter your blood group.";
+    // case "blood_group_id":
+    //   return trimmedValue ? "" : "Please select your blood group.";
     case "resident_address_line1":
       return trimmedValue ? "" : "Please enter your residential address.";
     case "resident_address_line2":
@@ -1263,7 +1264,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
             companyPhone,
             teamSize,
           };
-    payload.blood_group = payload.blood_group ?? payload.bloodGroup ?? "";
+    // payload.blood_group_id = payload.blood_group_id ?? payload.bloodGroup ?? "";
     delete payload.bloodGroup;
     payload.terms = toBooleanOrDefault(
       payload.event_rules_acceptance ?? payload.terms,
@@ -1300,7 +1301,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       false,
     );
     payload.mobile_number = normalizePhoneForApi(payload.mobile_number);
-    payload.alternatePhone = normalizePhoneForApi(payload.alternatePhone);
+    payload.alternate_phone = normalizePhoneForApi(payload.alternate_phone);
     payload.emergency_contact_mobile = normalizePhoneForApi(
       payload.emergency_contact_mobile,
     );

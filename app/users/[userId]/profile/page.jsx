@@ -4,6 +4,7 @@ import { calculateAge, formatDate } from "@/lib/utils";
 import HealthSnapshotCard from "./components/HealthSnapshotCard";
 import SafetyReachabilityCard from "./components/SafetyReachabilityCard";
 import BloodGroupValue from "./components/BloodGroupValue";
+import PersonalDetailsCard from "./components/personalDetailsCard";
 import { Ruler, Sparkle, UserCircle } from "@phosphor-icons/react/dist/ssr";
 
 const MISSING = "Not available";
@@ -138,7 +139,7 @@ const asHealthFlag = (value) => {
   return String(value);
 };
 
-function StatCard({ label, value }) {
+export function StatCard({ label, value }) {
   return (
     <article className="rounded-2xl border border-border/80 bg-background/75 p-4">
       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-soft">
@@ -229,6 +230,9 @@ async function ProfileContent({ params }) {
     "alternate_phone_number",
     "alternate_phone",
   ]);
+  console.log(alternateMobile, "alternateMobile");
+  console.log(registration, "registration");
+  
 
   const category = getValue(registration, [
     "category",
@@ -274,7 +278,7 @@ async function ProfileContent({ params }) {
     "bloodGroup",
   ]);
 
-  console.log(registration, "registration ");
+  console.log(bloodGroup, "bloodGroup ");
   
 
   const cardiacCondition = asHealthFlag(
@@ -284,6 +288,7 @@ async function ProfileContent({ params }) {
   const height = details?.height || MISSING;
   const weight = details?.weight || MISSING;
   const diabetes = asHealthFlag(details?.has_diabetes);
+  const otherMedical = getRegistrationValue(registration, ["other_medical_conditions"]);
 
   const completionFieldEntries = [
     { label: "Full Name", value: fullName },
@@ -451,6 +456,7 @@ async function ProfileContent({ params }) {
             diabetes={diabetes}
             height={height}
             weight={weight}
+            otherMedical={otherMedical}
           />
 
           <SafetyReachabilityCard
@@ -463,38 +469,18 @@ async function ProfileContent({ params }) {
             alternateMobile={alternateMobile}
           />
 
-          <article className="rounded-3xl border border-border/80 bg-linear-to-br from-background/95 to-primary/6 p-5 shadow-[0_18px_42px_-28px_color-mix(in_srgb,var(--primary)_38%,transparent)] sm:p-6">
-            <div className="mb-5 flex items-center gap-3">
-              <span className="grid h-10 w-10 aspect-square place-items-center rounded-xl bg-primary/15 text-primary">
-                <Ruler size={20} weight="duotone" />
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
-                  Runner Information
-                </p>
-                <h2 className="text-lg font-bold text-foreground">
-                  Personal Details
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <StatCard label="First Name" value={firstName} />
-              <StatCard label="Last Name" value={lastName} />
-              <StatCard label="Age" value={runnerAge} />
-              <StatCard label="Date of Birth" value={dateOfBirth} />
-              <StatCard label="Mobile Number" value={personalMobile} />
-              <StatCard
-                label="Blood Group"
-                value={<BloodGroupValue value={bloodGroup} />}
-              />
-              <StatCard label="Height" value={height} />
-              <StatCard label="Weight" value={weight} />
-              <div className="sm:col-span-2">
-                <StatCard label="Address" value={address} />
-              </div>
-            </div>
-          </article>
+          <PersonalDetailsCard
+            firstName={firstName}
+            lastName={lastName}
+            runnerAge={runnerAge}
+            dateOfBirth={dateOfBirth}
+            personalMobile={personalMobile}
+            bloodGroup={bloodGroup}
+            height={height}
+            weight={weight}
+            address={address}
+            alternateMobile={alternateMobile}
+          />
         </section>
       </div>
     </main>

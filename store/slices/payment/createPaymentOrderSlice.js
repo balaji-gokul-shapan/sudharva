@@ -21,6 +21,47 @@ const extractOrder = (payload) => {
   return payload.order || payload.data || payload.result || payload;
 };
 
+const getRazorpayOrderConfig = (order) => {
+  if (!order || typeof order !== "object") {
+    return {
+      key: "",
+      orderId: "",
+      amountPaise: "",
+      totalAmountPaise: "",
+      currency: "INR",
+      notes: {},
+      registrationAmount: "",
+      premiumBibFee: "",
+      premiumBibNumber: "",
+      isPremium: false,
+    };
+  }
+
+  return {
+    key:
+      order.rzpKey ||
+      order.key ||
+      order.key_id ||
+      order.razorpay_key ||
+      "",
+    orderId: order.order_id || order.orderId || order.id || "",
+    amountPaise: order.amount || order.amount_paise || "",
+    totalAmountPaise:
+      order.total_amount_paise || order.totalAmountPaise || order.amount || "",
+    currency: order.currency || "INR",
+    notes:
+      order.notes && typeof order.notes === "object"
+        ? order.notes
+        : {},
+    registrationAmount:
+      order.registration_amount || order.registrationAmount || "",
+    premiumBibFee: order.premium_bib_fee || order.premiumBibFee || "",
+    premiumBibNumber:
+      order.premium_bib_number || order.premiumBibNumber || "",
+    isPremium: Boolean(order.is_premium || order.isPremium),
+  };
+};
+
 const hasUsableOrder = (payload) => {
   const order = extractOrder(payload);
   if (!order || typeof order !== "object") return false;
@@ -158,5 +199,9 @@ export const selectCreatePaymentOrder = (state) => state.createPaymentOrder;
 export const selectPaymentOrder = (state) => state.createPaymentOrder?.order;
 export const selectCreatePaymentOrderLoading =
   (state) => state.createPaymentOrder?.loading;
+export const selectCreatePaymentOrderError =
+  (state) => state.createPaymentOrder?.error;
+export const selectRazorpayOrderConfig = (state) =>
+  getRazorpayOrderConfig(state.createPaymentOrder?.order);
 
 export default createPaymentOrderSlice.reducer;

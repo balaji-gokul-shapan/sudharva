@@ -46,19 +46,8 @@ export const metadata = {
     images: ["/image/cta/hero-banner.png"],
   },
   icons: {
-    icon: [
-      {
-        url: "/icon",
-        type: "image/png",
-        sizes: "32x32",
-      },
-      {
-        url: "/favicon.svg",
-        type: "image/svg+xml",
-        sizes: "any",
-      },
-    ],
-    shortcut: "/icon",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
     apple: "/apple-icon",
   },
 };

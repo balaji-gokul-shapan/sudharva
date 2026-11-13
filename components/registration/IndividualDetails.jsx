@@ -182,7 +182,7 @@ export const IndividualDetails = ({
     [handlePhoneChange, mobileCountry],
   );
   const handleAlternatePhoneChange = useCallback(
-    (value) => handlePhoneChange("alternatePhone", value, alternateCountry),
+    (value) => handlePhoneChange("alternate_phone", value, alternateCountry),
     [alternateCountry, handlePhoneChange],
   );
 
@@ -363,7 +363,7 @@ export const IndividualDetails = ({
         </div>
 
         <div className="min-w-0">
-          <label htmlFor="alternatePhone" className="mb-2 block text-sm font-semibold text-foreground">
+          <label htmlFor="alternate_phone" className="mb-2 block text-sm font-semibold text-foreground">
             Alternate mobile number
           </label>
           <div className="relative">
@@ -375,7 +375,7 @@ export const IndividualDetails = ({
             <div
               className={cn(
                 "flex w-full items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 pl-11 text-sm text-foreground transition focus-within:border-accent",
-                errors.alternatePhone && "border-destructive",
+                errors.alternate_phone && "border-destructive",
               )}
             >
               <div
@@ -403,14 +403,14 @@ export const IndividualDetails = ({
                   onChange={(event) => {
                     const nextCountry = event.target.value;
                     const localDigits = getLocalPhoneDigits(
-                      formRef.current.alternatePhone,
+                      formRef.current["alternate_phone"],
                       alternateCountry,
                     );
 
                     setAlternateCountry(nextCountry);
 
                     if (!localDigits) {
-                      onChangeRef.current("alternatePhone", "");
+                      onChangeRef.current("alternate_phone", "");
                       return;
                     }
 
@@ -418,7 +418,7 @@ export const IndividualDetails = ({
                       getCountryCallingCode(nextCountry || "IN") || "",
                     );
                     onChangeRef.current(
-                      "alternatePhone",
+                      "alternate_phone",
                       `+${nextDialCode}${localDigits}`,
                     );
                   }}
@@ -439,24 +439,24 @@ export const IndividualDetails = ({
                 </span>
               </div>
               <PhoneInput
-                id="alternatePhone"
-                name="alternatePhone"
+                id="alternate_phone"
+                name="alternate_phone"
                 country={alternateCountry}
                 international={false}
-                value={toE164PhoneValue(form.alternatePhone, alternateCountry)}
+                value={toE164PhoneValue(form.alternate_phone, alternateCountry)}
                 onChange={handleAlternatePhoneChange}
                 placeholder="Enter phone number"
                 autoComplete="tel"
                 aria-required="false"
-                aria-invalid={Boolean(errors.alternatePhone)}
-                aria-describedby={errors.alternatePhone ? "alternatePhone-error" : undefined}
+                aria-invalid={Boolean(errors.alternate_phone)}
+                aria-describedby={errors.alternate_phone ? "alternate_phone-error" : undefined}
                 className="w-full border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
               />
             </div>
           </div>
-          {errors.alternatePhone && (
-            <p id="alternatePhone-error" className="mt-1.5 text-xs font-medium text-destructive">
-              {errors.alternatePhone}
+          {errors.alternate_phone && (
+            <p id="alternate_phone-error" className="mt-1.5 text-xs font-medium text-destructive">
+              {errors.alternate_phone}
             </p>
           )}
         </div>
@@ -602,16 +602,16 @@ export const IndividualDetails = ({
               required={false}
             />
             <SearchSelect
-              id="bloodGroup"
-              name="bloodGroup"
+              id="blood_group_id"
+              name="blood_group_id"
               label="Blood Group"
               placeholder="Select blood group"
               searchPlaceholder="Search blood group"
-              value={form.bloodGroup}
+              value={form.blood_group_id}
               onChange={onChange}
               options={bloodGroupOptions}
               icon={Shield01Icon}
-              error={errors.bloodGroup}
+              error={errors.blood_group_id}
               required={false}
               disabled={bloodGroupMasterState?.loading}
             />
