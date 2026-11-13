@@ -4,36 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eventCategoryRecords } from "@/app/datas/eventCategories";
 import { Particles } from "@/components/animation/particles";
-import { createPageMetadata } from "@/app/seo";
 
 export function generateStaticParams() {
   return eventCategoryRecords.map(({ anchorId }) => ({
     category: anchorId,
   }));
-}
-
-export async function generateMetadata({ params }) {
-  const { category: categoryId } = await params;
-  const category = eventCategoryRecords.find(
-    ({ anchorId }) => anchorId === categoryId,
-  );
-
-  if (!category) {
-    return {
-      title: "Event Category - Sudharva Marathon",
-      description: "Explore Sudharva Marathon events.",
-      robots: {
-        index: false,
-        follow: false,
-      },
-    };
-  }
-
-  return createPageMetadata({
-    title: `${category.label} - Sudharva Marathon`,
-    description: category.description,
-    path: `/categories/${categoryId}`,
-  });
 }
 
 function CategoryLoading() {
