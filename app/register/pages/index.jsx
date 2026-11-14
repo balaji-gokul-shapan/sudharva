@@ -5,11 +5,7 @@ import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const Index = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
-    if (typeof window === "undefined") return false;
-
-    return Boolean(window.localStorage.getItem("auth.accessToken"));
-  });
+  const [isAuthenticated, setIsAuthenticated] = React.useState(true);
   const [identifier, setIdentifier] = useState("");
 
   return (

@@ -411,7 +411,7 @@ function PromoCodeCard({
             </div>
           </div>
 
-          {/* <div className="mt-5">
+          <div className="mt-5">
             <label
               htmlFor="premium-promo-code"
               className="mb-2 block text-sm font-semibold text-(--premium-heading)"
@@ -519,9 +519,9 @@ function PromoCodeCard({
                 )}
               </AnimatePresence>
             </div>
-          </div> */}
+          </div>
 
-          {/* <div className="mt-4 border-t border-dashed border-[color-mix(in_srgb,var(--premium-muted)_35%,transparent)] pt-4">
+          <div className="mt-4 border-t border-dashed border-[color-mix(in_srgb,var(--premium-muted)_35%,transparent)] pt-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-(--premium-muted)">
               Try a demo code
             </p>
@@ -550,7 +550,7 @@ function PromoCodeCard({
                 );
               })}
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
 
