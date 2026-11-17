@@ -22,7 +22,7 @@ export default function Home() {
       <Overview />
       <EventCategories />
       <Partners />
-      <PrizeAwardSection />
+      {/* <PrizeAwardSection /> */}
       <SpecialAddons />
 
       {/* <CarouselPage /> */}
