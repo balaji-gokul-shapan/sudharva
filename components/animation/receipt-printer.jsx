@@ -150,10 +150,10 @@ function Receipt({
   const premiumBibAmount = displayPremiumBibAmount;
   const barcodeBars = toBarcodeBars(referenceCode || order);
 
-  console.log(effectiveTotal,"effectiveTotal");
-  console.log(effectiveBase,"effectiveBase");
-  console.log(premiumBibAmount,"premiumBibAmount");
-  console.log(subtotal,"subtotal");
+  // console.log(effectiveTotal,"effectiveTotal");
+  // console.log(effectiveBase,"effectiveBase");
+  // console.log(premiumBibAmount,"premiumBibAmount");
+  // console.log(subtotal,"subtotal");
   
   
 

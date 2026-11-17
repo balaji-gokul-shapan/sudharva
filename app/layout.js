@@ -64,7 +64,7 @@ const organizationJsonLd = JSON.stringify({
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||((!t||t==="system")&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
 const preloaderInitScript = `(function(){document.documentElement.setAttribute("data-hero-preloader","new");})();`;
-
+// const preloaderInitScript = `(function(){try{var seen=localStorage.getItem("hero-preloader-seen-v1")==="1";document.documentElement.setAttribute("data-hero-preloader",seen?"seen":"new");}catch(e){document.documentElement.setAttribute("data-hero-preloader","new");}})();`;
 export default function RootLayout({ children }) {
   return (
     <html

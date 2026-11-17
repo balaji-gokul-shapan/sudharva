@@ -163,6 +163,7 @@ const DISTANCE_KM = 3;      // shown on the counter
 const RUN_SECONDS = 3;    // how long the "race" lasts without sprint taps
 const MARKERS = Array.from({ length: DISTANCE_KM + 1 }, (_, i) => i);
 const CONFETTI = Array.from({ length: 28 }, (_, i) => i);
+const HERO_PRELOADER_STORAGE_KEY = "hero-preloader-seen-v1";
 
 // resets on a full page reload, survives client-side route changes
 let hasPlayedThisPageLoad = false;
@@ -179,8 +180,17 @@ export function HeroPreloader() {
     const heroImage = document.querySelector(".hero-img img");
     const html = document.documentElement;
     const previousPreloaderState = html.getAttribute("data-hero-preloader");
+    let hasSeenPreloader = false;
+    try {
+      hasSeenPreloader =
+        window.localStorage.getItem(HERO_PRELOADER_STORAGE_KEY) === "1";
+    } catch {
+      hasSeenPreloader = false;
+    }
     const shouldSkipPreloader =
-      hasPlayedThisPageLoad || previousPreloaderState === "seen";
+      hasPlayedThisPageLoad ||
+      previousPreloaderState === "seen" ||
+      hasSeenPreloader;
 
     // Ensure stale CSS/inline styles never keep the preloader hidden on mount.
     html.setAttribute(
@@ -246,6 +256,11 @@ export function HeroPreloader() {
     const finalizePreloader = () => {
       gsap.set(shell, { display: "none" });
       html.setAttribute("data-hero-preloader", "seen");
+      try {
+        window.localStorage.setItem(HERO_PRELOADER_STORAGE_KEY, "1");
+      } catch {
+        // Ignore storage restrictions and continue hiding preloader.
+      }
       document.documentElement.style.overflow = "";
     };
 

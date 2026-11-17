@@ -105,11 +105,11 @@ function RazorpayPopupContent() {
     selectCreateRegistrationRequestPayload,
   );
   const paymentConfirmation = useAppSelector(selectPaymentConfirmationResponse);
-  console.log(paymentConfirmation, "paymentConfirmation");
+  // console.log(paymentConfirmation, "paymentConfirmation");
   const paymentOrderConfirmation = useAppSelector(
     selectPaymentOrderConfirmation,
   );
-  console.log(paymentOrderConfirmation, "paymentOrderConfirmation");
+  // console.log(paymentOrderConfirmation, "paymentOrderConfirmation");
 
   const masterData = useAppSelector((state) => state.master.data);
   const registrationData = registrationDataFromStore || null;
@@ -205,18 +205,18 @@ function RazorpayPopupContent() {
   const premiumBibFeeRupees =
     Number(reduxPremiumBibFee || orderNotes?.premium_bib_fee || 0) / 100;
 
-  console.log(
-    {
-      totalAmountPaise,
-      premiumBibFeeRupees,
-      registrationAmountFromOrderRupees,
-      amountPaise,
-      premiumBibNumber,
-      premiumBibFee,
-      registrationAmountFromOrder,
-    },
-    "dsdsdssdsd",
-  );
+  // console.log(
+  //   {
+  //     totalAmountPaise,
+  //     premiumBibFeeRupees,
+  //     registrationAmountFromOrderRupees,
+  //     amountPaise,
+  //     premiumBibNumber,
+  //     premiumBibFee,
+  //     registrationAmountFromOrder,
+  //   },
+  //   "dsdsdssdsd",
+  // );
 
   const [status, setStatus] = useState({ type: "", message: "" });
   const [result, setResult] = useState({
@@ -257,12 +257,12 @@ function RazorpayPopupContent() {
     registrationData?.fee,
     receiptAmountRupees,
   );
-  console.log(registrationData, "registrationData");
+  // console.log(registrationData, "registrationData");
   const isPremiumMember =
     Boolean(reduxIsPremium) ||
     Boolean(paymentConfirmation?.premium_bib_number_status) ||
     Boolean(premiumBibNumber);
-  console.log(isPremiumMember, "isPremiumMember");
+  // console.log(isPremiumMember, "isPremiumMember");
   const referenceCode =
     registrationData?.participant_reference ||
     registrationRequestPayloadFromStore?.reference_code ||

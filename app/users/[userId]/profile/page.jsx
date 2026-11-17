@@ -364,7 +364,7 @@ async function ProfileContent({ params }) {
     "event_category",
   ]);
   const category = toDisplayText(categoryRaw);
-  console.log(categoryRaw,"categoryRaw");
+  // console.log(categoryRaw,"categoryRaw");
   
   const distance = getDistance(category);
   const participantRef = getValue(registration, ["participant_reference"]);
