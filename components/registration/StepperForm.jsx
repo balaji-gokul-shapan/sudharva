@@ -840,9 +840,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const [isSavingRegistration, setIsSavingRegistration] = useState(false);
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
 
-  // Check whether auth credentials are actually available. On app load,
-  // hydration from localStorage takes a few ms; the save button must not
-  // fire before that completes, otherwise the API receives no token.
+  
   const authAccessToken = useAppSelector(
     (state) => state.userRefreshToken?.accessToken || null
   );
@@ -1626,12 +1624,12 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
                         Registration details saved. Complete payment above to
                         finalize your entry.
                       </p>
-                      {effectiveRegistrationReference && (
+                      {/* {effectiveRegistrationReference && (
                         <p className="text-ink-soft/80">
                           Reference:{" "}
                           {String(effectiveRegistrationReference)}
                         </p>
-                      )}
+                      )} */}
                     </>
                   ) : error ? (
                     <p className="text-destructive font-semibold">{error}</p>

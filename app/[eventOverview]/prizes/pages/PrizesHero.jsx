@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { Reveal } from "@/components/animation/Reveal";
 import {
@@ -8,7 +9,10 @@ import {
   Target01Icon,
   UserGroupIcon,
 } from "@animateicons/react/huge";
-import { PRIZE_ROWS } from "@/components/registration/datas/data";
+import {
+  PRIZE_CATEGORY_GROUPS,
+  PRIZE_ROWS,
+} from "@/components/registration/datas/data";
 import { NumberTicker } from "@/components/animation/NumberTicker";
 import { MedalIcon } from "@/components/ui/icons/medal-icon";
 import { IndianRupeeIcon } from "@/components/ui/icons/indian-rupee-icon";
@@ -17,13 +21,18 @@ import Link from "next/link";
 import { GemIcon } from "@/components/ui/icons/gem-icon";
 import { cn } from "@/lib/utils";
 
-const withTotals = PRIZE_ROWS.map((row) => ({
-  ...row,
-  total: row.prize1 + row.prize2 + row.prize3,
-}));
+const withRowTotals = (rows = []) =>
+  rows.map((row) => ({
+    ...row,
+    total: row.prize1 + row.prize2 + row.prize3,
+  }));
 
-const TOTAL_GIFT_PRIZE = withTotals.reduce((sum, row) => sum + row.total, 0);
-const TOTAL_CATEGORIES = withTotals.length;
+const BASE_TOTALS = withRowTotals(PRIZE_ROWS);
+const DEFAULT_TOTAL_GIFT_PRIZE = BASE_TOTALS.reduce(
+  (sum, row) => sum + row.total,
+  0,
+);
+const DEFAULT_TOTAL_CATEGORIES = BASE_TOTALS.length;
 
 const tableHeader = [
   {
@@ -63,7 +72,55 @@ const PrizeRibbon = ({ amount, variant = "total" }) => {
 };
 const currency = (value) => new Intl.NumberFormat("en-IN").format(value);
 
+const getPodiumTotalsForRows = (rows = []) => {
+  return rows.reduce(
+    (acc, row) => {
+      acc.prize1 += Number(row?.prize1 || 0);
+      acc.prize2 += Number(row?.prize2 || 0);
+      acc.prize3 += Number(row?.prize3 || 0);
+      return acc;
+    },
+    { prize1: 0, prize2: 0, prize3: 0 },
+  );
+};
+
 const PrizesHero = () => {
+  const [activePrizeGroup, setActivePrizeGroup] = useState("all");
+
+  const selectedPrizeGroup = useMemo(
+    () =>
+      PRIZE_CATEGORY_GROUPS.find((group) => group.key === activePrizeGroup) ||
+      PRIZE_CATEGORY_GROUPS[0],
+    [activePrizeGroup],
+  );
+
+  const withTotals = useMemo(
+    () => withRowTotals(selectedPrizeGroup?.rows || PRIZE_ROWS),
+    [selectedPrizeGroup],
+  );
+
+  const totalGiftPrize = useMemo(
+    () => withTotals.reduce((sum, row) => sum + row.total, 0),
+    [withTotals],
+  );
+  const totalCategories = withTotals.length || DEFAULT_TOTAL_CATEGORIES;
+
+  const activePodiumLadder = useMemo(() => {
+    const fallbackGroup = PRIZE_CATEGORY_GROUPS.find(
+      (group) => group.key !== "all",
+    );
+    const sourceGroup =
+      selectedPrizeGroup?.key === "all"
+        ? fallbackGroup
+        : selectedPrizeGroup || fallbackGroup;
+
+    return {
+      key: sourceGroup?.key || "all",
+      label: sourceGroup?.label || "All",
+      ...getPodiumTotalsForRows(sourceGroup?.rows || []),
+    };
+  }, [selectedPrizeGroup]);
+
   return (
     <section className="relative min-h-screen overflow-x-hidden bg-[var(--color-surface)] text-[var(--color-ink)]">
       <div
@@ -97,7 +154,7 @@ const PrizesHero = () => {
             <p className="mx-auto max-w-3xl text-base leading-7 text-[var(--color-ink-soft)] sm:text-lg">
               A transparent prize structure for every division. Top three
               finishers in each category win cash rewards, with a total gift
-              pool of Rs. {currency(TOTAL_GIFT_PRIZE)}/-.
+              pool of Rs. {currency(totalGiftPrize || DEFAULT_TOTAL_GIFT_PRIZE)}/-.
             </p>
           </Reveal>
 
@@ -106,17 +163,17 @@ const PrizesHero = () => {
               {[
                 {
                   label: "Total Gift Prize",
-                  value: `Rs. ${currency(TOTAL_GIFT_PRIZE)}/-`,
+                  value: `Rs. ${currency(totalGiftPrize || DEFAULT_TOTAL_GIFT_PRIZE)}/-`,
                   icon: Award01Icon,
                 },
                 {
                   label: "Per Category Prize",
-                  value: `Rs. ${currency(TOTAL_GIFT_PRIZE / TOTAL_CATEGORIES)}/-`,
+                  value: `Rs. ${currency((totalGiftPrize || DEFAULT_TOTAL_GIFT_PRIZE) / totalCategories)}/-`,
                   icon: MoneyBag01Icon,
                 },
                 {
                   label: "Prize Categories",
-                  value: `${TOTAL_CATEGORIES}`,
+                  value: `${totalCategories}`,
                   icon: UserGroupIcon,
                 },
                 {
@@ -152,17 +209,103 @@ const PrizesHero = () => {
       </section>
 
       <section className="container-page relative mx-auto max-w-7xl px-4 pb-24">
+
+        
         <Reveal preset="fade-up" delay={0}>
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="text-xl font-bold tracking-tight text-primary sm:text-2xl">
-              Prize Matrix
-            </h2>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-primary sm:text-2xl">
+                Prize Matrix
+              </h2>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                Showing: {selectedPrizeGroup?.label || "All"}
+              </p>
+            </div>
             <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
               Transparent Breakdown
             </span>
           </div>
-        </Reveal>
 
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {PRIZE_CATEGORY_GROUPS.map((group) => {
+              const isActive = group.key === selectedPrizeGroup?.key;
+              return (
+                <button
+                  key={group.key}
+                  type="button"
+                  onClick={() => setActivePrizeGroup(group.key)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] transition",
+                    isActive
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : "border-border bg-[var(--color-surface)] text-[var(--color-ink-soft)] hover:border-accent/40 hover:text-[var(--color-ink)]",
+                  )}
+                >
+                  {group.label}
+                </button>
+              );
+            })}
+          </div>
+        </Reveal>
+  <Reveal preset="fade-up" delay={0.1} className="mt-10 block">
+          <div className="rounded-3xl border border-border/70 bg-[var(--color-surface)]/75 p-4 my-4 shadow-[0_20px_70px_-35px_rgba(10,10,30,0.35)] backdrop-blur sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h3 className="text-lg font-bold text-primary sm:text-xl">
+                Podium Ladder by Category
+              </h3>
+              <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                1st / 2nd / 3rd
+              </span>
+            </div>
+
+            <motion.article
+              key={activePodiumLadder.key}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="mx-auto max-w-xl overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-4"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-soft)]">
+                {activePodiumLadder.label}
+              </p>
+
+              <div className="mt-4 flex items-end justify-center gap-2">
+                <div className="flex w-1/3 flex-col items-center">
+                  <span className="mb-1 rounded-full border border-slate-400/50 bg-slate-300/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-700">
+                    2nd
+                  </span>
+                  <div className="flex min-h-20 w-full items-end justify-center rounded-t-xl border border-slate-400/50 bg-linear-to-b from-slate-100 to-slate-200 px-1 pb-2">
+                    <span className="text-[11px] font-extrabold text-slate-700">
+                      ₹{currency(activePodiumLadder.prize2)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex w-1/3 flex-col items-center">
+                  <span className="mb-1 rounded-full border border-amber-500/50 bg-amber-300/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                    1st
+                  </span>
+                  <div className="flex min-h-28 w-full items-end justify-center rounded-t-xl border border-amber-500/50 bg-linear-to-b from-amber-100 to-amber-200 px-1 pb-2">
+                    <span className="text-[11px] font-extrabold text-amber-800">
+                      ₹{currency(activePodiumLadder.prize1)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex w-1/3 flex-col items-center">
+                  <span className="mb-1 rounded-full border border-orange-500/50 bg-orange-300/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-800">
+                    3rd
+                  </span>
+                  <div className="flex min-h-16 w-full items-end justify-center rounded-t-xl border border-orange-500/50 bg-linear-to-b from-orange-100 to-orange-200 px-1 pb-2">
+                    <span className="text-[11px] font-extrabold text-orange-800">
+                      ₹{currency(activePodiumLadder.prize3)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </motion.article>
+          </div>
+        </Reveal>
         <Reveal preset="fade-up" delay={0.06} className="hidden lg:block">
           <div className="overflow-hidden rounded-3xl border border-border/70 bg-[var(--color-surface)]/70 shadow-[0_20px_70px_-35px_rgba(10,10,30,0.35)] backdrop-blur">
             <div className="overflow-x-auto">
@@ -266,6 +409,8 @@ const PrizesHero = () => {
           ))}
         </div>
 
+      
+
         <Reveal preset="fade-up" delay={0.12} className="mt-10 block">
           <div className="relative overflow-hidden rounded-2xl flex flex-col sm:flex-row items-center  border border-accent/30 bg-linear-to-r from-accent/10 via-primary/10 to-volunteer/10 p-6">
             <div
@@ -284,7 +429,7 @@ const PrizesHero = () => {
                   className="mr-2 inline-block size-6 text-accent sm:size-7 lg:size-8"
                 />
                 <NumberTicker
-                  value={`Rs. ${currency(TOTAL_GIFT_PRIZE)}/-`}
+                  value={`Rs. ${currency(totalGiftPrize || DEFAULT_TOTAL_GIFT_PRIZE)}/-`}
                   className="text-2xl font-bold text-accent sm:text-4xl leading-none whitespace-nowrap"
                 />
               </div>
@@ -309,7 +454,7 @@ const PrizesHero = () => {
                   href="/register"
                   className="group flex shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap"
                 >
-                  Claim Your Prize
+                  Register Now
                 </Link>
               </RainbowButton>
             </div>

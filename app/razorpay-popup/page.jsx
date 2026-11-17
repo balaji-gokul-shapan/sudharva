@@ -129,7 +129,7 @@ function RazorpayPopupContent() {
   } = useAppSelector(selectRazorpayOrderConfig);
   const isOrderLoading = useAppSelector(selectCreatePaymentOrderLoading);
   const getPaymentOrder = useAppSelector(selectCreatePaymentOrder);
-  console.log(getPaymentOrder, "getPaymentOrder");
+  console.log(selectRazorpayOrderConfig, "selectRazorpayOrderConfig");
 
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const hasAutoOpenedRef = useRef(false);
@@ -187,6 +187,11 @@ function RazorpayPopupContent() {
         : {},
     [reduxOrderNotes],
   );
+  const hasOrderNotes = Object.keys(orderNotes).length > 0;
+  const paymentOrderData =
+    getPaymentOrder?.order && typeof getPaymentOrder.order === "object"
+      ? getPaymentOrder.order
+      : {};
   const premiumBibNumber =
     String(reduxPremiumBibNumber || orderNotes?.premium_bib_number || "") || "";
   const premiumBibFee =
@@ -339,7 +344,7 @@ function RazorpayPopupContent() {
 
   const containerStyle = useMemo(
     () => ({
-      fontFamily: "-apple-system, Segoe UI, Roboto, sans-serif",
+      fontFamily: "var(--font-sans), ui-sans-serif, system-ui, sans-serif",
       maxWidth: 560,
       margin: "40px auto",
       padding: "0 16px",
@@ -421,15 +426,24 @@ function RazorpayPopupContent() {
   };
 
   useEffect(() => {
-    if (hasRequiredCheckoutData) return;
     if (!effectiveReference) return;
     if (orderFetchAttemptedRef.current) return;
+
+    // Even if key/order/amount are already passed via URL, fetch order once
+    // to hydrate notes and payment metadata for receipt and checkout notes.
+    const shouldHydrateOrderMeta =
+      !hasRequiredCheckoutData ||
+      !hasOrderNotes ||
+      !paymentOrderData?.payment_status ||
+      !paymentOrderData?.registration_status;
+
+    if (!shouldHydrateOrderMeta) return;
 
     orderFetchAttemptedRef.current = true;
 
     const fetchOrder = async () => {
       try {
-        await dispatch(
+        const response = await dispatch(
           createPaymentOrder({
             participant_reference: effectiveReference,
             ...(payableFromParams > 0
@@ -437,6 +451,8 @@ function RazorpayPopupContent() {
               : {}),
           }),
         ).unwrap();
+        console.log(response,"response");
+        return response;
       } catch (error) {
         show(
           "error",
@@ -452,8 +468,11 @@ function RazorpayPopupContent() {
   }, [
     dispatch,
     effectiveReference,
+    hasOrderNotes,
     hasRequiredCheckoutData,
     payableFromParams,
+    paymentOrderData?.payment_status,
+    paymentOrderData?.registration_status,
   ]);
 
   const copyField = useCallback(async (value) => {
@@ -767,6 +786,50 @@ function RazorpayPopupContent() {
       />
 
       <main style={containerStyle}>
+        {/* {hasOrderNotes ? (
+          <section
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 16,
+              background: "#ffffff",
+              marginBottom: 12,
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
+              Order Summary
+            </h2>
+            <p style={{ ...mutedStyle, marginTop: 6 }}>
+              Participant: {String(orderNotes?.participant_reference || "-")} | Amount: {" "}
+              {String(orderNotes?.currency || orderCurrency || "INR")} {" "}
+              {String(orderNotes?.final_amount || "0.00")}
+            </p>
+            <div style={{ ...mutedStyle, marginTop: 8, lineHeight: 1.7 }}>
+              <div>Coupon: {String(orderNotes?.coupon_code || "Not Applied")}</div>
+              <div>
+                Discount: {String(orderNotes?.currency || orderCurrency || "INR")} {" "}
+                {String(orderNotes?.coupon_discount || "0.00")}
+              </div>
+              <div>
+                Original: {String(orderNotes?.currency || orderCurrency || "INR")} {" "}
+                {String(orderNotes?.registration_amount || "0.00")}
+              </div>
+              <div>
+                Premium Bib Fee: {String(orderNotes?.currency || orderCurrency || "INR")} {" "}
+                {String(orderNotes?.premium_bib_fee || "0.00")}
+              </div>
+              <div>
+                Final: {String(orderNotes?.currency || orderCurrency || "INR")} {" "}
+                {String(orderNotes?.final_amount || "0.00")}
+              </div>
+              <div>
+                Registration Status: {String(paymentOrderData?.registration_status || "-")}
+              </div>
+              <div>Payment Status: {String(paymentOrderData?.payment_status || "-")}</div>
+            </div>
+          </section>
+        ) : null} */}
+
         {isPreparingCheckout ? (
           <section
             style={{
@@ -999,6 +1062,8 @@ function RazorpayPopupContent() {
                   isPremiumMember={isPremiumMember}
                   className="mx-auto"
                   referenceCode={referenceCode}
+                  hasOrderNotes={hasOrderNotes}
+                  orderNotes={orderNotes}
                 />
 
                 {/* <div style={{ marginTop: 12 }}>

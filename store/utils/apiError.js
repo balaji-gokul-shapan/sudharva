@@ -43,6 +43,58 @@ const sanitizeMessage = (
   return text;
 };
 
+const toHumanFieldLabel = (fieldName = "") => {
+  const normalized = String(fieldName || "")
+    .replace(/_/g, " ")
+    .trim();
+
+  if (!normalized) return "Field";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
+const collectStrings = (value) => {
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(collectStrings).filter(Boolean);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap(collectStrings).filter(Boolean);
+  }
+
+  return [];
+};
+
+const getFieldValidationMessage = (responseData) => {
+  if (!responseData || typeof responseData !== "object") return "";
+
+  const reservedKeys = new Set(["message", "error", "detail"]);
+
+  const messages = Object.entries(responseData)
+    .flatMap(([field, value]) => {
+      if (reservedKeys.has(field)) return [];
+
+      const parts = collectStrings(value)
+        .map((part) => sanitizeMessage(part, { fallback: "", htmlFallback: "" }))
+        .filter(Boolean);
+
+      if (!parts.length) return [];
+
+      if (field === "non_field_errors") {
+        return parts;
+      }
+
+      const label = toHumanFieldLabel(field);
+      return parts.map((part) => `${label}: ${part}`);
+    })
+    .filter(Boolean);
+
+  return messages.join(" ").trim();
+};
+
 export const extractApiErrorMessage = (
   error,
   {
@@ -61,6 +113,11 @@ export const extractApiErrorMessage = (
   const directText = getFirstStringFromUnknown(directMessage);
   if (directText) {
     return sanitizeMessage(directText, { fallback, htmlFallback });
+  }
+
+  const fieldValidationMessage = getFieldValidationMessage(responseData);
+  if (fieldValidationMessage) {
+    return sanitizeMessage(fieldValidationMessage, { fallback, htmlFallback });
   }
 
   const nestedText = getFirstStringFromUnknown(responseData);

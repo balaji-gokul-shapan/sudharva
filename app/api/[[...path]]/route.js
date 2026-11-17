@@ -85,12 +85,16 @@ async function proxyRequest(request, { params }) {
     );
   }
 
+  const method = request.method.toUpperCase();
   const upstreamUrl = new URL(baseUrl);
   const basePath = upstreamUrl.pathname.replace(/\/+$/, "");
   const apiPath = path.map((segment) => encodeURIComponent(segment)).join("/");
   const trailingSlash = new URL(request.url).pathname.endsWith("/");
+  const isCouponRoute = path[0] === "coupons";
+  const shouldForceTrailingSlash =
+    isCouponRoute && !trailingSlash && !["GET", "HEAD"].includes(method);
   upstreamUrl.pathname = `${basePath}${getApiPrefix(baseUrl)}/${apiPath}${
-    trailingSlash ? "/" : ""
+    trailingSlash || shouldForceTrailingSlash ? "/" : ""
   }`;
   upstreamUrl.search = new URL(request.url).search;
   const resolvedUpstreamUrl = upstreamUrl.toString();
@@ -132,7 +136,6 @@ async function proxyRequest(request, { params }) {
     }
   }
 
-  const method = request.method.toUpperCase();
   const hasBody = !["GET", "HEAD"].includes(method);
   const shouldFollowRedirects = ["GET", "HEAD"].includes(method);
   const requestBody = hasBody ? await request.arrayBuffer() : undefined;

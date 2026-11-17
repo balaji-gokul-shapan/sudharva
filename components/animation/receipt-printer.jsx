@@ -106,9 +106,16 @@ function Receipt({
   participantName,
   participantPhone,
   participantCategory,
-  referenceCode
+  referenceCode,
+  orderNotes = {},
 }) {
   const money = (n) => n.toFixed(2);
+  const toAmount = (value) => {
+    const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const hasOrderNotes =
+    orderNotes && typeof orderNotes === "object" && Object.keys(orderNotes).length > 0;
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
   const taxAmount = subtotal * tax;
   const effectiveBase = Number.isFinite(Number(baseAmt))
@@ -119,7 +126,28 @@ function Receipt({
       ? Number(totalAmount)
       : effectiveBase + taxAmount;
 
-  const premiumBibAmount = effectiveTotal - effectiveBase;
+  const notesRegistrationAmount = toAmount(orderNotes?.registration_amount);
+  const notesPremiumBibFee = toAmount(orderNotes?.premium_bib_fee);
+  const notesCouponDiscount = toAmount(orderNotes?.coupon_discount);
+  const notesFinalAmount = toAmount(orderNotes?.final_amount);
+
+  const displayRegistrationAmount =
+    hasOrderNotes && notesRegistrationAmount > 0
+      ? notesRegistrationAmount
+      : effectiveBase;
+  const displayPremiumBibAmount =
+    hasOrderNotes && notesPremiumBibFee > 0
+      ? notesPremiumBibFee
+      : Math.max(effectiveTotal - effectiveBase, 0);
+  const displayCouponDiscount =
+    hasOrderNotes && notesCouponDiscount > 0 ? notesCouponDiscount : 0;
+  const displayTotalAmount =
+    hasOrderNotes && notesFinalAmount > 0
+      ? notesFinalAmount
+      : effectiveTotal;
+  const displayCurrency = String(orderNotes?.currency || currency || "");
+
+  const premiumBibAmount = displayPremiumBibAmount;
   const barcodeBars = toBarcodeBars(referenceCode || order);
 
   console.log(effectiveTotal,"effectiveTotal");
@@ -170,7 +198,8 @@ function Receipt({
             {item.name}
           </span>
           <span className="shrink-0 text-right tabular-nums">
-            {money(item.quantity * item.price)}
+            {/* {money(item.quantity * item.price)} */}
+            {money(displayRegistrationAmount)}
           </span>
         </p>
       ))}
@@ -182,7 +211,7 @@ function Receipt({
       </p>
       <p className="flex justify-between text-zinc-500">
         <span>Registration Price</span>
-        <span className="tabular-nums">{money(effectiveBase)}</span>
+        <span className="tabular-nums">{money(displayRegistrationAmount)}</span>
       </p>
       {isPremiumMember ? (
         <p className="flex justify-between text-zinc-500">
@@ -190,20 +219,30 @@ function Receipt({
           <span className="tabular-nums">{money(premiumBibAmount) ?? 500}</span>
         </p>
       ) : null}
-      <p className="flex justify-between text-zinc-500">
-        <span>Tax {Math.round(tax * 100)}%</span>
-        <span className="tabular-nums">{money(taxAmount)}</span>
-      </p>
-      <p className="flex justify-between text-zinc-500">
-        <span>Subtotal</span>
-        <span className="tabular-nums">{money(subtotal)}</span>
-      </p>
+      {displayCouponDiscount > 0 ? (
+        <p className="flex justify-between text-zinc-500">
+          <span>Coupon Discount</span>
+          <span className="tabular-nums">- {money(displayCouponDiscount)}</span>
+        </p>
+      ) : null}
+      {!hasOrderNotes ? (
+        <>
+          <p className="flex justify-between text-zinc-500">
+            <span>Tax {Math.round(tax * 100)}%</span>
+            <span className="tabular-nums">{money(taxAmount)}</span>
+          </p>
+          <p className="flex justify-between text-zinc-500">
+            <span>Subtotal</span>
+            <span className="tabular-nums">{money(subtotal)}</span>
+          </p>
+        </>
+      ) : null}
 
       <p className="mt-1 flex justify-between font-semibold text-[13px]">
         <span>Total Amount</span>
         <span className="tabular-nums">
-          {currency}
-          {money(effectiveTotal)}
+          {displayCurrency}{" "}
+          {money(displayTotalAmount)}
         </span>
       </p>
       <div aria-hidden="true" className="mt-4 flex h-9 justify-center gap-px">
@@ -259,6 +298,8 @@ export default function ReceiptPrinter({
   className,
   paymentDate,
   referenceCode,
+  hasOrderNotes = false,
+  orderNotes = {},
 }) {
   const [phase, setPhase] = useState("idle");
   const [torn, setTorn] = useState(false);
@@ -908,6 +949,7 @@ export default function ReceiptPrinter({
             isPremiumMember={isPremiumMember}
             paymentDate={paymentDate}
             referenceCode={referenceCode}
+            orderNotes={orderNotes}
           />
         </div>
       </div>
@@ -944,6 +986,7 @@ export default function ReceiptPrinter({
             isPremiumMember={isPremiumMember}
             paymentDate={paymentDate}
             referenceCode={referenceCode}
+            orderNotes={orderNotes}
           />
         </div>
       </div>

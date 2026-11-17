@@ -4,7 +4,6 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Lottie } from "lottie-react";
 import gsap from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
@@ -29,7 +28,6 @@ import { heroRuningData, META } from "../../../datas/homepage/data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LineShadowText } from "@/components/animation/line-shadow-text";
-import preloaderAnimation from "../../../../public/image/cta/preloader.json";
 
 gsap.registerPlugin(CustomEase, SplitText);
 
@@ -148,312 +146,285 @@ function animateTextInScope(scope, selector, textAnimations) {
 /* Replays on every full page reload                        */
 /* ------------------------------------------------------- */
 
+
+import dynamic from "next/dynamic";
+
+
+// ...keep your other imports (icons, Reveal, Stagger, etc.) EXCEPT:
+//   remove  `import { Lottie } from "lottie-react"`
+//   remove  `import preloaderAnimation from ".../preloader.json"`
+//   remove  CustomEase import + CustomEase.create(...)
+
+
+gsap.registerPlugin(SplitText);
+
+/* ---------- config ---------- */
+const DISTANCE_KM = 3;      // shown on the counter
+const RUN_SECONDS = 3;    // how long the "race" lasts without sprint taps
+const MARKERS = Array.from({ length: DISTANCE_KM + 1 }, (_, i) => i);
+const CONFETTI = Array.from({ length: 28 }, (_, i) => i);
+
+// resets on a full page reload, survives client-side route changes
+let hasPlayedThisPageLoad = false;
+
+/* ... createSplitTextAnimations + animateTextInScope stay unchanged ... */
+
 export function HeroPreloader() {
   const scopeRef = useRef(null);
 
   useEffect(() => {
-    const PRELOADER_SESSION_KEY = "sudharva:hero-preloader-seen:v1";
-    const PRELOADER_MAIN_DURATION = 3;
     const shell = scopeRef.current;
-
     if (!shell) return;
 
-    let mounted = true;
-    let preloaderTimeline;
-    let heroTimeline;
-
-    const splitInstances = [];
-    const textAnimations = createSplitTextAnimations(splitInstances);
-
-    const preloaderBg = shell.querySelector(".preloader-bg");
-    const preloaderMask = shell.querySelector(".preloader-mask");
-    const preloaderLogo = shell.querySelector(".preloader-logo");
-    const preloaderSunText = shell.querySelector(".preloader-sun-text");
-    const progressBar = shell.querySelector(
-      ".preloader-progress-bar"
-    );
-
     const heroImage = document.querySelector(".hero-img img");
+    const html = document.documentElement;
+    const previousPreloaderState = html.getAttribute("data-hero-preloader");
+    const shouldSkipPreloader =
+      hasPlayedThisPageLoad || previousPreloaderState === "seen";
 
-    const revealHeroImmediately = () => {
-      [
-        ".hero-main-title",
-        ".hero-tagline",
-        ".hero-subtitle",
-        ".hero-body",
-      ].forEach((selector) => {
-        const node = document.querySelector(selector);
-        if (node) {
-          gsap.set(node, { visibility: "visible", opacity: 1, clearProps: "transform" });
-        }
-      });
-
-      const divider = document.querySelector(".hero-divider");
-      if (divider) {
-        gsap.set(divider, { scaleY: 1, transformOrigin: "top" });
-      }
-    };
-
-    const shouldSkipPreloader = (() => {
-      try {
-        return sessionStorage.getItem(PRELOADER_SESSION_KEY) === "1";
-      } catch {
-        return false;
-      }
-    })();
-
-    if (shouldSkipPreloader) {
-      gsap.set(shell, {
-        display: "none",
-        autoAlpha: 0,
-        pointerEvents: "none",
-      });
-
-      if (heroImage) {
-        gsap.set(heroImage, { scale: 1, transformOrigin: "center center" });
-      }
-
-      revealHeroImmediately();
-      return;
-    }
-
-    /*
-     * RESET
-     *
-     * The preloader may have been hidden by the previous animation.
-     * Restore its initial state whenever this component mounts.
-     */
-
+    // Ensure stale CSS/inline styles never keep the preloader hidden on mount.
+    html.setAttribute(
+      "data-hero-preloader",
+      shouldSkipPreloader ? "seen" : "new",
+    );
     gsap.set(shell, {
+      clearProps: "display,opacity,visibility,pointerEvents",
       display: "block",
       autoAlpha: 1,
       pointerEvents: "auto",
     });
 
-    shell.classList.remove("is-preloader-running");
-    shell.style.setProperty(
-      "--preloader-main-duration",
-      `${PRELOADER_MAIN_DURATION}s`
-    );
-
-    gsap.set(preloaderBg, {
-      scaleX: 0,
-      opacity: 1,
-      transformOrigin: "left center",
-    });
-
-    gsap.set(preloaderMask, {
-      scale: 1,
-    });
-
-    gsap.set([preloaderLogo, progressBar], {
-      autoAlpha: 1,
-    });
-
-    gsap.set(preloaderSunText, {
-      autoAlpha: 0,
-      yPercent: 18,
-    });
-
-    if (heroImage) {
-      gsap.set(heroImage, {
-        scale: 2.5,
-        // transformOrigin: "center center",
+    const revealHeroImmediately = () => {
+      [".hero-main-title", ".hero-tagline", ".hero-subtitle", ".hero-body"].forEach((sel) => {
+        const node = document.querySelector(sel);
+        if (node) gsap.set(node, { visibility: "visible", opacity: 1, clearProps: "transform" });
       });
-    }
-
-    /*
-     * The preloader and hero are separate DOM sections.
-     * Search document for hero text, but keep preloader
-     * selectors scoped to this component.
-     */
-
-    const animateHeroText = (selector) => {
-      if (!mounted) return;
-
-      animateTextInScope(
-        document,
-        selector,
-        textAnimations
-      );
-    };
-
-    const runIntro = () => {
-      if (!mounted) return;
-
-      try {
-        sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-      } catch {
-        // Ignore storage failures and continue animation.
-      }
-
-      shell.classList.add("is-preloader-running");
-
-      /*
-       * PRELOADER TIMELINE
-       */
-
-      preloaderTimeline = gsap.timeline();
-
-      preloaderTimeline
-        .to(preloaderBg, {
-          scaleX: 1,
-          duration: PRELOADER_MAIN_DURATION,
-          ease: "power2.inOut",
-        })
-
-        .to(
-          preloaderSunText,
-          {
-            autoAlpha: 1,
-            yPercent: 0,
-            duration: 0.4,
-            ease: "power2.out",
-          },
-          PRELOADER_MAIN_DURATION * 0.62
-        )
-
-        .to(
-          preloaderMask,
-          {
-            scale: 3,
-            duration: PRELOADER_MAIN_DURATION,
-            ease: "power2.inOut",
-          },
-          // "-=0.15"
-        )
-
-        .to(
-          [preloaderBg, preloaderLogo, progressBar],
-          {
-            autoAlpha: 0,
-            duration: 0.75,
-            ease: "power2.inOut",
-          },
-          PRELOADER_MAIN_DURATION - 0.75
-        )
-
-        .to(
-          heroImage || shell,
-          {
-            scale: heroImage ? 1 : 1,
-            duration: PRELOADER_MAIN_DURATION,
-            ease: "expoScale(0.5,7,power1.out)",
-          },
-          "<"
-        )
-
-        .to(
-          shell,
-          {
-            autoAlpha: 0,
-            duration: 0.5,
-            pointerEvents: "none",
-          },
-          "<0.2"
-        )
-
-        .set(shell, {
-          display: "none",
-        });
-
-      preloaderTimeline.eventCallback("onComplete", () => {
-        shell.classList.remove("is-preloader-running");
-      });
-
-      /*
-       * HERO TEXT TIMELINE
-       *
-       * Do not add another GSAP animation inside HeroHeading.
-       * This timeline is responsible for revealing the hero text.
-       */
-
-      heroTimeline = gsap.timeline({
-        delay: 0.2,
-      });
-
-      heroTimeline.call(() => {
-        animateHeroText(".hero-tagline");
-      });
-
       const divider = document.querySelector(".hero-divider");
-      if (divider) {
-        heroTimeline.fromTo(
-          divider,
-          {
-            scaleY: 0,
-            transformOrigin: "top",
-          },
-          {
-            scaleY: 1,
-            duration: 0.5,
-            ease: "back.inOut",
-          },
-          "+=0.4",
-        );
+      if (divider) gsap.set(divider, { scaleY: 1, transformOrigin: "top" });
+    };
+
+    if (shouldSkipPreloader) {
+      hasPlayedThisPageLoad = true;
+      html.setAttribute("data-hero-preloader", "seen");
+      gsap.set(shell, { display: "none" });
+      if (heroImage) gsap.set(heroImage, { scale: 1 });
+      revealHeroImmediately();
+      return;
+    }
+
+    /* ---------- elements ---------- */
+    const q = (s) => shell.querySelector(s);
+    const panels = shell.querySelectorAll(".pl-panel");
+    const content = q(".pl-content");
+    const track = q(".pl-track");
+    const runner = q(".pl-runner");
+    const fill = q(".pl-fill");
+    const lane = q(".pl-lane");
+    const kmEl = q(".pl-km");
+    const pctEl = q(".pl-pct");
+    const statusEl = q(".pl-status");
+    const hint = q(".pl-hint");
+    const tapeL = q(".pl-tape-l");
+    const tapeR = q(".pl-tape-r");
+    const confetti = shell.querySelectorAll(".pl-confetti i");
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const splitInstances = [];
+    const textAnimations = createSplitTextAnimations(splitInstances);
+    const animateHeroText = (sel) => animateTextInScope(document, sel, textAnimations);
+
+    const state = { p: 0 };   // race progress 0 → 1
+    const boost = { v: 1 };   // sprint multiplier
+    let finished = false;
+    let cancelled = false;
+    let lastStatus = "";
+    let sprintCall;
+    let fin;
+    let forceExitTimer;
+    let finishExitTimer;
+
+    const finalizePreloader = () => {
+      gsap.set(shell, { display: "none" });
+      html.setAttribute("data-hero-preloader", "seen");
+      document.documentElement.style.overflow = "";
+    };
+
+    /* ---------- initial state ---------- */
+    gsap.set(shell, { display: "block", autoAlpha: 1 });
+    gsap.set(panels, { yPercent: 0 });
+    gsap.set(confetti, { autoAlpha: 0 });
+    if (heroImage) gsap.set(heroImage, { scale: 2.5, transformOrigin: "center center" });
+    document.documentElement.style.overflow = "hidden";
+
+    const introNodes = [".pl-eyebrow", ".pl-title", ".pl-sub", ".pl-track", ".pl-meta", ".pl-hint"]
+      .map(q)
+      .filter(Boolean);
+    gsap.set(introNodes, { autoAlpha: 1, y: 0 });
+
+    gsap.from(introNodes, {
+      y: 24, autoAlpha: 0, duration: 0.6, stagger: 0.08, ease: "power3.out",
+    });
+
+    /* ---------- the race ---------- */
+    const run = gsap.timeline({ paused: true, onComplete: finish });
+
+    function applySpeed() {
+      run.timeScale(boost.v);
+    }
+
+    function render() {
+      if (!track || !runner || !fill || !lane || !kmEl || !pctEl || !statusEl) {
+        return;
       }
 
-      heroTimeline.call(
-        () => animateHeroText(".hero-main-title"),
-        [],
-        "-=0.25"
-      );
+      const w = track.clientWidth;
+      const rw = runner.offsetWidth;
+      const startX = w * 0.08;
+      const endX = w * 0.92;
+      // runner's chest (~65% of sprite width) travels from startX to endX
+      gsap.set(runner, { x: startX + state.p * (endX - startX) - rw * 0.65 });
+      fill.style.transform = `scaleX(${state.p})`;
+      lane.style.backgroundPositionX = `${-state.p * 900}px`;
+      kmEl.textContent = (state.p * DISTANCE_KM).toFixed(1);
+      pctEl.textContent = `${Math.round(state.p * 100)}%`;
 
-      heroTimeline.call(
-        () => animateHeroText(".hero-subtitle"),
-        [],
-        "<0.2"
-      );
-
-      heroTimeline.call(
-        () => animateHeroText(".hero-body"),
-        [],
-        "<0.1"
-      );
-    };
-
-    /*
-     * Wait for fonts so SplitText calculates the correct
-     * character and line positions.
-     */
-
-    let cancelled = false;
-
-    const startAnimation = () => {
-      if (cancelled || !mounted) return;
-      runIntro();
-    };
-
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(startAnimation);
-    } else {
-      startAnimation();
+      const s =
+        state.p < 0.25 ? "Warming up"
+        : state.p < 0.6 ? "Finding rhythm"
+        : state.p < 0.9 ? "Pushing on"
+        : "Final stretch";
+      if (s !== lastStatus) {
+        statusEl.textContent = s;
+        lastStatus = s;
+      }
+      applySpeed();
     }
+
+    run.to(state, {
+      p: 1,
+      duration: reduceMotion ? 0.8 : RUN_SECONDS,
+      ease: "power1.inOut",
+      onUpdate: render,
+    });
+    render();
+
+    /* ---------- interactivity: tap / click / space = sprint ---------- */
+    function sprint() {
+      if (finished) return;
+      shell.classList.add("is-sprinting");
+      sprintCall?.kill();
+      sprintCall = gsap.delayedCall(0.8, () => shell.classList.remove("is-sprinting"));
+
+      gsap.killTweensOf(boost);
+      gsap
+        .timeline()
+        .to(boost, { v: 2.8, duration: 0.12, onUpdate: applySpeed })
+        .to(boost, { v: 1, duration: 1.1, ease: "power2.out", onUpdate: applySpeed }, "+=0.25");
+
+      gsap.fromTo(kmEl, { scale: 1.18 }, { scale: 1, duration: 0.3, ease: "back.out(3)", overwrite: true });
+    }
+    const onKey = (e) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        sprint();
+      }
+    };
+    shell.addEventListener("pointerdown", sprint);
+    window.addEventListener("keydown", onKey);
+
+    /* ---------- finish: tape breaks, confetti, gates open, hero reveals ---------- */
+    function finish() {
+      if (finished) return;
+      finished = true;
+      shell.classList.remove("is-sprinting");
+      shell.removeEventListener("pointerdown", sprint);
+      window.removeEventListener("keydown", onKey);
+
+      // Hide race track immediately once finish triggers.
+      // if (track) gsap.set(track, { autoAlpha: 0, display: "none" });
+
+      if (statusEl) statusEl.textContent = "Finish!";
+      if (kmEl) kmEl.textContent = DISTANCE_KM.toFixed(1);
+      if (pctEl) pctEl.textContent = "100%";
+
+      fin = gsap.timeline();
+
+      fin
+        .to(hint, { autoAlpha: 0, duration: 0.2 }, 0)
+        .to(tapeL, { rotate: -35, x: -50, y: 50, autoAlpha: 0, duration: 0.7, ease: "power2.out" }, 0)
+        .to(tapeR, { rotate: 35, x: 50, y: 50, autoAlpha: 0, duration: 0.7, ease: "power2.out" }, 0)
+        .to(runner, { y: -14, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" }, 0)
+        .set(confetti, { autoAlpha: 1 }, 0)
+        .to(confetti, {
+          x: () => gsap.utils.random(-280, 280),
+          y: () => gsap.utils.random(-280, -60),
+          rotation: () => gsap.utils.random(-540, 540),
+          duration: 0.9,
+          ease: "power3.out",
+        }, 0)
+        .to(confetti, { y: "+=170", autoAlpha: 0, duration: 0.7, ease: "power1.in" }, ">-0.3")
+
+        // gates open
+        .to(content, { autoAlpha: 0, duration: 0.18, ease: "power2.out" }, 1.28)
+        .to(panels[0], { yPercent: -100, duration: 1.1, ease: "power4.inOut" }, 1.4)
+        .to(panels[1], { yPercent: 100, duration: 1.1, ease: "power4.inOut" }, 1.4)
+        // As soon as panels finish opening, remove preloader shell completely.
+        .call(finalizePreloader, null, 2.52);
+
+      // Failsafe: if finish timeline stalls mid-way, force close.
+      finishExitTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        finalizePreloader();
+      }, 4200);
+
+      if (heroImage) {
+        fin.to(heroImage, { scale: 1, duration: 1.8, ease: "power3.out" }, 1.4);
+      }
+
+      // hero text (same elements/animations you already had)
+      const divider = document.querySelector(".hero-divider");
+      fin.call(() => animateHeroText(".hero-tagline"), null, 1.95);
+      if (divider) {
+        fin.fromTo(divider, { scaleY: 0, transformOrigin: "top" },
+          { scaleY: 1, duration: 0.5, ease: "back.inOut" }, 2.1);
+      }
+      fin
+        .call(() => animateHeroText(".hero-main-title"), null, 2.3)
+        .call(() => animateHeroText(".hero-subtitle"), null, 2.45)
+        .call(() => animateHeroText(".hero-body"), null, 2.55);
+    }
+
+    /* ---------- start once fonts are ready (SplitText needs them) ---------- */
+    const start = () => {
+      if (cancelled) return;
+      hasPlayedThisPageLoad = true;
+      run.play();
+
+      // Failsafe: ensure preloader always closes even if timeline callbacks are interrupted.
+      forceExitTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        if (!finished) {
+          finish();
+        } else {
+          finalizePreloader();
+        }
+      }, Math.max(7000, Math.round((reduceMotion ? 0.8 : RUN_SECONDS) * 1000) + 3200));
+    };
+    if (document.fonts?.ready) document.fonts.ready.then(start);
+    else start();
 
     return () => {
       cancelled = true;
-      mounted = false;
-      shell.classList.remove("is-preloader-running");
-
-      preloaderTimeline?.kill();
-      heroTimeline?.kill();
-
-      gsap.killTweensOf(shell);
-      gsap.killTweensOf([
-        preloaderBg,
-        preloaderMask,
-        preloaderLogo,
-        preloaderSunText,
-        progressBar,
-      ]);
-
-      if (heroImage) {
-        gsap.killTweensOf(heroImage);
-      }
-
-      splitInstances.forEach((split) => {
-        split.revert();
-      });
+      run.kill();
+      fin?.kill();
+      sprintCall?.kill();
+      if (forceExitTimer) window.clearTimeout(forceExitTimer);
+      if (finishExitTimer) window.clearTimeout(finishExitTimer);
+      gsap.killTweensOf([boost, kmEl]);
+      shell.removeEventListener("pointerdown", sprint);
+      window.removeEventListener("keydown", onKey);
+      document.documentElement.style.overflow = "";
+      splitInstances.forEach((s) => s.revert());
     };
   }, []);
 
@@ -461,35 +432,70 @@ export function HeroPreloader() {
     <div
       ref={scopeRef}
       className="hero-preloader-shell"
-      aria-hidden="true"
+      role="status"
+      aria-label="Loading Sudharva 2027"
     >
-      <div className="preloader-progress-bar">
-        <div className="preloader-bg" />
+      <div className="pl-panel pl-panel-top" />
+      <div className="pl-panel pl-panel-bottom" />
 
-        <div className="preloader-logo">
-          <Lottie
-            src={preloaderAnimation}
-            loop
-            autoplay
-            className="preloader-gif"
-            aria-label="Sudharva preloader animation"
-          />
-          {/* <Image
-            src="/video/preloader.gif"
-            alt="Sudharva preloader"
-            width={400}
-            height={400}
-            priority
-            unoptimized
-            className="preloader-gif"
-          /> */}
-          <p className="preloader-sun-text">
-            Sudharva 2027
-          </p>
+      <div className="pl-content">
+        <p className="pl-eyebrow">Appa Charitable Trust presents</p>
+        <h2 className="pl-title">
+          Sudharva <span>2027</span>
+        </h2>
+        <p className="pl-sub">Run Against Diabetes</p>
+
+        <div className="pl-track">
+          <div className="pl-speed" />
+          <div className="pl-road">
+            <div className="pl-lane" />
+          </div>
+          <div className="pl-fill" />
+
+          <div className="pl-finish" />
+          <div className="pl-tape">
+            <i className="pl-tape-l" />
+            <i className="pl-tape-r" />
+          </div>
+
+          <div className="pl-runner">
+            <span className="pl-dust"><i /><i /><i /></span>
+            <Image
+              src="/video/preloader.gif"
+              alt="Runner animation"
+              width={190}
+              height={190}
+              unoptimized
+              className="pl-runner-anim"
+              draggable={false}
+            />
+            <span className="pl-shadow" />
+          </div>
+
+          <div className="pl-confetti">
+            {CONFETTI.map((i) => <i key={i} />)}
+          </div>
+
+          <ul className="pl-markers">
+            {MARKERS.map((i) => (
+              <li key={i} style={{ left: `${8 + (i / DISTANCE_KM) * 84}%` }}>
+                {i === 0 ? "START" : i === DISTANCE_KM ? "FINISH" : `${i} km`}
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
 
-      <div className="preloader-mask" />
+        <div className="pl-meta">
+          <div className="pl-dist">
+            <span className="pl-km">0.0</span>
+            <small> / {DISTANCE_KM} km</small>
+          </div>
+          <span className="pl-status">Warming up</span>
+          <span className="pl-pct">0%</span>
+        </div>
+
+        <p className="pl-hint">Tap anywhere to sprint</p>
+      </div>
     </div>
   );
 }

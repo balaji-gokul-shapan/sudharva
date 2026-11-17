@@ -50,6 +50,83 @@ const hasRegistrationData = (registration) => {
   return hasMeaningfulRegistration(registration);
 };
 
+const normalizeStatus = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_");
+
+const getPrimaryRegistrationRecord = (payload) => {
+  if (!payload) return null;
+
+  const mergeParentRunner = (record, parentRunner) => {
+    if (!record || typeof record !== "object") return null;
+
+    const resolvedRunner =
+      (record.runner && typeof record.runner === "object" ? record.runner : null) ||
+      (parentRunner && typeof parentRunner === "object" ? parentRunner : null);
+
+    if (!resolvedRunner) return record;
+
+    const runnerProfile =
+      resolvedRunner.profile && typeof resolvedRunner.profile === "object"
+        ? resolvedRunner.profile
+        : {};
+    const runnerAddress =
+      resolvedRunner.address && typeof resolvedRunner.address === "object"
+        ? resolvedRunner.address
+        : {};
+    const runnerEmergency =
+      resolvedRunner.emergency_contact &&
+      typeof resolvedRunner.emergency_contact === "object"
+        ? resolvedRunner.emergency_contact
+        : {};
+
+    const normalizedRunnerDetails =
+      resolvedRunner.details && typeof resolvedRunner.details === "object"
+        ? resolvedRunner.details
+        : {
+            ...runnerProfile,
+            resident_address_line1: runnerAddress.line1,
+            resident_address_line2: runnerAddress.line2,
+            resident_city: runnerAddress.city,
+            resident_state: runnerAddress.state,
+            resident_taulk: runnerAddress.taulk,
+            resident_district: runnerAddress.district,
+            resident_pincode: runnerAddress.pincode,
+            emergency_contact_name: runnerEmergency.name,
+            emergency_contact_relationship: runnerEmergency.relationship,
+            emergency_contact_mobile: runnerEmergency.mobile_number,
+            emergency_contact_mobile_number: runnerEmergency.mobile_number,
+          };
+
+    return {
+      ...record,
+      runner: {
+        ...resolvedRunner,
+        details: normalizedRunnerDetails,
+      },
+    };
+  };
+
+  if (Array.isArray(payload)) {
+    return mergeParentRunner(payload[0] || null, null);
+  }
+
+  if (Array.isArray(payload?.registrations)) {
+    return mergeParentRunner(payload.registrations[0] || null, payload?.runner);
+  }
+
+  if (Array.isArray(payload?.data?.registrations)) {
+    return mergeParentRunner(
+      payload.data.registrations[0] || null,
+      payload?.data?.runner || payload?.runner,
+    );
+  }
+
+  return mergeParentRunner(payload, payload?.runner);
+};
+
 const stats = [
   {
     label: "Total Registrations",
@@ -74,14 +151,20 @@ const stats = [
 export default async function UserDashboard({ params }) {
   const { userId } = await params;
   const encodedUserId = userId ? encodeURIComponent(userId) : "";
-  const registration = await getUserRegistrationServer(userId, {
+  const registrationPayload = await getUserRegistrationServer(userId, {
     redirectPath: `/users/${encodeURIComponent(String(userId || ""))}`,
   });
+  const registration = getPrimaryRegistrationRecord(registrationPayload);
+  
   const hasRegistration = hasRegistrationData(registration);
+  const normalizedPaymentStatus = normalizeStatus(
+    registration?.payment_status ||
+      registration?.registration_status ||
+      registration?.status ||
+      registration?.paymentStatus,
+  );
   const isPendingPayment =
-    hasRegistration &&
-    (registration?.status === "PENDING_PAYMENT" ||
-      registration?.status === "pending_payment");
+    hasRegistration && normalizedPaymentStatus === "pending_payment";
   const isPaymentCompleted = !isPendingPayment;
 
   if (!hasRegistration) {
@@ -180,7 +263,7 @@ export default async function UserDashboard({ params }) {
               <div className="rounded-xl border border-border bg-muted/50 p-4">
                 <Flag01Icon className="text-accent" size={20} />
                 <p className="mt-3 text-sm text-ink-soft">Location</p>
-                <p className="mt-1 font-semibold">{"Ajeya Stadium, Avadi, Chennai" ||  user.location}</p>
+                <p className="mt-1 font-semibold">{user.location || "Ajeya Stadium, Avadi, Chennai"}</p>
                 <Link 
                   target="_blank"
                   rel="noopener noreferrer"

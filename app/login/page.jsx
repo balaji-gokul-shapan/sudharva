@@ -48,9 +48,7 @@ export default function LoginPage() {
               Run Against Diabetes
             </span>
           </ResetHomeLink>
-          <ResetHomeLink
-            className="whitespace-nowrap text-xs font-semibold text-ink-soft transition-colors hover:text-accent sm:text-sm"
-          >
+          <ResetHomeLink className="whitespace-nowrap text-xs font-semibold text-ink-soft transition-colors hover:text-accent sm:text-sm">
             Back to website
           </ResetHomeLink>
         </div>
@@ -68,20 +66,33 @@ export default function LoginPage() {
             flickerChance={0.1}
           />
         </div> */}
-        <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute inset-0 z-10 pointer-events-none">
           <Suspense fallback={null}>
             <LightRays
-              color="color-mix(in srgb, var(--accent) 36%, transparent)"
+              color="color-mix(in srgb, var(--accent) 38%, transparent)"
               blur={44}
               speed={16}
             />
           </Suspense>
           <GridPattern
+            squares={[
+              [24, 2],
+              [12, 2],
+              [32, 2],
+              [27, 4],
+              [22, 5],
+              [28, 22],
+              [5, 23],
+              [5, 5],
+              [10, 10],
+              [12, 15],
+              [15, 10],
+            ]}
             width={62}
             height={62}
             x={0}
             y={0}
-            className="opacity-[0.2] [mask-image:radial-gradient(circle_at_center,black,transparent_98%)]"
+            className="fill-accent/12 stroke-accent/35 opacity-80 mask-[radial-gradient(circle_at_center,black,transparent_92%)]"
           />
         </div>
 

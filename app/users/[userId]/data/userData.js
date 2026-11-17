@@ -70,17 +70,25 @@ export const getUserData = (userId, regData) => {
       registration?.payment_status,
     ),
     category: pick(
+      registration?.category?.name,
       registration?.category,
       registration?.category_name,
       registration?.event_category,
     ),
-    eventName: pick(registration?.event, registration?.event_name),
+    eventName: pick(
+      registration?.event?.name,
+      registration?.event_name,
+      registration?.event,
+    ),
     city: pick(
       details?.resident_city,
+      details?.city,
       details?.resident_taulk,
+      details?.taulk,
       details?.resident_district,
+      details?.district,
     ),
-    state: pick(details?.resident_state),
+    state: pick(details?.resident_state, details?.state),
     profileImage: pick(runner?.profile_image, registration?.profile_image),
     raw: registration,
   };

@@ -5,7 +5,12 @@ import HealthSnapshotCard from "./components/HealthSnapshotCard";
 import SafetyReachabilityCard from "./components/SafetyReachabilityCard";
 import BloodGroupValue from "./components/BloodGroupValue";
 import PersonalDetailsCard from "./components/personalDetailsCard";
-import { Ruler, Sparkle, UserCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  Crown,
+  Ruler,
+  Sparkle,
+  UserCircle,
+} from "@phosphor-icons/react/dist/ssr";
 
 const MISSING = "Not available";
 
@@ -22,6 +27,7 @@ const getValue = (source, keys, fallback = MISSING) => {
 const getRegistrationValue = (registration, keys, fallback = MISSING) => {
   const sources = [
     registration?.runner?.details,
+    registration?.runner?.profile,
     registration?.details,
     registration?.runner,
     registration,
@@ -33,6 +39,27 @@ const getRegistrationValue = (registration, keys, fallback = MISSING) => {
   }
 
   return fallback;
+};
+
+const toDisplayText = (value, fallback = MISSING) => {
+  if (value === undefined || value === null) return fallback;
+
+  if (typeof value === "object") {
+    const objectValue = [
+      value?.name,
+      value?.category_name,
+      value?.title,
+      value?.label,
+      value?.distance,
+      value?.value,
+    ].find((item) => item !== undefined && item !== null && String(item).trim() !== "");
+
+    if (objectValue !== undefined) return String(objectValue).trim();
+    return fallback;
+  }
+
+  const text = String(value).trim();
+  return text || fallback;
 };
 
 const getDistance = (category) => {
@@ -139,6 +166,92 @@ const asHealthFlag = (value) => {
   return String(value);
 };
 
+const toBoolean = (...values) => {
+  for (const value of values) {
+    if (value === undefined || value === null || value === "") continue;
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value === 1;
+
+    const normalized = String(value).trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(normalized)) return true;
+    if (["false", "0", "no", "n"].includes(normalized)) return false;
+  }
+
+  return false;
+};
+
+const getPrimaryRegistrationRecord = (payload) => {
+  if (!payload) return null;
+
+  const mergeParentRunner = (record, parentRunner) => {
+    if (!record || typeof record !== "object") return null;
+
+    const resolvedRunner =
+      (record.runner && typeof record.runner === "object" ? record.runner : null) ||
+      (parentRunner && typeof parentRunner === "object" ? parentRunner : null);
+
+    if (!resolvedRunner) return record;
+
+    const runnerProfile =
+      resolvedRunner.profile && typeof resolvedRunner.profile === "object"
+        ? resolvedRunner.profile
+        : {};
+    const runnerAddress =
+      resolvedRunner.address && typeof resolvedRunner.address === "object"
+        ? resolvedRunner.address
+        : {};
+
+    const runnerEmergency =
+      resolvedRunner.emergency_contact &&
+      typeof resolvedRunner.emergency_contact === "object"
+        ? resolvedRunner.emergency_contact
+        : {};
+
+    const normalizedRunnerDetails =
+      resolvedRunner.details && typeof resolvedRunner.details === "object"
+        ? resolvedRunner.details
+        : {
+            ...runnerProfile,
+            resident_address_line1: runnerAddress.line1,
+            resident_address_line2: runnerAddress.line2,
+            resident_city: runnerAddress.city,
+            resident_state: runnerAddress.state,
+            resident_taulk: runnerAddress.taulk,
+            resident_district: runnerAddress.district,
+            resident_pincode: runnerAddress.pincode,
+            emergency_contact_name: runnerEmergency.name,
+            emergency_contact_relationship: runnerEmergency.relationship,
+            emergency_contact_mobile: runnerEmergency.mobile_number,
+            emergency_contact_mobile_number: runnerEmergency.mobile_number,
+          };
+
+    return {
+      ...record,
+      runner: {
+        ...resolvedRunner,
+        details: normalizedRunnerDetails,
+      },
+    };
+  };
+
+  if (Array.isArray(payload)) {
+    return mergeParentRunner(payload[0] || null, null);
+  }
+
+  if (Array.isArray(payload?.registrations)) {
+    return mergeParentRunner(payload.registrations[0] || null, payload?.runner);
+  }
+
+  if (Array.isArray(payload?.data?.registrations)) {
+    return mergeParentRunner(
+      payload.data.registrations[0] || null,
+      payload?.data?.runner || payload?.runner,
+    );
+  }
+
+  return mergeParentRunner(payload, payload?.runner);
+};
+
 export function StatCard({ label, value }) {
   return (
     <article className="rounded-2xl border border-border/80 bg-background/75 p-4">
@@ -184,9 +297,10 @@ function CompletionOrb({ completion, hoverText }) {
 
 async function ProfileContent({ params }) {
   const { userId } = await params;
-  const registration = await getUserRegistrationServer(userId, {
+  const registrationPayload = await getUserRegistrationServer(userId, {
     redirectPath: `/users/${userId}/profile`,
   });
+  const registration = getPrimaryRegistrationRecord(registrationPayload);
 
   const details = {
     ...(registration?.details || {}),
@@ -198,15 +312,23 @@ async function ProfileContent({ params }) {
     getValue(registration, ["registration_status", "status"], "Pending"),
   );
   const confirmedOnSource =
+    registration?.payment_completed_timestamp ||
+    registration?.timestamps?.payment_completed_at ||
     registration?.confirmed_at ||
     registration?.payment_confirmed_at ||
     registration?.approved_at ||
     registration?.verified_at ||
+    registration?.timestamps?.registered_at ||
     "";
   const confirmedOn = formatDate(confirmedOnSource) || MISSING;
   const showConfirmedDate =
     isConfirmedStatus(status) && confirmedOn !== MISSING;
-  const joinedOn = formatDate(registration?.created_at || "") || MISSING;
+  const joinedOn =
+    formatDate(
+      registration?.registration_completed_timestamp ||
+        registration?.timestamps?.registered_at ||
+        "",
+    ) || MISSING;
   const runnerAge = calculateAge(details?.date_of_birth) || MISSING;
   const firstName = getValue(
     registration?.runner,
@@ -226,21 +348,39 @@ async function ProfileContent({ params }) {
   const personalMobile = details?.mobile_number || MISSING;
   const alternateMobile = getRegistrationValue(registration, [
     "alternate_mobile_number",
+    "alternate_mobile",
     "alternatePhone",
     "alternate_phone_number",
     "alternate_phone",
+    "alternate_contact_number",
+    "secondary_mobile",
+    "secondary_mobile_number",
   ]);
-  console.log(alternateMobile, "alternateMobile");
-  console.log(registration, "registration");
   
 
-  const category = getValue(registration, [
+  const categoryRaw = getValue(registration, [
     "category",
     "category_name",
     "event_category",
   ]);
+  const category = toDisplayText(categoryRaw);
+  console.log(categoryRaw,"categoryRaw");
+  
   const distance = getDistance(category);
   const participantRef = getValue(registration, ["participant_reference"]);
+  const premiumBibNumber =
+    getValue(
+      registration,
+      ["bib_number", "premium_bib_number"],
+      getValue(registration?.bib, ["bib_number"], ""),
+    ) || MISSING;
+  const isPremiumMember =
+    toBoolean(
+      registration?.premium_bib_number_status,
+      registration?.bib?.premium_bib_number_status,
+      registration?.order_notes?.is_premium,
+      registration?.notes?.is_premium,
+    ) || premiumBibNumber !== MISSING;
   const paymentStatus = String(
     getValue(
       registration,
@@ -256,29 +396,51 @@ async function ProfileContent({ params }) {
     hasRegistration && paymentStatus === "pending_payment";
   const isPaymentPaid = hasRegistration && !isPendingPayment;
 
-  const city = details?.resident_city || details?.resident_taulk || MISSING;
+  const city =
+    details?.resident_city ||
+    details?.city ||
+    details?.resident_taulk ||
+    details?.taulk ||
+    details?.district ||
+    MISSING;
   const address =
     [
       details?.resident_address_line1,
       details?.resident_address_line2,
+      details?.line1,
+      details?.line2,
       details?.resident_pincode,
+      details?.pincode,
       details?.resident_city,
+      details?.city,
       details?.resident_taulk,
+      details?.taulk,
       details?.resident_district,
+      details?.district,
       details?.resident_state,
+      details?.state,
     ]
       .filter((part) => part && String(part).trim())
       .join(", ") || MISSING;
   const dateOfBirth = formatDate(details?.date_of_birth) || MISSING;
-  const emergencyContactName = details?.emergency_contact_name || MISSING;
-  const emergencyContactMobile = details?.emergency_contact_mobile || MISSING;
+  const emergencyContactName =
+    details?.emergency_contact_name ||
+    details?.emergencyName ||
+    registration?.runner?.emergency_contact?.name ||
+    registration?.emergency_contact?.name ||
+    MISSING;
+  const emergencyContactMobile =
+    details?.emergency_contact_mobile ||
+    details?.emergency_contact_mobile_number ||
+    details?.emergencyMobile ||
+    registration?.runner?.emergency_contact?.mobile_number ||
+    registration?.emergency_contact?.mobile_number ||
+    MISSING;
   const bloodGroup = getRegistrationValue(registration, [
     "blood_group",
     "blood_group_id",
     "bloodGroup",
   ]);
-
-  console.log(bloodGroup, "bloodGroup ");
   
 
   const cardiacCondition = asHealthFlag(
@@ -407,6 +569,12 @@ async function ProfileContent({ params }) {
                     Confirmed on {confirmedOn}
                   </span>
                 ) : null}
+                {isPremiumMember ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/45 bg-amber-300/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.13em] text-amber-800">
+                    <Crown size={12} weight="fill" />
+                    Premium Member
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -447,6 +615,44 @@ async function ProfileContent({ params }) {
             </div>
           </div>
         </section>
+
+        {isPremiumMember ? (
+          <section className="relative overflow-hidden rounded-[1.7rem] border border-amber-400/35 bg-linear-to-br from-amber-100/55 via-background to-amber-50/40 p-5 shadow-[0_18px_46px_-30px_rgba(161,98,7,0.45)]">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-amber-300/30 blur-3xl"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-16 bottom-2 h-32 w-32 rounded-full bg-yellow-300/20 blur-3xl"
+            />
+
+            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-200/35 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-900">
+                  <Crown size={12} weight="fill" />
+                  Premium Runner Access
+                </p>
+                <h3 className="mt-2 text-xl font-black tracking-tight text-amber-900 sm:text-2xl">
+                  Your Premium Bib Is Active
+                </h3>
+                <p className="mt-1 text-sm text-amber-900/80">
+                  You are in the premium lane for this registration. Keep this
+                  bib reference handy for race-day support.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-amber-500/35 bg-amber-100/45 px-4 py-3 text-right">
+                <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-amber-900/80">
+                  Premium Bib
+                </p>
+                <p className="mt-1 text-2xl font-black tracking-widest text-amber-900">
+                  {premiumBibNumber}
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr]">
           <HealthSnapshotCard

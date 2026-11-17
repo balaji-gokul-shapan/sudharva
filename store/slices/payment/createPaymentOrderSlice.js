@@ -101,9 +101,9 @@ export const createPaymentOrder = createAsyncThunk(
         },
         data: {
           participant_reference: orderData?.participant_reference || "",
-          ...(orderData?.payable_amount !== undefined
-            ? { payable_amount: Number(orderData.payable_amount) }
-            : {}),
+          // ...(orderData?.payable_amount !== undefined
+          //   ? { payable_amount: Number(orderData.payable_amount) }
+          //   : {}),
           ...(orderData?.registration_status
             ? { registration_status: orderData.registration_status }
             : {}),

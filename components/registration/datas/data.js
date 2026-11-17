@@ -440,7 +440,41 @@ export const PRIZE_ROWS = [
   { id: "u17-male", category: "6yrs - 17yrs - Male", prize1: 5000, prize2: 3000, prize3: 2000 },
   { id: "u17-female", category: "6yrs - 17yrs - Female", prize1: 5000, prize2: 3000, prize3: 2000 },
   { id: "adult-male", category: "18yrs - 50yrs - Male", prize1: 5000, prize2: 3000, prize3: 2000 },
-  { id: "adult-female", category: "18yrs - 45yrs - Female", prize1: 5000, prize2: 3000, prize3: 2000 },
+  { id: "adult-female", category: "18yrs - 50yrs - Female", prize1: 5000, prize2: 3000, prize3: 2000 },
   { id: "senior-male", category: "Above 50yrs - Male", prize1: 5000, prize2: 3000, prize3: 2000 },
-  { id: "senior-female", category: "Above 45yrs - Female", prize1: 5000, prize2: 3000, prize3: 2000 },
+  { id: "senior-female", category: "Above 50yrs - Female", prize1: 5000, prize2: 3000, prize3: 2000 },
+];
+
+const clonePrizeRows = (prefix) =>
+  PRIZE_ROWS.map((row) => ({
+    ...row,
+    id: `${prefix}-${row.id}`,
+  }));
+
+export const PRIZE_CATEGORY_GROUPS = [
+  {
+    key: "all",
+    label: "All",
+    rows: PRIZE_ROWS,
+  },
+  {
+    key: "community-walk",
+    label: "Community Walk",
+    rows: clonePrizeRows("community-walk"),
+  },
+  {
+    key: "fun-run",
+    label: "Fun Run",
+    rows: clonePrizeRows("fun-run"),
+  },
+  {
+    key: "challenge-run",
+    label: "10K Challenge Run",
+    rows: clonePrizeRows("challenge-run"),
+  },
+  {
+    key: "half-marathon",
+    label: "21.1K Half Marathon",
+    rows: clonePrizeRows("half-marathon"),
+  },
 ];

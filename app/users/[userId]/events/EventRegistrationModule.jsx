@@ -11,6 +11,7 @@ const MISSING = "Not available";
 const pick = (...values) => {
   for (const value of values) {
     if (value === undefined || value === null) continue;
+    if (typeof value === "object") continue;
     const text = String(value).trim();
     if (text) return text;
   }
@@ -91,11 +92,13 @@ export default function EventRegistrationModule({
   const eventName =
     pick(
       registration?.event_name,
+      registration?.event?.name,
       registration?.event,
       registration?.event_title,
     ) || MISSING;
   const category =
     pick(
+      registration?.category?.name,
       registration?.category,
       registration?.category_name,
       registration?.event_category,
@@ -104,6 +107,7 @@ export default function EventRegistrationModule({
     pick(
       registration?.tshirt_size_name,
       registration?.tshirt_size_label,
+      registration?.tshirt_size?.name,
       registration?.tshirt_size,
       registration?.runner?.details?.tshirt_size,
       registration?.runner?.details?.tshirt_size_name,
@@ -198,7 +202,7 @@ export default function EventRegistrationModule({
           <EventDetail
             icon={<Flag01Icon size={18} />}
             label="Place"
-            value={"Ajeya Stadium, Avadi, Chennai"|| place}
+            value={place}
             action={
               <Link
                 href="https://www.google.com/maps/place/ajeya+Stadium,/data=!4m2!3m1!1s0x3a52627fc6dca50d:0xad76da86c69d66ca?sa=X&ved=1t:242&ictx=111"

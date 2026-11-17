@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import gsap from "gsap";
+import confetti from "canvas-confetti";
 import {
   AnimatePresence,
   animate,
@@ -38,59 +39,14 @@ import {
   createPaymentOrder,
   selectPaymentOrder,
 } from "@/store/slices/payment/createPaymentOrderSlice";
+import { applyCouponCode } from "@/store/slices/couponCode/ApplyCouponCodeSlice";
+import { cancelCouponCode } from "@/store/slices/couponCode/cancelCouponCodeSlice";
 import { selectCreateRegistrationData } from "@/store/slices/registration/createRegistrationSlice";
 import { Input } from "../ui/input";
-import { GoogleGeminiIcon } from "@animateicons/react/huge";
+import { BadgeXIcon, Cancel01Icon, Coupon01Icon, DiscountTag01Icon, GoogleGeminiIcon, HeartIcon, SparklesIcon } from "@animateicons/react/huge";
+import { Ribbon } from "../animation/Ribbon";
 
-const PROMO_CODES = [
-  {
-    code: "RUN10",
-    type: "percent",
-    value: 10,
-    label: "10% off your entry fee",
-  },
-  {
-    code: "EARLYBIRD",
-    type: "percent",
-    value: 15,
-    label: "15% early-bird discount",
-  },
-  {
-    code: "FIRST500",
-    type: "flat",
-    value: 500,
-    label: "₹500 off your entry fee",
-  },
-  {
-    code: "COMMUNITY50",
-    type: "flat",
-    value: 50,
-    label: "₹50 community discount",
-  },
-];
-
-const PREMIUM_PROMO_CODES = [
-  {
-    code: "ELITE5",
-    type: "percent",
-    value: 5,
-    label: "5% premium bib discount",
-  },
-  {
-    code: "VIP250",
-    type: "flat",
-    value: 250,
-    label: "₹250 premium discount",
-  },
-  {
-    code: "BIBBOOST",
-    type: "flat",
-    value: 100,
-    label: "₹100 premium boost",
-  },
-];
-
-export function findPromo(rawCode, promoCodes = PROMO_CODES) {
+export function findPromo(rawCode, promoCodes = []) {
   const normalized = String(rawCode ?? "")
     .trim()
     .toUpperCase();
@@ -114,10 +70,46 @@ export function getPromoDiscount(promo, fee) {
 const formatINR = (amount) =>
   `₹${Math.max(0, Math.round(amount)).toLocaleString("en-IN")}`;
 
+const readCategoryLabel = (value) => {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object") {
+    return value?.name || value?.category_name || value?.title || "";
+  }
+  return String(value);
+};
+
+const toFiniteNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatCurrencyAmount = (value, currencyType = "INR") => {
+  const normalizedCurrency = String(currencyType || "INR").trim().toUpperCase();
+  const numericValue = toFiniteNumber(value);
+
+  if (numericValue === null) return "-";
+
+  if (normalizedCurrency === "INR") {
+    return formatINR(numericValue);
+  }
+
+  return `${normalizedCurrency} ${numericValue.toFixed(2)}`;
+};
+
 const isPaidStatusValue = (value) => {
-  const normalized = String(value || "").trim().toLowerCase();
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
   if (!normalized) return false;
-  return ["paid", "payment_done", "completed", "success", "captured", "verified"].includes(normalized);
+  return [
+    "paid",
+    "payment_done",
+    "completed",
+    "success",
+    "captured",
+    "verified",
+  ].includes(normalized);
 };
 
 const normalizeCategoryText = (value) =>
@@ -214,11 +206,10 @@ const getBibRangeRuleByCategoryId = (categoryId, categories = []) => {
   const matched = categories.find(
     (item) => String(item?.id) === String(categoryId),
   );
- 
 
   return extractBibRangeFromCategory(matched);
 };
-function AnimatedAmount({ value, className }) {
+function AnimatedAmount({ value, className, pulseKey, colorful = false }) {
   const motionValue = useMotionValue(value);
   const [display, setDisplay] = useState(value);
 
@@ -232,7 +223,37 @@ function AnimatedAmount({ value, className }) {
     return () => controls.stop();
   }, [motionValue, value]);
 
-  return <span className={className}>{formatINR(display)}</span>;
+  const pulseEnabled = pulseKey !== undefined && pulseKey !== null;
+
+  return (
+    <motion.span
+      key={pulseEnabled ? `amount-pulse-${pulseKey}` : "amount-pulse-static"}
+      className={cn(
+        className,
+        "inline-block transition-all duration-500",
+      )}
+      initial={pulseEnabled ? { scale: 1, y: 0, color: "currentColor" } : false}
+      animate={
+        pulseEnabled
+          ? {
+              scale: [1, 1.1, 1],
+              y: [0, -1, 0],
+              color: colorful
+                ? ["currentColor", "#ec4899", "#0ea5e9", "currentColor"]
+                : "currentColor",
+            }
+          : { scale: 1, y: 0, color: "currentColor" }
+      }
+      transition={{ duration: pulseEnabled ? 0.5 : 0, ease: "easeOut" }}
+      style={
+        colorful && pulseEnabled
+          ? { filter: "drop-shadow(0 0 10px rgba(217, 70, 239, 0.35))" }
+          : undefined
+      }
+    >
+      {formatINR(display)}
+    </motion.span>
+  );
 }
 
 function PromoCodeCard({
@@ -245,45 +266,28 @@ function PromoCodeCard({
   onToggleBib,
   onBibChange,
   onCodeChange,
+  onApplyCode,
+  onCancelCode,
   onApply,
   onClear,
-  promoCodes,
   bibLoading,
   bibError,
   bibSuccess,
+  promoApplying,
 }) {
   const [error, setError] = useState("");
 
-  const handleApply = () => {
-    const trimmed = code.trim();
 
-    if (!trimmed) {
-      setError("Enter a promo code to continue.");
-      return;
-    }
-
-    const match = findPromo(trimmed, promoCodes);
-
-    if (!match) {
-      setError(`“${trimmed.toUpperCase()}” is not a valid promo code.`);
-      return;
-    }
-
-    setError("");
-    onApply(match);
-  };
-
-  const handleClear = () => {
-    setError("");
-    onClear();
-  };
 
   const isApplied = Boolean(promo);
   const isBibApplied = Boolean(bibApplied);
   const status = isApplied ? "applied" : error ? "error" : "idle";
-  const message = isApplied ? `${promo.label} applied.` : error;
+  const message = isApplied
+    ? promo?.message || promo?.label || "Coupon applied successfully."
+    : error;
   const bibPreview = String(bibNumber || "").trim() || "ELITE24";
   const normalizedBibNumber = String(bibNumber || "").trim();
+  const [viewPromoTab, setViewPromoTab] = useState(Boolean(promo));
   const hintCutoffLength = Math.max(1, Number(bibHintMaxLength || 5));
   const shouldShowBibHint =
     Boolean(bibHint) && normalizedBibNumber.length < hintCutoffLength;
@@ -306,6 +310,53 @@ function PromoCodeCard({
     await onToggleBib(!isBibApplied);
   };
 
+  const handleApplyCouponCode = async () => {
+    if (isApplied) {
+      try {
+        await onCancelCode();
+        setError("");
+      } catch (cancelError) {
+        setError(
+          typeof cancelError === "string"
+            ? cancelError
+            : cancelError?.message || "Unable to cancel coupon code.",
+        );
+      }
+      return;
+    }
+
+    const trimmed = (code || "").trim();
+
+    if (!trimmed) {
+      setError("Enter a coupon code to continue.");
+      return;
+    }
+
+    try {
+      const promoToApply =  await onApplyCode(trimmed)
+
+
+      if (!promoToApply) {
+        setError(`"${trimmed}" is not a valid coupon code.`);
+        return;
+      }
+
+      setError("");
+      onApply(promoToApply);
+    } catch (applyError) {
+      setError(
+        typeof applyError === "string"
+          ? applyError
+          : applyError?.message || "Unable to apply coupon code.",
+      );
+    }
+  };
+
+  const handleClear = () => {
+    setError("");
+    onClear();
+  };
+
   return (
     <div className="relative">
       <div className="relative overflow-hidden rounded-3xl border border-(--premium-card-border) bg-(--premium-card-bg) text-(--premium-card-fg) shadow-(--premium-card-shadow)">
@@ -316,6 +367,14 @@ function PromoCodeCard({
         />
 
         <div className="relative px-5 py-5 sm:px-6">
+          <Ribbon
+            className={"bg-gradient-primary"}
+            position="top-right"
+            color="bg-[var(--color-surface)]"
+            textColor="text-[var(--color-white)]"
+          >
+            <SparklesIcon size={14} className="mr-1 text-danger" /> Pro Access 
+          </Ribbon>
           <div className="flex flex-col lg:flex-row items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-(--premium-card-border) bg-(--premium-strong-bg) text-(--premium-icon)">
               <Ticket size={22} weight="duotone" />
@@ -373,12 +432,12 @@ function PromoCodeCard({
                 >
                   {bibLoading ? (
                     <>
-                      <Sparkle size={17} weight="bold" />
+                      <GoogleGeminiIcon size={17} weight="bold" />
                       Applying...
                     </>
                   ) : isBibApplied ? (
                     <>
-                      <Check size={17} weight="bold" />
+                      <Cancel01Icon size={17} weight="bold" />
                       Cancel
                     </>
                   ) : (
@@ -410,116 +469,6 @@ function PromoCodeCard({
               </p>
             </div>
           </div>
-
-          {/* <div className="mt-5">
-            <label
-              htmlFor="premium-promo-code"
-              className="mb-2 block text-sm font-semibold text-(--premium-heading)"
-            >
-              Premium promo code
-            </label>
-
-            <div className="flex flex-col gap-2.5 sm:flex-row">
-              <div className="relative flex-1">
-                <Tag
-                  size={17}
-                  aria-hidden="true"
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-(--premium-muted)"
-                />
-                <input
-                  id="premium-promo-code"
-                  name="premiumPromoCode"
-                  type="text"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={code}
-                  onChange={(event) => {
-                    onCodeChange(event.target.value);
-                    setError("");
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      handleApply();
-                    }
-                  }}
-                  placeholder="Enter code"
-                  aria-describedby="premium-promo-code-status"
-                  aria-invalid={status === "error"}
-                  className={cn(
-                    "w-full rounded-xl border bg-(--premium-panel-bg) py-3 pl-11 pr-11 text-sm font-semibold uppercase tracking-[0.18em] text-(--premium-input) outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-(--premium-placeholder) focus-visible:outline-[2px_solid_var(--premium-label)]",
-                    status === "error"
-                      ? "border-destructive"
-                      : "border-(--premium-card-border)",
-                  )}
-                />
-                {code && (
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    aria-label="Clear promo code"
-                    className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-(--premium-muted) transition hover:bg-[color-mix(in_srgb,var(--premium-action-bg)_20%,transparent)] hover:text-(--premium-input) focus-visible:outline-[2px_solid_var(--premium-label)]"
-                  >
-                    <X size={14} weight="bold" />
-                  </button>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleApply}
-                className={cn(
-                  "inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold uppercase tracking-wider transition focus-visible:outline-[2px_solid_var(--premium-label)]",
-                  isApplied
-                    ? "border border-success/50 bg-success/15 text-success hover:bg-success/20"
-                    : "bg-(--premium-action-bg) text-(--premium-action-fg) shadow-md hover:brightness-105",
-                )}
-              >
-                {isApplied ? (
-                  <>
-                    <Check size={17} weight="bold" />
-                    Applied
-                  </>
-                ) : (
-                  <>
-                    <Percent size={17} weight="bold" />
-                    Apply
-                  </>
-                )}
-              </button>
-            </div>
-
-            <div
-              id="premium-promo-code-status"
-              aria-live="polite"
-              className="min-h-6"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {message && (
-                  <motion.p
-                    key={message}
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2 }}
-                    className={cn(
-                      "mt-2 flex items-center gap-1.5 text-xs font-semibold",
-                      status === "applied"
-                        ? "text-success"
-                        : "text-(--premium-error)",
-                    )}
-                  >
-                    {status === "applied" ? (
-                      <Sparkle size={14} weight="fill" />
-                    ) : (
-                      <Warning size={14} weight="fill" />
-                    )}
-                    {message}
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </div>
-          </div> */}
 
           {/* <div className="mt-4 border-t border-dashed border-[color-mix(in_srgb,var(--premium-muted)_35%,transparent)] pt-4">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-(--premium-muted)">
@@ -554,6 +503,232 @@ function PromoCodeCard({
         </div>
       </div>
 
+      <div className="mt-5">
+        <div className="relative overflow-hidden rounded-2xl border border-(--promo-lab-card-border) bg-(--promo-lab-soft-bg) p-4 sm:p-5 shadow-(--promo-lab-card-shadow)">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[radial-gradient(70%_120%_at_10%_0%,color-mix(in_srgb,var(--promo-lab-action-bg)_28%,transparent),transparent_75%)]"
+          />
+
+          <div className="relative">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--promo-lab-label)">
+                  Coupon Lab
+                </p>
+                <label
+                  htmlFor="premium-promo-code"
+                  className="mt-1 block text-sm font-semibold text-(--promo-lab-heading)"
+                >
+                  Add your coupon code
+                </label>
+                <p className="mt-1 text-xs text-(--promo-lab-body)">
+                  Enter a code or tap a quick pick to apply savings instantly.
+                </p>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full border border-(--promo-lab-card-border) bg-(--promo-lab-chip-bg) px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-(--promo-lab-muted)">
+                <Percent size={12} weight="bold" />
+                For Sponsered runners
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setViewPromoTab((current) => !current)}
+              aria-expanded={viewPromoTab}
+              aria-controls="premium-promo-fields"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-(--promo-lab-label) underline underline-offset-4 transition hover:text-(--promo-lab-input) focus-visible:outline-[2px_solid_var(--promo-lab-label)]"
+            >
+              <Percent size={14} weight="bold" />
+              {viewPromoTab ? "Hide coupon code" : "Apply coupon code"}
+            </button>
+
+            <AnimatePresence initial={false}>
+              {viewPromoTab && (
+                <motion.div
+                  id="premium-promo-fields"
+                  initial={{ opacity: 0, y: -8, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: "auto" }}
+                  exit={{ opacity: 0, y: -8, height: 0 }}
+                  transition={{ duration: 0.22 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-stretch">
+                    <div className="relative flex-1 w-full">
+                      <Tag
+                        size={17}
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-(--promo-lab-muted)"
+                      />
+                      <input
+                        id="premium-coupon-code"
+                        name="premiumCouponCode"
+                        type="text"
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={code}
+                        onChange={(event) => {
+                          onCodeChange(event.target.value);
+                          setError("");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            handleApplyCouponCode();
+                          }
+                        }}
+                        placeholder="ENTER CODE"
+                        aria-describedby="premium-promo-code-status"
+                        aria-invalid={status === "error"}
+                        className={cn(
+                          "h-12 w-full rounded-xl border bg-(--promo-lab-panel-bg) py-3 pl-11 pr-11 text-sm font-semibold  tracking-[0.2em] text-(--promo-lab-input) outline-none transition placeholder:font-medium placeholder:tracking-[0.12em] placeholder:text-(--promo-lab-placeholder) focus-visible:outline-[2px_solid_var(--promo-lab-label)]",
+                          status === "error"
+                            ? "border-destructive"
+                            : "border-(--promo-lab-card-border)",
+                        )}
+                      />
+                      {code && (
+                        <button
+                          type="button"
+                          onClick={handleClear}
+                          aria-label="Clear promo code"
+                          className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-(--promo-lab-muted) transition hover:bg-[color-mix(in_srgb,var(--promo-lab-action-bg)_20%,transparent)] hover:text-(--promo-lab-input) focus-visible:outline-[2px_solid_var(--promo-lab-label)]"
+                        >
+                          <X size={14} weight="bold" />
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyCouponCode}
+                      disabled={promoApplying}
+                      className={cn(
+                        "inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold uppercase tracking-wider transition focus-visible:outline-[2px_solid_var(--promo-lab-label)] sm:min-w-36",
+                        promoApplying && "cursor-not-allowed opacity-70",
+                        isApplied
+                          ? "border border-success/50 bg-success/15 text-success hover:bg-success/20"
+                          : "bg-(--promo-lab-action-bg) text-(--promo-lab-action-fg) shadow-md hover:-translate-y-0.5 hover:brightness-105",
+                      )}
+                    >
+                      {promoApplying ? (
+                        <>
+                          <DiscountTag01Icon size={17} weight="bold" />
+                              {isApplied ? "Cancelling..." : "Applying..."}
+                        </>
+                      ) : isApplied ? (
+                        <>
+                          <BadgeXIcon size={17} weight="bold" />
+                              Cancel
+                        </>
+                      ) : (
+                        <>
+                          <Coupon01Icon size={17} weight="bold" />
+                          Apply
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* <div className="mt-3 flex flex-wrap gap-2">
+                    {promoCodes.map((option) => {
+                      const isCurrent = option.code === promo?.code;
+
+                      return (
+                        <button
+                          key={option.code}
+                          type="button"
+                          onClick={() => {
+                            setError("");
+                            onCodeChange(option.code);
+                            onApply(option);
+                          }}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition focus-visible:outline-[2px_solid_var(--promo-lab-label)]",
+                            isCurrent
+                              ? "border-success/50 bg-success/15 text-success"
+                              : "border-(--promo-lab-card-border) bg-(--promo-lab-chip-bg) text-(--promo-lab-card-fg) hover:border-(--promo-lab-label) hover:bg-(--promo-lab-chip-hover-bg)",
+                          )}
+                        >
+                          {option.code}
+                        </button>
+                      );
+                    })}
+                  </div> */}
+
+                  <div
+                    id="premium-promo-code-status"
+                    aria-live="polite"
+                    className="min-h-6"
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      {message && (
+                        <motion.p
+                          key={message}
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.2 }}
+                          className={cn(
+                            "mt-2 flex items-center gap-1.5 text-xs font-semibold",
+                            status === "applied"
+                              ? "text-success"
+                              : "text-(--promo-lab-error)",
+                          )}
+                        >
+                          {status === "applied" ? (
+                            <Sparkle size={14} weight="fill" />
+                          ) : (
+                            <Warning size={14} weight="fill" />
+                          )}
+                          {message}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* {isApplied && (
+                    <div className="mt-2 rounded-xl border border-success/25 bg-success/5 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-success">
+                        Applied Coupon
+                      </p>
+                      <div className="mt-1.5 space-y-1 text-xs text-ink-soft">
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Original amount</span>
+                          <span className="font-semibold text-foreground">
+                            {formatCurrencyAmount(
+                              promo?.originalAmount,
+                              promo?.currencyType,
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Discount amount</span>
+                          <span className="font-semibold text-success">
+                            - {formatCurrencyAmount(
+                              promo?.discountAmount,
+                              promo?.currencyType,
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span>Final amount</span>
+                          <span className="font-semibold text-foreground">
+                            {formatCurrencyAmount(
+                              promo?.finalAmount,
+                              promo?.currencyType,
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )} */}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 -bottom-2 h-4"
@@ -576,8 +751,8 @@ function StandardPromoCodeCard({
 }) {
   const [error, setError] = useState("");
 
-  const handleApply = () => {
-    const trimmed = code.trim();
+  const handleApplyCouponCode = () => {
+    const trimmed = String(code || "").trim();
 
     if (!trimmed) {
       setError("Enter a promo code to continue.");
@@ -587,7 +762,7 @@ function StandardPromoCodeCard({
     const match = findPromo(trimmed, promoCodes);
 
     if (!match) {
-      setError(`“${trimmed.toUpperCase()}” is not a valid promo code.`);
+      setError(`"${trimmed.toUpperCase()}" is not a valid promo code.`);
       return;
     }
 
@@ -656,7 +831,7 @@ function StandardPromoCodeCard({
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
-                      handleApply();
+                      handleApplyCouponCode();
                     }
                   }}
                   placeholder="Enter code"
@@ -683,7 +858,7 @@ function StandardPromoCodeCard({
 
               <button
                 type="button"
-                onClick={handleApply}
+                onClick={handleApplyCouponCode}
                 className={cn(
                   "inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/20",
                   isApplied
@@ -796,10 +971,14 @@ export default function PaymentStep({
   const [paymentLinkOpened, setPaymentLinkOpened] = useState(false);
   const [paymentLinkError, setPaymentLinkError] = useState("");
   const paymentOrderRequestRef = useRef("");
+  const previousPayableRef = useRef(null);
   const bibTicketWrapRef = useRef(null);
   const [isTicketTorn, setIsTicketTorn] = useState(false);
   const [isCancellingBib, setIsCancellingBib] = useState(false);
   const [bibClientError, setBibClientError] = useState("");
+  const [couponCelebrationTick, setCouponCelebrationTick] = useState(0);
+  const [amountColorTick, setAmountColorTick] = useState(0);
+  const [isApplyingPremiumCoupon, setIsApplyingPremiumCoupon] = useState(false);
   const price = category?.price ?? 0;
   const isCorporate = form.entryType === "corporate";
   const { data: masterData = null } = useQuery({
@@ -868,7 +1047,9 @@ export default function PaymentStep({
       return paidStatusFromData;
     }
 
-    const localPaid = Boolean(window.localStorage.getItem(paymentCompletionKey));
+    const localPaid = Boolean(
+      window.localStorage.getItem(paymentCompletionKey),
+    );
     return localPaid || paidStatusFromData;
   }, [participantReference, paidStatusFromData, paymentCompletionKey]);
 
@@ -1036,6 +1217,8 @@ export default function PaymentStep({
     registrationCategoriesFromMasterData.length > 0
       ? registrationCategoriesFromMasterData
       : registrationCategoriesFromEventCategories;
+      console.log(getRegistrationCategory,"getRegistrationCategory");
+      
 
   const selectedCategoryFromMasters = (() => {
     if (
@@ -1048,7 +1231,9 @@ export default function PaymentStep({
     const selectedId =
       form?.runner_category_id ||
       registerData?.runner_category_id ||
-      registerData?.runnerCategoryId;
+      registerData?.category?.id
+      console.log(form, registerData,selectedId, "selectedId");
+      
 
     if (selectedId) {
       const byId = getRegistrationCategory.find(
@@ -1059,7 +1244,9 @@ export default function PaymentStep({
 
     const candidateNames = [
       form?.event,
-      registerData?.category,
+      readCategoryLabel(registerData?.category),
+      registerData?.category_name,
+      registerData?.event_category,
       category?.name,
       category?.title,
     ]
@@ -1117,6 +1304,14 @@ export default function PaymentStep({
   // console.log(selectedCategoryFromMasters, "selectedCategoryFromMasters");
 
   const selectedCategoryForRule = selectedCategoryFromMasters || getData;
+  const selectedEventLabel =
+    readCategoryLabel(registerData?.category) ||
+    registerData?.category_name ||
+    registerData?.event_category ||
+    category?.name ||
+    category?.title ||
+    "-";
+  
   const premiumBibRangeRule =
     getBibRangeRuleByCategoryId(
       selectedCategoryForRule?.id,
@@ -1142,7 +1337,8 @@ export default function PaymentStep({
   // console.log(effectivePrice, "effectivePrice");
 
   const appliedPromo = form.promoApplied ?? null;
-  const appliedPremiumPromo = form.premiumPromoApplied ?? null;
+  const appliedPremiumCoupon =
+    form.premiumCouponApplied ?? form.premiumPromoApplied ?? null;
 
   const regularDiscount = useMemo(
     () => getPromoDiscount(appliedPromo, effectivePrice),
@@ -1151,8 +1347,8 @@ export default function PaymentStep({
 
   const premiumDiscount = useMemo(() => {
     const remainingAfterRegular = Math.max(0, effectivePrice - regularDiscount);
-    return getPromoDiscount(appliedPremiumPromo, remainingAfterRegular);
-  }, [appliedPremiumPromo, effectivePrice, regularDiscount]);
+    return getPromoDiscount(appliedPremiumCoupon, remainingAfterRegular);
+  }, [appliedPremiumCoupon, effectivePrice, regularDiscount]);
 
   const totalDiscount = Math.min(
     effectivePrice,
@@ -1164,6 +1360,51 @@ export default function PaymentStep({
     effectivePrice - totalDiscount + premiumBibCharge,
   );
   const expectedAmountPaise = Math.max(0, Math.round(payable * 100));
+
+  const launchCouponCelebration = useCallback(() => {
+    const colors = ["#f97316", "#22c55e", "#06b6d4", "#ec4899", "#f59e0b"];
+
+    confetti({
+      particleCount: 90,
+      spread: 70,
+      startVelocity: 55,
+      origin: { y: 0.68 },
+      colors,
+    });
+
+    confetti({
+      particleCount: 55,
+      angle: 60,
+      spread: 50,
+      startVelocity: 50,
+      origin: { x: 0, y: 0.7 },
+      colors,
+    });
+
+    confetti({
+      particleCount: 55,
+      angle: 120,
+      spread: 50,
+      startVelocity: 50,
+      origin: { x: 1, y: 0.7 },
+      colors,
+    });
+
+    setCouponCelebrationTick((current) => current + 1);
+    setAmountColorTick((current) => current + 1);
+  }, []);
+
+  useEffect(() => {
+    if (previousPayableRef.current === null) {
+      previousPayableRef.current = payable;
+      return;
+    }
+
+    if (previousPayableRef.current !== payable) {
+      previousPayableRef.current = payable;
+      setAmountColorTick((current) => current + 1);
+    }
+  }, [payable]);
 
   useEffect(() => {
     if (!participantReference) return;
@@ -1200,9 +1441,7 @@ export default function PaymentStep({
 
   const premiumBibNumber = (form.premiumBibNumber || "").trim();
   const shouldShowBibTicket = Boolean(premiumBibNumber);
-  const bibTicketValue = premiumBibNumber
-    ? `${premiumBibNumber}`
-    : "00123";
+  const bibTicketValue = premiumBibNumber ? `${premiumBibNumber}` : "00123";
 
   useEffect(() => {
     const el = bibTicketWrapRef.current;
@@ -1261,12 +1500,19 @@ export default function PaymentStep({
     if (razorpayKey) params.set("key", razorpayKey);
     if (razorpayOrderId) params.set("orderId", razorpayOrderId);
     if (razorpayAmountPaise) params.set("amount", String(razorpayAmountPaise));
-    if (participantReference) params.set("reference", String(participantReference));
+    if (participantReference)
+      params.set("reference", String(participantReference));
     if (payable > 0) params.set("payable", String(payable));
 
     const query = params.toString();
     return query ? `/razorpay-popup?${query}` : "/razorpay-popup";
-  }, [participantReference, payable, razorpayAmountPaise, razorpayKey, razorpayOrderId]);
+  }, [
+    participantReference,
+    payable,
+    razorpayAmountPaise,
+    razorpayKey,
+    razorpayOrderId,
+  ]);
 
   const handleOpenPaymentPopup = async () => {
     if (isPaymentCompleted) {
@@ -1300,7 +1546,8 @@ export default function PaymentStep({
     popupTab.document.body.style.minHeight = "100vh";
     popupTab.document.body.style.display = "grid";
     popupTab.document.body.style.placeItems = "center";
-    popupTab.document.body.style.fontFamily = "Segoe UI, sans-serif";
+    popupTab.document.body.style.fontFamily =
+      "var(--font-sans), ui-sans-serif, system-ui, sans-serif";
     popupTab.document.body.innerHTML =
       "<p style='font-size:14px;color:#444'>Preparing your secure payment...</p>";
 
@@ -1314,6 +1561,8 @@ export default function PaymentStep({
 
       const latestOrder =
         response?.order || response?.data || response?.result || response || {};
+        console.log(latestOrder,"dsddsdsdsdsd");
+        
 
       const latestKey =
         latestOrder?.rzpKey ||
@@ -1365,13 +1614,18 @@ export default function PaymentStep({
       );
       popupTab.document.title = "Payment Error";
       popupTab.document.body.innerHTML =
-        "<div style='font-family:Segoe UI,sans-serif;max-width:460px;margin:40px auto;padding:16px;color:#333'><h2 style='margin:0 0 8px;font-size:18px'>Unable to prepare payment</h2><p style='margin:0 0 10px;font-size:14px'>Please close this tab and try again from the registration page.</p></div>";
+        "<div style='font-family:var(--font-sans),ui-sans-serif,system-ui,sans-serif;max-width:460px;margin:40px auto;padding:16px;color:#333'><h2 style='margin:0 0 8px;font-size:18px'>Unable to prepare payment</h2><p style='margin:0 0 10px;font-size:14px'>Please close this tab and try again from the registration page.</p></div>";
     }
   };
 
   const handleApplyPromo = (promo) => {
+    const shouldCelebrate = appliedPromo?.code !== promo?.code;
     onChange("promoCode", promo.code);
     onChange("promoApplied", promo);
+
+    if (shouldCelebrate) {
+      launchCouponCelebration();
+    }
   };
 
   const handleClearPromo = () => {
@@ -1388,20 +1642,159 @@ export default function PaymentStep({
     }
   };
 
-  const handleApplyPremiumPromo = (promo) => {
-    onChange("premiumPromoCode", promo.code);
-    onChange("premiumPromoApplied", promo);
+  const handleApplyPremiumCoupon = (coupon) => {
+    const shouldCelebrate = appliedPremiumCoupon?.code !== coupon?.code;
+    onChange("premiumCouponCode", coupon.code);
+    onChange("premiumCouponApplied", coupon);
+    // Backward compatibility for existing form payload consumers.
+    onChange("premiumPromoCode", coupon.code);
+    onChange("premiumPromoApplied", coupon);
+
+    if (shouldCelebrate) {
+      launchCouponCelebration();
+    }
   };
 
-  const handleClearPremiumPromo = () => {
+  const handleApplyPremiumCouponCode = useCallback(
+    async (rawCode) => {
+      const trimmed = String(rawCode || "")
+        .trim();
+
+      if (!trimmed) {
+        throw new Error("Enter a coupon code to continue.");
+      }
+
+      setIsApplyingPremiumCoupon(true);
+      try {
+        const payload = await dispatch(
+          applyCouponCode({
+            coupon_code: trimmed,
+            participant_reference: participantReference,
+          }),
+        ).unwrap();
+
+        const serverData =
+          payload?.data || payload?.result || payload?.coupon || payload || {};
+        const serverCode = String(
+          serverData?.coupon_code || serverData?.couponCode || trimmed,
+        )
+          .trim()
+          .toUpperCase();
+
+        const serverCurrencyType =
+          serverData?.currency_type ||
+          serverData?.currencyType ||
+          serverData?.currency ||
+          "INR";
+        const originalAmount =
+          serverData?.original_amount ??
+          serverData?.originalAmount ??
+          serverData?.amount;
+        const discountAmount =
+          serverData?.discount_amount ??
+          serverData?.discountAmount ??
+          serverData?.discount_value ??
+          serverData?.discountValue ??
+          serverData?.value;
+        const finalAmount =
+          serverData?.final_amount ??
+          serverData?.finalAmount ??
+          serverData?.payable_amount ??
+          serverData?.payableAmount;
+        const normalizedDiscountAmount = toFiniteNumber(discountAmount);
+
+        if (normalizedDiscountAmount !== null && normalizedDiscountAmount > 0) {
+          return {
+            code: serverCode,
+            type: "flat",
+            value: normalizedDiscountAmount,
+            label:
+              serverData?.message ||
+              payload?.message ||
+              `${serverCode} applied`,
+            message: serverData?.message || payload?.message || "",
+            currencyType: serverCurrencyType,
+            originalAmount,
+            discountAmount: normalizedDiscountAmount,
+            finalAmount,
+            participantReference:
+              serverData?.participant_reference ||
+              serverData?.participantReference ||
+              participantReference ||
+              "",
+          };
+        }
+
+        throw new Error("Coupon applied but discount details were not returned.");
+      } catch (error) {
+        throw new Error(
+          typeof error === "string"
+            ? error
+            : error?.message || "Unable to apply coupon code.",
+        );
+      } finally {
+        setIsApplyingPremiumCoupon(false);
+      }
+    },
+    [dispatch, participantReference],
+  );
+
+  const handleCancelPremiumCouponCode = async () => {
+    const appliedCouponCode =
+      appliedPremiumCoupon?.code ||
+      form?.premiumCouponCode ||
+      form?.premiumPromoCode ||
+      "";
+
+    const normalizedCouponCode = String(appliedCouponCode || "")
+      .trim()
+      .toUpperCase();
+
+    if (!participantReference) {
+      throw new Error("Participant reference missing. Please retry registration.");
+    }
+
+    if (!normalizedCouponCode) {
+      throw new Error("No applied coupon code to cancel.");
+    }
+
+    setIsApplyingPremiumCoupon(true);
+    try {
+      await dispatch(
+        cancelCouponCode({
+          coupon_code: normalizedCouponCode,
+          participant_reference: participantReference,
+        }),
+      ).unwrap();
+
+      onChange("premiumCouponCode", "");
+      onChange("premiumCouponApplied", null);
+      onChange("premiumPromoCode", "");
+      onChange("premiumPromoApplied", null);
+    } catch (error) {
+      throw new Error(
+        typeof error === "string"
+          ? error
+          : error?.message || "Unable to cancel coupon code.",
+      );
+    } finally {
+      setIsApplyingPremiumCoupon(false);
+    }
+  };
+
+  const handleClearPremiumCoupon = () => {
+    onChange("premiumCouponCode", "");
+    onChange("premiumCouponApplied", null);
     onChange("premiumPromoCode", "");
     onChange("premiumPromoApplied", null);
   };
 
-  const handlePremiumCodeChange = (value) => {
-    onChange("premiumPromoCode", value.toUpperCase());
+  const handlePremiumCouponCodeChange = (value) => {
+    onChange("premiumCouponCode", value);
+    onChange("premiumPromoCode", value);
 
-    if (appliedPremiumPromo) {
+    if (appliedPremiumCoupon) {
+      onChange("premiumCouponApplied", null);
       onChange("premiumPromoApplied", null);
     }
   };
@@ -1425,7 +1818,7 @@ export default function PaymentStep({
               </h3>
               <p className="text-xs text-ink-soft">
                 {}
-                {"Selected event"} · {registerData?.category ?? "-"}{" "}
+                {"Selected event"} · {selectedEventLabel}{" "}
                 {"Distance"} - {getData?.distance ?? "-"}
               </p>
             </div>
@@ -1478,21 +1871,23 @@ export default function PaymentStep({
               </div>
               {/* </div> */}
               <PromoCodeCard
-                code={form.premiumPromoCode ?? ""}
-                promo={appliedPremiumPromo}
+                code={form.premiumCouponCode ?? form.premiumPromoCode ?? ""}
+                promo={appliedPremiumCoupon}
                 bibNumber={form.premiumBibNumber ?? ""}
                 bibApplied={form.premiumBibApplied}
                 onToggleBib={handleTogglePremiumBib}
                 onBibChange={handleBibNumberChange}
-                onCodeChange={handlePremiumCodeChange}
-                onApply={handleApplyPremiumPromo}
-                onClear={handleClearPremiumPromo}
-                promoCodes={PREMIUM_PROMO_CODES}
+                onCodeChange={handlePremiumCouponCodeChange}
+                onApplyCode={handleApplyPremiumCouponCode}
+                onCancelCode={handleCancelPremiumCouponCode}
+                onApply={handleApplyPremiumCoupon}
+                onClear={handleClearPremiumCoupon}
                 bibHint={premiumBibRangeHint}
                 bibHintMaxLength={premiumBibHintMaxLength}
                 bibLoading={Boolean(bibNumberState?.loading) || isCancellingBib}
                 bibError={bibError}
                 bibSuccess={Boolean(bibNumberState?.success)}
+                promoApplying={isApplyingPremiumCoupon}
               />
             </div>
 
@@ -1533,7 +1928,7 @@ export default function PaymentStep({
                     </dt>
                     <dd className="flex items-center gap-2 font-semibold tabular-nums text-success">
                       <span aria-hidden="true">-</span>
-                      <AnimatedAmount value={regularDiscount} />
+                      <AnimatedAmount value={regularDiscount} pulseKey={amountColorTick} />
                     </dd>
                   </div>
                 </motion.div>
@@ -1541,7 +1936,7 @@ export default function PaymentStep({
             </AnimatePresence>
 
             <AnimatePresence initial={false}>
-              {appliedPremiumPromo && (
+              {appliedPremiumCoupon && (
                 <motion.div
                   key="promo-row-premium"
                   initial={{ opacity: 0, height: 0 }}
@@ -1553,14 +1948,62 @@ export default function PaymentStep({
                   <div className="flex items-center justify-between gap-4">
                     <dt className="flex items-center gap-2 text-ink-soft">
                       <span className="rounded-md bg-success/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-success">
-                        {appliedPremiumPromo.code}
+                        {appliedPremiumCoupon.code}
                       </span>
-                      Premium promo discount
+                      Premium coupon discount
                     </dt>
                     <dd className="flex items-center gap-2 font-semibold tabular-nums text-success">
                       <span aria-hidden="true">-</span>
-                      <AnimatedAmount value={premiumDiscount} />
+                      <AnimatedAmount value={premiumDiscount} pulseKey={amountColorTick} />
                     </dd>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence initial={false}>
+              {appliedPremiumCoupon && (
+                <motion.div
+                  key="premium-coupon-breakdown"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="rounded-xl border border-success/25 bg-success/5 px-3 py-3">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-success">
+                      Coupon Breakdown
+                    </p>
+                    <div className="mt-2 space-y-1.5 text-xs text-ink-soft">
+                      <div className="flex items-center justify-between gap-3">
+                        <span>Original amount</span>
+                        <span className="font-semibold text-foreground">
+                          {formatCurrencyAmount(
+                            appliedPremiumCoupon?.originalAmount,
+                            appliedPremiumCoupon?.currencyType,
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span>Discount amount</span>
+                        <span className="font-semibold text-success">
+                          - {formatCurrencyAmount(
+                            appliedPremiumCoupon?.discountAmount,
+                            appliedPremiumCoupon?.currencyType,
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span>Final amount</span>
+                        <span className="font-semibold text-foreground">
+                          {formatCurrencyAmount(
+                            appliedPremiumCoupon?.finalAmount,
+                            appliedPremiumCoupon?.currencyType,
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -1576,7 +2019,7 @@ export default function PaymentStep({
                 </dt>
                 <dd className="flex items-center gap-2 font-semibold tabular-nums text-warning">
                   <span aria-hidden="true">+</span>
-                  <AnimatedAmount value={premiumBibCharge} />
+                  <AnimatedAmount value={premiumBibCharge} pulseKey={amountColorTick} />
                 </dd>
               </div>
             )}
@@ -1589,7 +2032,11 @@ export default function PaymentStep({
                 {isCorporate ? (
                   "Confirmed by organizer"
                 ) : (
-                  <AnimatedAmount value={payable} />
+                  <AnimatedAmount
+                    value={payable}
+                    pulseKey={amountColorTick}
+                    colorful
+                  />
                 )}
               </dd>
             </div>
@@ -1676,9 +2123,9 @@ export default function PaymentStep({
                       ? paymentLinkError
                       : isPaymentCompleted
                         ? "Payment already verified. You can continue from this page without reopening Razorpay."
-                      : paymentLinkOpened
-                        ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
-                        : "Opening Razorpay does not submit this registration or confirm payment."}
+                        : paymentLinkOpened
+                          ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
+                          : "Opening Razorpay does not submit this registration or confirm payment."}
                   </p>
                   {/* {form.paymentReported ? (
                     <div
@@ -1725,18 +2172,10 @@ export default function PaymentStep({
           </div>
         </div>
       </div>
-      {/* <StandardPromoCodeCard
-        code={form.promoCode ?? ""}
-        promo={appliedPromo}
-        onCodeChange={handleCodeChange}
-        onApply={handleApplyPromo}
-        onClear={handleClearPromo}
-        promoCodes={PROMO_CODES}
-      /> */}
       <AnimatePresence initial={false}>
-        {(appliedPromo || appliedPremiumPromo) && totalDiscount > 0 && (
+        {(appliedPromo || appliedPremiumCoupon) && totalDiscount > 0 && (
           <motion.div
-            key="promo-success"
+            key={`promo-success-${couponCelebrationTick}`}
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
@@ -1751,7 +2190,7 @@ export default function PaymentStep({
                 You saved {formatINR(totalDiscount)} on this entry
               </p>
               <p className="text-xs text-ink-soft">
-                {[appliedPromo, appliedPremiumPromo]
+                {[appliedPromo, appliedPremiumCoupon]
                   .filter(Boolean)
                   .map((promoItem) => `${promoItem.label} (${promoItem.code})`)
                   .join(" · ")}
@@ -1761,7 +2200,7 @@ export default function PaymentStep({
               type="button"
               onClick={() => {
                 handleClearPromo();
-                handleClearPremiumPromo();
+                handleClearPremiumCoupon();
               }}
               className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold text-ink-soft transition hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >

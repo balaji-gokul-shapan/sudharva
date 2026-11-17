@@ -5,6 +5,8 @@ export const metadata = {
   },
 };
 
+export const instant = false;
+
 export default function RazorpayPopupLayout({ children }) {
   return children;
 }

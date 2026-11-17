@@ -23,7 +23,7 @@ const options = {
     'Content-Type': 'application/json'
   },
   data: {
-    username: '',
+    user_credentials: '',
     password: ''
   }
 }
@@ -92,13 +92,13 @@ const toReadableErrorMessage = (payload) => {
 
 export const loginUser = createAsyncThunk(
   "userLogin/loginUser",
-  async ({ username, password }, thunkAPI) => {
+  async ({ user_credentials, password }, thunkAPI) => {
     try {
-      const normalizedUsername = String(username || "").trim();
+      const normalizedUsername = String(user_credentials || "").trim();
       const response = await axios({
         ...options,
         data: {
-          username: normalizedUsername,
+          user_credentials: normalizedUsername,
           password,
         },
       });

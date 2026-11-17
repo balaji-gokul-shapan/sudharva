@@ -11,10 +11,13 @@ import getBloodGroupMasterReducer from "./slices/masters/getBloodGroupmasterSlic
 import createPaymentOrderReducer from "./slices/payment/createPaymentOrderSlice";
 import paymentOrderConfirmationReducer from "./slices/payment/paymentOrderConfirmationSlice";
 import enterBibNumberReducer from "./slices/bibNumber/enterBibNumberSlice";
+import applyCouponCodeReducer from "./slices/couponCode/ApplyCouponCodeSlice";
 import loginUserReducer from "./slices/users/userLoginSlice";
 import userRegisterReducer from "./slices/users/userRegisterSlice";
 import userRefreshTokenReducer from "./slices/users/userRefreshTokenSlice";
 import getUserDetailsReducer from "./slices/users/getuserDetailsSlice";
+import getRequestOtpReducer from "./slices/forgotPassword/getOtpSlice";
+import resetPasswordReducer from "./slices/forgotPassword/resetPasswordSlice";
 
 const combinedReducer = combineReducers({
   app: appSliceReducer,
@@ -25,6 +28,7 @@ const combinedReducer = combineReducers({
   enterBibNumber: enterBibNumberReducer,
   createPaymentOrder: createPaymentOrderReducer,
   paymentOrderConfirmation: paymentOrderConfirmationReducer,
+  applyCouponCode: applyCouponCodeReducer,
   registrationDraft: registrationDraftReducer,
   master: getMasterReducer,
   masterEventCategories: getMasterEventCategoriesReducer,
@@ -33,6 +37,8 @@ const combinedReducer = combineReducers({
   userRegister: userRegisterReducer,
   userRefreshToken: userRefreshTokenReducer,
   getUserDetails: getUserDetailsReducer,
+  getRequestOtp: getRequestOtpReducer,
+  resetPassword: resetPasswordReducer,
 });
 
 const rootReducer = (state, action) => {

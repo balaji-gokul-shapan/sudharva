@@ -10,6 +10,8 @@ const Index = () => {
 
     return Boolean(window.localStorage.getItem("auth.accessToken"));
   });
+    // const [isAuthenticated, setIsAuthenticated] = React.useState(true);
+
   const [identifier, setIdentifier] = useState("");
 
   return (

@@ -27,7 +27,7 @@ import { requestOtp } from "@/store/slices/otp/otpRequestSlice";
 import { registerUser } from "@/store/slices/users/userRegisterSlice";
 import { loginUser } from "@/store/slices/users/userLoginSlice";
 import { verifyOtp } from "@/store/slices/otp/otpVerifySlice";
-import { CancelCircleIcon, EyeIcon, EyeOffIcon, HelpCircleIcon, Mail01Icon, PhoneIcon } from "@animateicons/react/huge";
+import { ArrowRightDoubleIcon, CancelCircleIcon, EyeIcon, EyeOffIcon, HelpCircleIcon, Mail01Icon, PasswordValidationIcon, PhoneIcon, UserCircleIcon } from "@animateicons/react/huge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ const panelVariants = {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateIdentifier(value, type) {
+export function validateIdentifier(value, type) {
   const identifier = value.trim();
 
   if (!identifier) {
@@ -119,7 +119,7 @@ const stripHtml = (html) => {
     .replace(/\s+/g, " ")
     .trim();
 };
-const toReadableErrorMessage = (payload, fallback = "Login failed") => {
+export const toReadableErrorMessage = (payload, fallback = "Login failed") => {
   if (!payload) return fallback;
 
   if (typeof payload === "string") {
@@ -183,6 +183,7 @@ export default function RegisterForm({
   const [direction, setDirection] = useState(1);
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   // const [username, setUsername] = useState("");
   // const [password, setPassword] = useState("");
   // const [confirmPassword, setConfirmPassword] = useState("");
@@ -291,6 +292,53 @@ export default function RegisterForm({
     setNotice("");
   };
 
+  useEffect(() => {
+    if (resendCountdown <= 0) return undefined;
+
+    const countdownTimer = setInterval(() => {
+      setResendCountdown((previous) => (previous > 0 ? previous - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(countdownTimer);
+  }, [resendCountdown]);
+
+  const requestRegistrationOtp = async ({ payload, successMessage }) => {
+    try {
+      setIsRequestingOtp(true);
+      const result = await dispatch(requestOtp(payload)).unwrap();
+
+      // The API can return HTTP 200 while refusing to send an OTP
+      // (e.g. the email already has login credentials). In that case
+      // do not advance to the OTP step.
+      if (
+        result?.login_required ||
+        result?.otp_sent === false ||
+        result?.success === false
+      ) {
+        setError(
+          result?.message || "Unable to send OTP right now. Please try again.",
+        );
+        setNotice("");
+        return false;
+      }
+
+      setError("");
+      setNotice(successMessage);
+      setResendCountdown(30);
+      return true;
+    } catch (requestError) {
+      const message = toReadableErrorMessage(
+        requestError,
+        "Unable to send OTP right now. Please try again.",
+      );
+      setError(message);
+      setNotice("");
+      return false;
+    } finally {
+      setIsRequestingOtp(false);
+    }
+  };
+
   const handleIdentifierSubmit = async (event) => {
     event.preventDefault();
 
@@ -311,41 +359,40 @@ export default function RegisterForm({
       mobile_number: identifierType === "phone" ? trimmedIdentifier : "",
     };
 
-    try {
-      setIsRequestingOtp(true);
-      const result = await dispatch(requestOtp(payload)).unwrap();
+    const sent = await requestRegistrationOtp({
+      payload,
+      successMessage: "Verification code sent. Enter the 6-digit OTP to continue.",
+    });
 
-      // The API can return HTTP 200 while refusing to send an OTP
-      // (e.g. the email already has login credentials). In that case
-      // do not advance to the OTP step.
-      if (
-        result?.login_required ||
-        result?.otp_sent === false ||
-        result?.success === false
-      ) {
-        setError(
-          result?.message || "Unable to send OTP right now. Please try again.",
-        );
-        setNotice("");
-        return;
-      }
-    } catch (requestError) {
-      const message = toReadableErrorMessage(
-        requestError,
-        "Unable to send OTP right now. Please try again.",
-      );
-      setError(message);
-      setNotice("");
-      return;
-    } finally {
-      setIsRequestingOtp(false);
-    }
+    if (!sent) return;
 
     setError("");
     setOtp("");
     setDirection(1);
     setStep("otp");
-    setNotice("Verification code sent. Enter the 6-digit OTP to continue.");
+  };
+
+  const handleResendOtp = async () => {
+    if (isRequestingOtp || resendCountdown > 0) return;
+
+    const validationError = validateIdentifier(identifier, identifierType);
+    if (validationError) {
+      setError(validationError);
+      setNotice("");
+      return;
+    }
+
+    const trimmedIdentifier = identifier.trim();
+    const payload = {
+      purpose: identifierType,
+      email: identifierType === "email" ? trimmedIdentifier : "",
+      mobile_number: identifierType === "phone" ? trimmedIdentifier : "",
+    };
+
+    await requestRegistrationOtp({
+      payload,
+      successMessage: "A new OTP has been sent.",
+    });
   };
 
   const handleOtpSubmit = async (event) => {
@@ -421,7 +468,7 @@ export default function RegisterForm({
       // Stepper APIs require runner auth token; login immediately after account creation.
       await dispatch(
         loginUser({
-          username: userCreds.username,
+          user_credentials: userCreds.username,
           password: userCreds.password,
         }),
       ).unwrap();
@@ -463,6 +510,7 @@ export default function RegisterForm({
     } else {
       setStep("identifier");
       setOtp("");
+      setResendCountdown(0);
     }
 
     setError("");
@@ -615,7 +663,7 @@ export default function RegisterForm({
                   )}
                 >
                   {step !== "identifier" ? (
-                    <CheckCircle size={18} weight="fill" />
+                    <UserCircleIcon size={18} weight="fill" />
                   ) : (
                     "01"
                   )}
@@ -644,7 +692,7 @@ export default function RegisterForm({
                   )}
                 >
                   {step === "account" ? (
-                    <CheckCircle size={18} weight="fill" />
+                    <PasswordValidationIcon size={18} weight="fill" />
                   ) : (
                     "02"
                   )}
@@ -765,13 +813,13 @@ export default function RegisterForm({
                     </Label>
                     <div className="relative">
                     {isEmail ? (
-                      <Envelope
+                      <Mail01Icon
                         size={19}
                         aria-hidden="true"
                         className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
                       />
                     ) : (
-                      <Phone
+                      <PhoneIcon
                         size={19}
                         aria-hidden="true"
                         className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
@@ -868,7 +916,7 @@ export default function RegisterForm({
                 >
                   <div className="mb-5 rounded-xl border border-accent/20 bg-accent/5 p-4">
                     <div className="flex items-start gap-3">
-                      <ShieldCheck
+                      <PasswordValidationIcon
                         size={20}
                         className="mt-0.5 shrink-0 text-accent"
                       />
@@ -921,6 +969,27 @@ export default function RegisterForm({
                     {error || "Keep your verification code private."}
                   </p>
 
+                  <div className="mt-2 flex items-center justify-between text-xs">
+                    <span className="text-ink-soft">Didn&apos;t receive the code?</span>
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isRequestingOtp || resendCountdown > 0}
+                      className={cn(
+                        "font-semibold underline-offset-4 transition",
+                        isRequestingOtp || resendCountdown > 0
+                          ? "cursor-not-allowed text-ink-soft/70"
+                          : "text-accent hover:underline",
+                      )}
+                    >
+                      {isRequestingOtp
+                        ? "Sending..."
+                        : resendCountdown > 0
+                          ? `Resend OTP in ${resendCountdown}s`
+                          : "Resend OTP"}
+                    </button>
+                  </div>
+
                   <RainbowButton
                     type="submit"
                     variant="accent"
@@ -929,7 +998,7 @@ export default function RegisterForm({
                     className="mt-4 min-h-12 w-full rounded-xl"
                   >
                     {isVerifyingOtp ? "Verifying OTP..." : "Verify & Continue"}
-                    <ArrowRight size={18} weight="bold" />
+                    <ArrowRightDoubleIcon size={18} weight="bold" />
                   </RainbowButton>
 
                   <button
