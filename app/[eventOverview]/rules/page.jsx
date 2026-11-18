@@ -4,9 +4,6 @@ export function generateStaticParams() {
   return [{ eventOverview: "event" }];
 }
 
-export function generateStaticParams() {
-  return [{ eventOverview: "event" }];
-}
 
 export default function Page() {
   return (
