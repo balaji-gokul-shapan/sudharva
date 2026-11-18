@@ -137,9 +137,7 @@ export const createPaymentOrder = createAsyncThunk(
       }
 
       const authMessage = String(
-        responsePayload?.detail ||
-          responsePayload?.message ||
-          "",
+        responsePayload?.detail || responsePayload?.message || "",
       ).toLowerCase();
       const isAuthFailure =
         status === 401 ||

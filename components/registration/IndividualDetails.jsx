@@ -182,7 +182,7 @@ export const IndividualDetails = ({
     [handlePhoneChange, mobileCountry],
   );
   const handleAlternatePhoneChange = useCallback(
-    (value) => handlePhoneChange("alternate_phone", value, alternateCountry),
+    (value) => handlePhoneChange("alternate_mobile_number", value, alternateCountry),
     [alternateCountry, handlePhoneChange],
   );
 
@@ -363,7 +363,7 @@ export const IndividualDetails = ({
         </div>
 
         <div className="min-w-0">
-          <label htmlFor="alternate_phone" className="mb-2 block text-sm font-semibold text-foreground">
+          <label htmlFor="alternate_mobile_number" className="mb-2 block text-sm font-semibold text-foreground">
             Alternate mobile number
           </label>
           <div className="relative">
@@ -375,7 +375,7 @@ export const IndividualDetails = ({
             <div
               className={cn(
                 "flex w-full items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 pl-11 text-sm text-foreground transition focus-within:border-accent",
-                errors.alternate_phone && "border-destructive",
+                errors.alternate_mobile_number && "border-destructive",
               )}
             >
               <div
@@ -403,14 +403,14 @@ export const IndividualDetails = ({
                   onChange={(event) => {
                     const nextCountry = event.target.value;
                     const localDigits = getLocalPhoneDigits(
-                      formRef.current["alternate_phone"],
+                      formRef.current["alternate_mobile_number"],
                       alternateCountry,
                     );
 
                     setAlternateCountry(nextCountry);
 
                     if (!localDigits) {
-                      onChangeRef.current("alternate_phone", "");
+                      onChangeRef.current("alternate_mobile_number", "");
                       return;
                     }
 
@@ -418,7 +418,7 @@ export const IndividualDetails = ({
                       getCountryCallingCode(nextCountry || "IN") || "",
                     );
                     onChangeRef.current(
-                      "alternate_phone",
+                      "alternate_mobile_number",
                       `+${nextDialCode}${localDigits}`,
                     );
                   }}
@@ -439,24 +439,24 @@ export const IndividualDetails = ({
                 </span>
               </div>
               <PhoneInput
-                id="alternate_phone"
-                name="alternate_phone"
+                id="alternate_mobile_number"
+                name="alternate_mobile_number"
                 country={alternateCountry}
                 international={false}
-                value={toE164PhoneValue(form.alternate_phone, alternateCountry)}
+                value={toE164PhoneValue(form.alternate_mobile_number, alternateCountry)}
                 onChange={handleAlternatePhoneChange}
                 placeholder="Enter phone number"
                 autoComplete="tel"
                 aria-required="false"
-                aria-invalid={Boolean(errors.alternate_phone)}
-                aria-describedby={errors.alternate_phone ? "alternate_phone-error" : undefined}
+                aria-invalid={Boolean(errors.alternate_mobile_number)}
+                aria-describedby={errors.alternate_mobile_number ? "alternate_mobile_number-error" : undefined}
                 className="w-full border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-ink-soft/60"
               />
             </div>
           </div>
-          {errors.alternate_phone && (
-            <p id="alternate_phone-error" className="mt-1.5 text-xs font-medium text-destructive">
-              {errors.alternate_phone}
+          {errors.alternate_mobile_number && (
+            <p id="alternate_mobile_number-error" className="mt-1.5 text-xs font-medium text-destructive">
+              {errors.alternate_mobile_number}
             </p>
           )}
         </div>

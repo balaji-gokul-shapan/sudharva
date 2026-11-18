@@ -29,6 +29,11 @@ const getRegistrationValue = (registration, keys, fallback = MISSING) => {
     registration?.runner?.details,
     registration?.runner?.profile,
     registration?.details,
+    registration?.medical,
+    registration?.payment,
+    registration?.bib,
+    registration?.consents,
+    registration?.timestamps,
     registration?.runner,
     registration,
   ];
@@ -207,23 +212,35 @@ const getPrimaryRegistrationRecord = (payload) => {
         ? resolvedRunner.emergency_contact
         : {};
 
-    const normalizedRunnerDetails =
+    const existingDetails =
       resolvedRunner.details && typeof resolvedRunner.details === "object"
         ? resolvedRunner.details
-        : {
-            ...runnerProfile,
-            resident_address_line1: runnerAddress.line1,
-            resident_address_line2: runnerAddress.line2,
-            resident_city: runnerAddress.city,
-            resident_state: runnerAddress.state,
-            resident_taulk: runnerAddress.taulk,
-            resident_district: runnerAddress.district,
-            resident_pincode: runnerAddress.pincode,
-            emergency_contact_name: runnerEmergency.name,
-            emergency_contact_relationship: runnerEmergency.relationship,
-            emergency_contact_mobile: runnerEmergency.mobile_number,
-            emergency_contact_mobile_number: runnerEmergency.mobile_number,
-          };
+        : {};
+    const normalizedRunnerDetails = {
+      ...runnerProfile,
+      ...existingDetails,
+      resident_address_line1:
+        existingDetails.resident_address_line1 ?? runnerAddress.line1,
+      resident_address_line2:
+        existingDetails.resident_address_line2 ?? runnerAddress.line2,
+      resident_city: existingDetails.resident_city ?? runnerAddress.city,
+      resident_state: existingDetails.resident_state ?? runnerAddress.state,
+      resident_taulk: existingDetails.resident_taulk ?? runnerAddress.taulk,
+      resident_district:
+        existingDetails.resident_district ?? runnerAddress.district,
+      resident_pincode:
+        existingDetails.resident_pincode ?? runnerAddress.pincode,
+      emergency_contact_name:
+        existingDetails.emergency_contact_name ?? runnerEmergency.name,
+      emergency_contact_relationship:
+        existingDetails.emergency_contact_relationship ??
+        runnerEmergency.relationship,
+      emergency_contact_mobile:
+        existingDetails.emergency_contact_mobile ?? runnerEmergency.mobile_number,
+      emergency_contact_mobile_number:
+        existingDetails.emergency_contact_mobile_number ??
+        runnerEmergency.mobile_number,
+    };
 
     return {
       ...record,
@@ -262,6 +279,27 @@ export function StatCard({ label, value }) {
         {value}
       </p>
     </article>
+  );
+}
+
+function ProfileDataSection({ title, description, items }) {
+  return (
+    <section className="rounded-3xl border border-border/80 bg-background/80 p-5 shadow-sm sm:p-6">
+      <div className="mb-4">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+          Registration Data
+        </p>
+        <h2 className="mt-1 text-lg font-bold text-foreground">{title}</h2>
+        {description ? (
+          <p className="mt-1 text-xs text-ink-soft">{description}</p>
+        ) : null}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {items.map(({ label, value }) => (
+          <StatCard key={label} label={label} value={value} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -349,13 +387,19 @@ async function ProfileContent({ params }) {
   const alternateMobile = getRegistrationValue(registration, [
     "alternate_mobile_number",
     "alternate_mobile",
+    "alternative_mobile_number",
+    "alternative_mobile",
     "alternatePhone",
     "alternate_phone_number",
     "alternate_phone",
+    "alternate_contact",
     "alternate_contact_number",
+    "alternative_contact",
+    "alternative_contact_number",
     "secondary_mobile",
     "secondary_mobile_number",
   ]);
+  console.log(alternateMobile, "alternateMobile");
   
 
   const categoryRaw = getValue(registration, [
@@ -381,6 +425,8 @@ async function ProfileContent({ params }) {
       registration?.order_notes?.is_premium,
       registration?.notes?.is_premium,
     ) || premiumBibNumber !== MISSING;
+
+
   const paymentStatus = String(
     getValue(
       registration,
@@ -395,7 +441,8 @@ async function ProfileContent({ params }) {
   const isPendingPayment =
     hasRegistration && paymentStatus === "pending_payment";
   const isPaymentPaid = hasRegistration && !isPendingPayment;
-
+  console.log(isPaymentPaid, isPremiumMember, "dsdsdsdsd");
+  
   const city =
     details?.resident_city ||
     details?.city ||
@@ -403,25 +450,24 @@ async function ProfileContent({ params }) {
     details?.taulk ||
     details?.district ||
     MISSING;
-  const address =
-    [
-      details?.resident_address_line1,
-      details?.resident_address_line2,
-      details?.line1,
-      details?.line2,
-      details?.resident_pincode,
-      details?.pincode,
-      details?.resident_city,
-      details?.city,
-      details?.resident_taulk,
-      details?.taulk,
-      details?.resident_district,
-      details?.district,
-      details?.resident_state,
-      details?.state,
-    ]
-      .filter((part) => part && String(part).trim())
-      .join(", ") || MISSING;
+  const addressParts = [
+    details?.resident_address_line1 ?? details?.line1,
+    details?.resident_address_line2 ?? details?.line2,
+    details?.resident_city ?? details?.city,
+    details?.resident_taulk ?? details?.taulk,
+    details?.resident_district ?? details?.district,
+    details?.resident_state ?? details?.state,
+    details?.resident_pincode ?? details?.pincode,
+  ]
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .filter(
+      (part, index, values) =>
+        values.findIndex(
+          (value) => value.toLowerCase() === part.toLowerCase(),
+        ) === index,
+    );
+  const address = addressParts.join(", ") || MISSING;
   const dateOfBirth = formatDate(details?.date_of_birth) || MISSING;
   const emergencyContactName =
     details?.emergency_contact_name ||
@@ -449,9 +495,50 @@ async function ProfileContent({ params }) {
   const allergies = getRegistrationValue(registration, ["allergies"]);
   const height = details?.height || MISSING;
   const weight = details?.weight || MISSING;
-  const diabetes = asHealthFlag(details?.has_diabetes);
-  const otherMedical = getRegistrationValue(registration, ["other_medical_conditions"]);
-
+  const diabetes = asHealthFlag(
+    getRegistrationValue(registration, ["has_diabetes"], null),
+  );
+  const hypertension = asHealthFlag(
+    getRegistrationValue(registration, ["hypertension"], null),
+  );
+  const previousMarathonParticipation = asHealthFlag(
+    getRegistrationValue(
+      registration,
+      ["previous_marathon_participation"],
+      null,
+    ),
+  );
+  const otherMedical = getRegistrationValue(registration, [
+    "other_medical_conditions",
+  ]);
+  const username = toDisplayText(registration?.runner?.username);
+  const gender = toDisplayText(details?.gender);
+  const emergencyContactRelationship = toDisplayText(
+    details?.emergency_contact_relationship,
+  );
+  const eventRecord = registration?.event || {};
+  const registrationType = registration?.registration_type || {};
+  const categoryRecord = registration?.category || {};
+  const tshirtRecord = registration?.tshirt_size || {};
+  const paymentRecord = registration?.payment || {};
+  const medicalRecord = registration?.medical || {};
+  const consentRecord = registration?.consents || {};
+  const currency = toDisplayText(eventRecord?.currency, "INR");
+  const formatMoney = (value) =>
+    value === null || value === undefined || value === ""
+      ? MISSING
+      : `${currency} ${String(value)}`;
+  const formatTimestamp = (value) => {
+    if (!value) return MISSING;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? String(value)
+      : date.toLocaleString("en-IN", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        });
+  };
+  
   const completionFieldEntries = [
     { label: "Full Name", value: fullName },
     { label: "Category", value: category },
@@ -569,7 +656,7 @@ async function ProfileContent({ params }) {
                     Confirmed on {confirmedOn}
                   </span>
                 ) : null}
-                {isPremiumMember ? (
+                {(isPremiumMember && isPaymentPaid) ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/45 bg-amber-300/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.13em] text-amber-800">
                     <Crown size={12} weight="fill" />
                     Premium Member
@@ -616,7 +703,7 @@ async function ProfileContent({ params }) {
           </div>
         </section>
 
-        {isPremiumMember ? (
+        {(isPremiumMember && isPaymentPaid) ? (
           <section className="relative overflow-hidden rounded-[1.7rem] border border-amber-400/35 bg-linear-to-br from-amber-100/55 via-background to-amber-50/40 p-5 shadow-[0_18px_46px_-30px_rgba(161,98,7,0.45)]">
             <div
               aria-hidden="true"

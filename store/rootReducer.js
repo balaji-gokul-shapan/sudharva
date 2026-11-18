@@ -19,12 +19,14 @@ import getUserDetailsReducer from "./slices/users/getuserDetailsSlice";
 import getRequestOtpReducer from "./slices/forgotPassword/getOtpSlice";
 import resetPasswordReducer from "./slices/forgotPassword/resetPasswordSlice";
 
+
 const combinedReducer = combineReducers({
   app: appSliceReducer,
   pincode: pincodeReducer,
   otpRequest: otpRequestReducer,
   otpVerify: otpVerifyReducer,
   createRegistration: createRegistrationReducer,
+  enterBibNumber: enterBibNumberReducer,
   enterBibNumber: enterBibNumberReducer,
   createPaymentOrder: createPaymentOrderReducer,
   paymentOrderConfirmation: paymentOrderConfirmationReducer,

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import {
   ArrowCounterClockwise,
   Buildings,
@@ -51,15 +50,12 @@ import { usePincodeLookup } from "./PincodeContext";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   createRegistration,
-  resetCreateRegistrationState,
   setCreateRegistrationSnapshot,
 } from "@/store/slices/registration/createRegistrationSlice";
 import { getMasterData } from "@/store/slices/masters/getMasterSlice";
 import { createPaymentOrder } from "@/store/slices/payment/createPaymentOrderSlice";
-import {
-  clearRegistrationDraft,
-  saveRegistrationDraft,
-} from "@/store/slices/registration/registrationDraftSlice";
+import { saveRegistrationDraft } from "@/store/slices/registration/registrationDraftSlice";
+import { resetClientSessionData } from "@/lib/resetClientSession";
 import {
   Dialog,
   DialogContent,
@@ -353,7 +349,7 @@ function createInitialForm(identifier, getRegistrationType, registerData) {
     first_name: "",
     // email: isEmail ? identifier : "",
     mobile_number: isEmail ? "" : identifier || "",
-    alternate_phone: "",
+    alternate_mobile_number: "",
     date_of_birth: "",
     // age: "",
     gender: "",
@@ -438,7 +434,7 @@ function validateField(name, value) {
         ? ""
         : "Enter a phone number with 7-15 digits.";
     }
-    case "alternate_phone": {
+    case "alternate_mobile_number": {
       if (!trimmedValue) return "Please enter your alternate phone number.";
       const digits = trimmedValue.replace(/\D/g, "");
       return digits.length >= 7 && digits.length <= 15
@@ -754,7 +750,6 @@ function StepIntro({ stepIndex }) {
 function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const isMobile = useIsMobile();
   const draft = useAppSelector((state) => state.registrationDraft);
 
@@ -876,6 +871,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     : seededForm;
 
   const [form, setForm] = useState(initialForm);
+  const paymentResetStartedRef = useRef(false);
   const effectiveRegistrationReference =
     participantReference ||
     form?.participant_reference ||
@@ -901,27 +897,33 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
     if (!effectiveRegistrationReference) return;
 
     const paymentCompletionKey = `payment.completed.${effectiveRegistrationReference}`;
-    const clearDraftAfterPayment = () => {
+    const resetSessionAfterPayment = async () => {
       if (!window.localStorage.getItem(paymentCompletionKey)) return;
+      if (paymentResetStartedRef.current) return;
 
-      dispatch(clearRegistrationDraft());
-      dispatch(resetCreateRegistrationState());
-      router.replace("/login");
+      paymentResetStartedRef.current = true;
+      try {
+        await resetClientSessionData(dispatch);
+      } catch (error) {
+        console.error("Failed to reset session after payment.", error);
+      } finally {
+        window.location.replace("/register");
+      }
     };
 
     const handlePaymentCompleted = (event) => {
       if (event.key === paymentCompletionKey && event.newValue) {
-        clearDraftAfterPayment();
+        void resetSessionAfterPayment();
       }
     };
 
     window.addEventListener("storage", handlePaymentCompleted);
-    clearDraftAfterPayment();
+    void resetSessionAfterPayment();
 
     return () => {
       window.removeEventListener("storage", handlePaymentCompleted);
     };
-  }, [dispatch, effectiveRegistrationReference, router]);
+  }, [dispatch, effectiveRegistrationReference]);
 
   useEffect(() => {
     if (stepIndex > 0) {
@@ -1299,7 +1301,7 @@ function StepperFormContent({ identifier, setIdentifier, step, registerData }) {
       false,
     );
     payload.mobile_number = normalizePhoneForApi(payload.mobile_number);
-    payload.alternate_phone = normalizePhoneForApi(payload.alternate_phone);
+    payload.alternate_mobile_number = normalizePhoneForApi(payload.alternate_mobile_number);
     payload.emergency_contact_mobile = normalizePhoneForApi(
       payload.emergency_contact_mobile,
     );

@@ -4,6 +4,10 @@ export function generateStaticParams() {
   return [{ eventOverview: "event" }];
 }
 
+export function generateStaticParams() {
+  return [{ eventOverview: "event" }];
+}
+
 export default function Page() {
   return (
     <main className="min-h-screen bg-background text-foreground">

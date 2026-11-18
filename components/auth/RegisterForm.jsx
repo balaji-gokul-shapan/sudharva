@@ -15,7 +15,6 @@ import {
   Phone,
   ShieldCheck,
   Sparkle,
-  X,
   InformationCircle,
 } from "@phosphor-icons/react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
@@ -564,7 +563,7 @@ export default function RegisterForm({
             </span>
           </Link>
 
-            <div className="my-6 max-w-lg lg:my-0 lg:py-8">
+          <div className="my-6 max-w-lg lg:my-0 lg:py-8">
             <motion.span
               initial={reducedMotion ? false : { opacity: 0, scale: 0.7 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -812,19 +811,19 @@ export default function RegisterForm({
                       {isEmail ? "Email" : "Phone number"}
                     </Label>
                     <div className="relative">
-                    {isEmail ? (
-                      <Mail01Icon
-                        size={19}
-                        aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
-                      />
-                    ) : (
-                      <PhoneIcon
-                        size={19}
-                        aria-hidden="true"
-                        className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
-                      />
-                    )}
+                      {isEmail ? (
+                        <Mail01Icon
+                          size={19}
+                          aria-hidden="true"
+                          className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
+                        />
+                      ) : (
+                        <PhoneIcon
+                          size={19}
+                          aria-hidden="true"
+                          className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-ink-soft"
+                        />
+                      )}
                       <Input
                         id="register-identifier"
                         name="identifier"
@@ -1128,10 +1127,7 @@ export default function RegisterForm({
                           <HelpCircleIcon size={14} />
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent
-                        side="top"
-                        className="help-popover"
-                      >
+                      <TooltipContent side="top" className="help-popover">
                         <ul className="list-disc list-inside space-y-1 text-xs text-foreground">
                           <li>Minimum 8 characters</li>
                           <li>Maximum 128 characters</li>
@@ -1300,9 +1296,7 @@ export default function RegisterForm({
                     Back to OTP verification
                   </button>
                 </motion.form>
-              )
-              }
-             
+              )}
             </AnimatePresence>
 
             {notice && (

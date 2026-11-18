@@ -136,6 +136,7 @@ async function proxyRequest(request, { params }) {
     }
   }
 
+  // const method = request.method.toUpperCase();
   const hasBody = !["GET", "HEAD"].includes(method);
   const shouldFollowRedirects = ["GET", "HEAD"].includes(method);
   const requestBody = hasBody ? await request.arrayBuffer() : undefined;

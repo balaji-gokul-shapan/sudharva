@@ -111,6 +111,15 @@ function RazorpayPopupContent() {
   );
   // console.log(paymentOrderConfirmation, "paymentOrderConfirmation");
 
+  const authAccessToken = useAppSelector(
+    (state) => state.userRefreshToken?.accessToken || "",
+  );
+  const isLoggedIn = Boolean(
+    authAccessToken ||
+      (typeof window !== "undefined" &&
+        window.localStorage.getItem("auth.accessToken")),
+  );
+
   const masterData = useAppSelector((state) => state.master.data);
   const registrationData = registrationDataFromStore || null;
   const orderFetchAttemptedRef = useRef(false);
@@ -153,10 +162,13 @@ function RazorpayPopupContent() {
     return Boolean(window.localStorage.getItem(paymentCompletionKey));
   }, [paymentCompletionKey]);
 
+
+
   useEffect(() => {
     if (masterData) return;
     dispatch(getMasterData());
   }, [dispatch, masterData]);
+
 
   const registrationAmountRupees =
     Number(
@@ -227,8 +239,8 @@ function RazorpayPopupContent() {
 
   const hasResult = Boolean(
     result.razorpay_order_id ||
-    result.razorpay_payment_id ||
-    result.razorpay_signature,
+      result.razorpay_payment_id ||
+      result.razorpay_signature,
   );
   const hasRequiredCheckoutData =
     Boolean(rzpKey.trim()) &&
@@ -293,6 +305,7 @@ function RazorpayPopupContent() {
     registrationData?.phone ||
     registrationData?.contact ||
     "";
+
   const participantEmail =
     registrationData?.email ||
     registrationRequestPayloadFromStore?.email ||
@@ -322,13 +335,15 @@ function RazorpayPopupContent() {
   const userRedirectPath = useMemo(() => {
     const userId =
       params.get("userId") ||
+      registrationData?.auth_user_id ||
       registrationData?.user_id ||
       registrationData?.userId ||
       registrationData?.runner?.id ||
+      registrationRequestPayloadFromStore?.user_id ||
       "";
 
-    return userId ? `/users/${userId}` : "/";
-  }, [params, registrationData]);
+    return userId ? `/users/${encodeURIComponent(String(userId))}` : "/users";
+  }, [params, registrationData, registrationRequestPayloadFromStore]);
 
   const receiptItems = useMemo(
     () => [
@@ -341,6 +356,7 @@ function RazorpayPopupContent() {
     ],
     [participantCategory, receiptAmountRupees],
   );
+
 
   const containerStyle = useMemo(
     () => ({
@@ -397,6 +413,7 @@ function RazorpayPopupContent() {
     }),
     [],
   );
+
 
   const actionWrapStyle = useMemo(
     () => ({
@@ -485,6 +502,7 @@ function RazorpayPopupContent() {
       show("error", "Unable to copy automatically. Please copy manually.");
     }
   }, []);
+
 
   const receiptPayload = useMemo(
     () => ({
@@ -603,6 +621,26 @@ function RazorpayPopupContent() {
 
     window.location.replace("/login");
   }, []);
+
+  const handleBackToDashboard = useCallback(() => {
+    let openerRedirected = false;
+
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.location.replace(userRedirectPath);
+        openerRedirected = true;
+      }
+    } catch {
+      // The current popup can still navigate to the dashboard below.
+    }
+
+    if (openerRedirected) {
+      window.close();
+      return;
+    }
+
+    window.location.replace(userRedirectPath);
+  }, [userRedirectPath]);
 
   const openPaymentPopup = useCallback(() => {
     if (isPaymentAlreadyCompleted) {
@@ -907,6 +945,7 @@ function RazorpayPopupContent() {
         <input
           value={rzpKey}
           readOnly
+          readOnly
           placeholder="rzp_test_..."
           style={baseFieldStyle}
         />
@@ -915,6 +954,7 @@ function RazorpayPopupContent() {
         <input
           value={orderId}
           readOnly
+          readOnly
           placeholder="order_..."
           style={baseFieldStyle}
         />
@@ -922,6 +962,7 @@ function RazorpayPopupContent() {
         <label style={labelStyle}>Amount in Paise (must equal order amount)</label>
         <input
           value={amountPaise}
+          readOnly
           readOnly
           placeholder="8250"
           type="number"
@@ -1104,16 +1145,18 @@ function RazorpayPopupContent() {
               </div>
 
               <div style={actionWrapStyle}>
-                <button
-                  type="button"
-                  onClick={handleGoToLogin}
-                  style={{
-                    ...actionButtonStyle,
-                    background: "#14532d",
-                  }}
-                >
-                  Go to Login
-                </button>
+                {isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={handleBackToDashboard}
+                    style={{
+                      ...actionButtonStyle,
+                      background: "#14532d",
+                    }}
+                  >
+                    Back to Dashboard
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleCloseWindow}

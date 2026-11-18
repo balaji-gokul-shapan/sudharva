@@ -409,7 +409,7 @@ function PromoCodeCard({
                     onChange={(event) =>
                       handleBibInput(event.target.value.replace(/\D/g, ""))
                     }
-                    placeholder="ELITE24"
+                    placeholder=""
                     className="h-12 w-full rounded-xl border border-(--premium-card-border) bg-(--premium-panel-bg) px-3 text-sm font-semibold uppercase tracking-[0.22em] text-(--premium-input) outline-none transition placeholder:tracking-normal placeholder:text-(--premium-placeholder) focus-visible:outline-[2px_solid_var(--premium-label)] sm:flex-1"
                   />
                   {shouldShowBibHint && (
@@ -504,7 +504,7 @@ function PromoCodeCard({
       </div>
 
       <div className="mt-5">
-        <div className="relative overflow-hidden rounded-2xl border border-(--promo-lab-card-border) bg-(--promo-lab-soft-bg) p-4 sm:p-5 shadow-(--promo-lab-card-shadow)">
+        <div className="relative overflow-hidden rounded-2xl border border-[var(--promo-lab-card-border)] bg-[var(--promo-lab-soft-bg)] p-4 sm:p-5 shadow-[var(--promo-lab-card-shadow)]">
           <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[radial-gradient(70%_120%_at_10%_0%,color-mix(in_srgb,var(--promo-lab-action-bg)_28%,transparent),transparent_75%)]"
@@ -513,20 +513,20 @@ function PromoCodeCard({
           <div className="relative">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-(--promo-lab-label)">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--promo-lab-label)]">
                   Coupon Lab
                 </p>
                 <label
                   htmlFor="premium-promo-code"
-                  className="mt-1 block text-sm font-semibold text-(--promo-lab-heading)"
+                  className="mt-1 block text-sm font-semibold text-[var(--promo-lab-heading)]"
                 >
                   Add your coupon code
                 </label>
-                <p className="mt-1 text-xs text-(--promo-lab-body)">
+                <p className="mt-1 text-xs text-[var(--promo-lab-body)]">
                   Enter a code or tap a quick pick to apply savings instantly.
                 </p>
               </div>
-              <span className="inline-flex items-center gap-1 rounded-full border border-(--promo-lab-card-border) bg-(--promo-lab-chip-bg) px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-(--promo-lab-muted)">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--promo-lab-card-border)] bg-[var(--promo-lab-chip-bg)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--promo-lab-muted)]">
                 <Percent size={12} weight="bold" />
                 For Sponsered runners
               </span>
@@ -537,7 +537,7 @@ function PromoCodeCard({
               onClick={() => setViewPromoTab((current) => !current)}
               aria-expanded={viewPromoTab}
               aria-controls="premium-promo-fields"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-(--promo-lab-label) underline underline-offset-4 transition hover:text-(--promo-lab-input) focus-visible:outline-[2px_solid_var(--promo-lab-label)]"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--promo-lab-label)] underline underline-offset-4 transition hover:text-[var(--promo-lab-input)] focus-visible:outline-[2px_solid_var(--promo-lab-label)]"
             >
               <Percent size={14} weight="bold" />
               {viewPromoTab ? "Hide coupon code" : "Apply coupon code"}
@@ -558,7 +558,7 @@ function PromoCodeCard({
                       <Tag
                         size={17}
                         aria-hidden="true"
-                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-(--promo-lab-muted)"
+                        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--promo-lab-muted)]"
                       />
                       <input
                         id="premium-coupon-code"
@@ -581,10 +581,10 @@ function PromoCodeCard({
                         aria-describedby="premium-promo-code-status"
                         aria-invalid={status === "error"}
                         className={cn(
-                          "h-12 w-full rounded-xl border bg-(--promo-lab-panel-bg) py-3 pl-11 pr-11 text-sm font-semibold  tracking-[0.2em] text-(--promo-lab-input) outline-none transition placeholder:font-medium placeholder:tracking-[0.12em] placeholder:text-(--promo-lab-placeholder) focus-visible:outline-[2px_solid_var(--promo-lab-label)]",
+                          "h-12 w-full rounded-xl border bg-[var(--promo-lab-panel-bg)] py-3 pl-11 pr-11 text-sm font-semibold tracking-[0.2em] text-[var(--promo-lab-input)] outline-none transition placeholder:font-medium placeholder:tracking-[0.12em] placeholder:text-[var(--promo-lab-placeholder)] focus-visible:outline-[2px_solid_var(--promo-lab-label)]",
                           status === "error"
                             ? "border-destructive"
-                            : "border-(--promo-lab-card-border)",
+                            : "border-[var(--promo-lab-card-border)]",
                         )}
                       />
                       {code && (
@@ -592,7 +592,7 @@ function PromoCodeCard({
                           type="button"
                           onClick={handleClear}
                           aria-label="Clear promo code"
-                          className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-(--promo-lab-muted) transition hover:bg-[color-mix(in_srgb,var(--promo-lab-action-bg)_20%,transparent)] hover:text-(--promo-lab-input) focus-visible:outline-[2px_solid_var(--promo-lab-label)]"
+                          className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-[var(--promo-lab-muted)] transition hover:bg-[color-mix(in_srgb,var(--promo-lab-action-bg)_20%,transparent)] hover:text-[var(--promo-lab-input)] focus-visible:outline-[2px_solid_var(--promo-lab-label)]"
                         >
                           <X size={14} weight="bold" />
                         </button>
@@ -608,7 +608,7 @@ function PromoCodeCard({
                         promoApplying && "cursor-not-allowed opacity-70",
                         isApplied
                           ? "border border-success/50 bg-success/15 text-success hover:bg-success/20"
-                          : "bg-(--promo-lab-action-bg) text-(--promo-lab-action-fg) shadow-md hover:-translate-y-0.5 hover:brightness-105",
+                          : "bg-[var(--promo-lab-action-bg)] text-[var(--promo-lab-action-fg)] shadow-md hover:-translate-y-0.5 hover:brightness-105",
                       )}
                     >
                       {promoApplying ? (
@@ -647,7 +647,7 @@ function PromoCodeCard({
                             "rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] transition focus-visible:outline-[2px_solid_var(--promo-lab-label)]",
                             isCurrent
                               ? "border-success/50 bg-success/15 text-success"
-                              : "border-(--promo-lab-card-border) bg-(--promo-lab-chip-bg) text-(--promo-lab-card-fg) hover:border-(--promo-lab-label) hover:bg-(--promo-lab-chip-hover-bg)",
+                              : "border-[var(--promo-lab-card-border)] bg-[var(--promo-lab-chip-bg)] text-[var(--promo-lab-card-fg)] hover:border-[var(--promo-lab-label)] hover:bg-[var(--promo-lab-chip-hover-bg)]",
                           )}
                         >
                           {option.code}
@@ -673,7 +673,7 @@ function PromoCodeCard({
                             "mt-2 flex items-center gap-1.5 text-xs font-semibold",
                             status === "applied"
                               ? "text-success"
-                              : "text-(--promo-lab-error)",
+                              : "text-[var(--promo-lab-error)]",
                           )}
                         >
                           {status === "applied" ? (
@@ -995,6 +995,10 @@ export default function PaymentStep({
   // console.log(masterEventCategoriesData, "masterEventCategoriesData");
   // console.log(masterData, "masterData");
   // console.log(registerData, "registerData");
+  // console.log(form, "form");
+  // console.log(masterEventCategoriesData, "masterEventCategoriesData");
+  // console.log(masterData, "masterData");
+  // console.log(registerData, "registerData");
 
   const participantReference =
     participantReferenceNo ||
@@ -1162,6 +1166,7 @@ export default function PaymentStep({
       ).unwrap();
 
       onChange("premiumBibApplied", true);
+      launchPremiumBibCelebration();
     } catch {
       onChange("premiumBibApplied", false);
     }
@@ -1360,6 +1365,45 @@ export default function PaymentStep({
     effectivePrice - totalDiscount + premiumBibCharge,
   );
   const expectedAmountPaise = Math.max(0, Math.round(payable * 100));
+
+  const launchPremiumBibCelebration = useCallback(() => {
+    const colors = ["#facc15", "#f59e0b", "#60a5fa", "#e0f2fe", "#ffffff"];
+
+    confetti({
+      particleCount: 70,
+      spread: 100,
+      startVelocity: 38,
+      gravity: 0.85,
+      scalar: 1.15,
+      shapes: ["star", "circle"],
+      origin: { x: 0.5, y: 0.52 },
+      colors,
+    });
+
+    confetti({
+      particleCount: 35,
+      angle: 55,
+      spread: 45,
+      startVelocity: 48,
+      scalar: 0.9,
+      shapes: ["square", "star"],
+      origin: { x: 0, y: 0.62 },
+      colors,
+    });
+
+    confetti({
+      particleCount: 35,
+      angle: 125,
+      spread: 45,
+      startVelocity: 48,
+      scalar: 0.9,
+      shapes: ["square", "star"],
+      origin: { x: 1, y: 0.62 },
+      colors,
+    });
+
+    setAmountColorTick((current) => current + 1);
+  }, []);
 
   const launchCouponCelebration = useCallback(() => {
     const colors = ["#f97316", "#22c55e", "#06b6d4", "#ec4899", "#f59e0b"];
@@ -2119,13 +2163,9 @@ export default function PaymentStep({
                     aria-live="polite"
                     className="mt-2 min-h-4 text-xs leading-relaxed text-ink-soft"
                   >
-                    {paymentLinkError
-                      ? paymentLinkError
-                      : isPaymentCompleted
-                        ? "Payment already verified. You can continue from this page without reopening Razorpay."
-                        : paymentLinkOpened
-                          ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
-                          : "Opening Razorpay does not submit this registration or confirm payment."}
+                    {paymentLinkOpened
+                      ? "Razorpay opened in a new tab. Return here after checkout to report your payment."
+                      : "Opening Razorpay does not submit this registration or confirm payment."}
                   </p>
                   {/* {form.paymentReported ? (
                     <div

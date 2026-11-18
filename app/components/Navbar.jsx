@@ -187,6 +187,10 @@ export const Navbar = () => {
     } catch {
       // Continue to destination even if reset partially fails.
     } finally {
+       if (typeof window !== "undefined" && window.location.pathname === path) {
+        window.location.replace(path);
+        return;
+      }
       router.push(path);
       setIsAuthNavigationPending(false);
     }

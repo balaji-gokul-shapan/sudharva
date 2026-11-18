@@ -4,6 +4,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Lottie } from "lottie-react";
 import gsap from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { SplitText } from "gsap/SplitText";
@@ -28,6 +29,7 @@ import { heroRuningData, META } from "../../../datas/homepage/data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LineShadowText } from "@/components/animation/line-shadow-text";
+import preloaderAnimation from "../../../../public/image/cta/preloader.json";
 
 gsap.registerPlugin(CustomEase, SplitText);
 
@@ -580,6 +582,7 @@ export function HeroHeading() {
               priority
               className="mx-auto block h-auto w-auto sm:mx-0"
               style={{ width: "auto", height: "auto" }}
+             
             />
 
             <LineShadowText
